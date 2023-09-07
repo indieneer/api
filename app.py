@@ -28,7 +28,8 @@ app.config.update(
     ENVIRONMENT=env.get("PYTHON_ENV"),
     VERSION="0.0.1",
     AUTH0_DOMAIN=env.get("AUTH0_DOMAIN"),
-    AUTH0_AUDIENCE=env.get("AUTH0_AUDIENCE")
+    AUTH0_AUDIENCE=env.get("AUTH0_AUDIENCE"),
+    MONGO_URI=env.get("MONGO_URI")
 )
 
 # blueprint registration
