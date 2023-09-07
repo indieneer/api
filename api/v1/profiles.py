@@ -28,7 +28,7 @@ def get_profile(profile_id):
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        profile = dbs.client.indieneer.profiles.find_one(filter_criteria)
+        profile = dbs.client.get_default_database().profiles.find_one(filter_criteria)
 
         if profile is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
@@ -42,7 +42,7 @@ def get_profile(profile_id):
 
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
-    db = dbs.client["indieneer"]
+    db = dbs.client.get_default_database()
     profiles = db["profiles"]
 
     data = request.get_json()
