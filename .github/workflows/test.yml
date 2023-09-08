@@ -7,8 +7,6 @@ on:
 
 jobs:
   integration:
-    env:
-      MONGO_URI: ${{ env.MONGO_URI }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,5 +23,7 @@ jobs:
         with:
           mongodb-version: 7.0
       - name: Run tests
+        env:
+          MONGO_URI: ${{ env.MONGO_URI }}
         run: |
           python -m unittest discover
