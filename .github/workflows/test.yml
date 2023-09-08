@@ -24,6 +24,6 @@ jobs:
           mongodb-version: 7.0
       - name: Run tests
         env:
-          MONGO_URI: ${{ env.MONGO_URI }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           python -m unittest discover
