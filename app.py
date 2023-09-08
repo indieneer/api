@@ -1,13 +1,11 @@
 from flask import Flask
 from authlib.integrations.flask_client import OAuth
-from dotenv import find_dotenv, load_dotenv
+
 import os
 from os import environ as env
 from api.v1.router import v1_router
+from config import configuration
 
-ENV_FILE = find_dotenv()
-if ENV_FILE:
-    load_dotenv(ENV_FILE)
 
 app = Flask(__name__)
 app.secret_key = env.get("APP_SECRET_KEY")
@@ -25,11 +23,7 @@ oauth.register(
 )
 
 app.config.update(
-    ENVIRONMENT=env.get("PYTHON_ENV"),
-    VERSION="0.0.1",
-    AUTH0_DOMAIN=env.get("AUTH0_DOMAIN"),
-    AUTH0_AUDIENCE=env.get("AUTH0_AUDIENCE"),
-    MONGO_URI=env.get("MONGO_URI")
+    **configuration
 )
 
 # blueprint registration

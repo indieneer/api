@@ -11,6 +11,8 @@ from services.database import Database as dbs
 from tools.http_utils import respond_error, respond_success
 from middlewares.requires_auth import requires_auth
 
+from flask import current_app
+
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
 # available fields for a profile object
@@ -28,7 +30,7 @@ def get_profile(profile_id):
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        profile = dbs.client.get_default_database().profiles.find_one(filter_criteria)
+        profile = dbs.client.get_default_database()["profiles"].find_one(filter_criteria)
 
         if profile is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
