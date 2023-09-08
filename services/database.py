@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from os import environ as env
 from config import configuration
 
+print(config)
 class Database:
     TIMEOUT_TIME = 500
 
