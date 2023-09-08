@@ -32,7 +32,7 @@ class GetProfileTestCase(unittest.TestCase):
 
     def test_get_profile_not_found(self):
         response = self.app.get('/v1/profiles/64f639f66c078a41dcc0fed9')
-        self.assertEqual(response.status_code, 1)
+        self.assertEqual(response.status_code, 404)
 
     def test_get_profile_exception(self):
         response = self.app.get('/v1/profiles/64f639f66c078a410fed9')
