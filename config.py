@@ -7,6 +7,7 @@ if ENV_FILE:
 
 configuration = {
     "ENVIRONMENT": env.get("PYTHON_ENV"),
+    "PORT": env.get("PORT"),
     "VERSION": "0.0.2",
     "AUTH0_DOMAIN": env.get("AUTH0_DOMAIN"),
     "AUTH0_AUDIENCE": env.get("AUTH0_AUDIENCE"),
