@@ -1,4 +1,5 @@
 from flask import Blueprint
+
 from api.v1.profiles import profiles_controller
 from api.v1.products import products_controller
 from api.v1.logins import logins_controller
