@@ -3,6 +3,8 @@ from os import environ as env
 from config import configuration
 
 print(configuration)
+
+
 class Database:
     TIMEOUT_TIME = 500
 
