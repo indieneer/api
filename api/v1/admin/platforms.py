@@ -33,7 +33,7 @@ def get_platforms():
 
 
 @platforms_controller.route('/', methods=["POST"])
-# @requires_auth
+@requires_auth
 def create_platform():
     db = dbs.client.get_database("indieneer")
     platforms = db["platforms"]
