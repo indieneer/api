@@ -1,10 +1,11 @@
+from bson import ObjectId
 from flask import Blueprint, request
 from pymongo.errors import ServerSelectionTimeoutError
 
 from middlewares.requires_auth import requires_auth
 from services.database import Database as dbs
 from slugify import slugify
-from tools.http_utils import respond_success, respond_error
+from tools.http_utils import respond_success, respond_error, respond_not_found
 
 platforms_controller = Blueprint('platforms', __name__, url_prefix='/platforms')
 
@@ -36,3 +37,19 @@ def create_platform():
     new_platform["_id"] = str(result.inserted_id)
 
     return respond_success(new_platform, None, 201)
+
+
+@platforms_controller.route('/<string:platform_id>', methods=["DELETE"])
+@requires_auth
+def delete_platform(platform_id):
+    try:
+        db = dbs.client.get_database("indieneer")
+        platforms = db["platforms"]
+
+        if platforms.delete_one({"_id": ObjectId(platform_id)}).deleted_count == 0:
+            return respond_not_found("platform not found", 404)
+
+        return respond_success(f"platform id {platform_id} successfully deleted")
+
+    except Exception as e:
+        return respond_error(str(e), 500)
