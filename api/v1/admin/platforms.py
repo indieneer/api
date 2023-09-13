@@ -2,7 +2,7 @@ from bson import ObjectId
 from flask import Blueprint, request
 from pymongo.errors import ServerSelectionTimeoutError
 
-from middlewares.requires_auth import requires_auth
+from middlewares import requires_auth
 from services.database import Database as dbs
 from slugify import slugify
 from tools.http_utils import respond_success, respond_error, respond_not_found
@@ -18,8 +18,22 @@ PLATFORM_FIELDS = [
 ]
 
 
-@platforms_controller.route('/', methods=["POST"])
+@platforms_controller.route('/', methods=["GET"])
 @requires_auth
+def get_platforms():
+    db = dbs.client.get_database("indieneer")
+
+    platforms = []
+    for p in db["platforms"].find():
+        platform = p
+        platform["_id"] = str(platform["_id"])
+        platforms.append(platform)
+
+    return respond_success(platforms, status_code=200)
+
+
+@platforms_controller.route('/', methods=["POST"])
+# @requires_auth
 def create_platform():
     db = dbs.client.get_database("indieneer")
     platforms = db["platforms"]
