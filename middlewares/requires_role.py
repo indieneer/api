@@ -1,7 +1,7 @@
 from functools import wraps
 
 
-def requires_admin_role(f):
+def requires_role(f, role: str):
     """Determines if the Admin role in the validated token exists
     """
 

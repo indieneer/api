@@ -39,3 +39,4 @@ def get_token_auth_header():
 
 
 from .requires_auth import requires_auth
+from .requires_role import requires_role
