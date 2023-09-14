@@ -1,5 +1,6 @@
 from bson import ObjectId
 from flask import Blueprint, request
+from pymongo import ReturnDocument
 
 from middlewares import requires_auth
 from services.database import Database as dbs
@@ -50,6 +51,33 @@ def create_platform():
         new_platform["_id"] = str(result.inserted_id)
 
         return respond_success(new_platform, None, 201)
+
+    except Exception as e:
+        return respond_error(str(e), 500)
+
+
+@platforms_controller.route('/<string:profile_id>', methods=["PATCH"])
+@requires_auth
+def update_platform(profile_id):
+    try:
+        data = request.get_json()
+
+        if len(data) == 0:
+            return respond_error(f'The request body is empty.', 422)
+
+        for key in data:
+            if key not in PLATFORM_FIELDS:
+                return respond_error(f'The key "{key}" is not allowed.', 422)
+
+        filter_criteria = {"_id": ObjectId(profile_id)}
+        result = dbs.client.get_default_database()["platforms"].find_one_and_update(filter_criteria, {"$set": data},
+                                                                                    return_document=ReturnDocument.AFTER)
+        if result is None:
+            return respond_error(f'The platform with id {profile_id} was not found.', 404)
+
+        result["_id"] = str(result["_id"])
+
+        return respond_success(result)
 
     except Exception as e:
         return respond_error(str(e), 500)
