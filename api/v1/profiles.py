@@ -9,7 +9,7 @@ from pymongo.errors import ServerSelectionTimeoutError
 
 from services.database import Database as dbs
 from tools.http_utils import respond_error, respond_success
-from middlewares.requires_auth import requires_auth
+from middlewares import requires_auth
 
 from flask import current_app
 

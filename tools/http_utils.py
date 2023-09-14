@@ -19,7 +19,3 @@ def respond_error(error: str, status_code: int = 400):
     }
 
     return response_object, status_code
-
-
-if __name__ == "__main__":
-    print(respond_success({"person": {"name": "Christiano Ronaldo", "age": 0}, "privilege": "admin futbola"}, {"page": 10}))
