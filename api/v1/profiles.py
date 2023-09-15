@@ -97,8 +97,6 @@ def update_profile(profile_id):
         if result is None:
             return respond_error(f'The user with id {profile_id} was not found.', 404)
 
-        print(result)
-
         result["_id"] = str(result["_id"])
 
         return respond_success(result)

@@ -11,5 +11,8 @@ configuration = {
     "VERSION": "0.0.2",
     "AUTH0_DOMAIN": env.get("AUTH0_DOMAIN"),
     "AUTH0_AUDIENCE": env.get("AUTH0_AUDIENCE"),
-    "MONGO_URI": env.get("MONGO_URI")
+    "AUTH0_NAMESPACE": env.get("AUTH0_NAMESPACE"),
+    "MONGO_URI": env.get("MONGO_URI"),
+    "ROOT_USER_EMAIL": env.get("ROOT_USER_EMAIL"),
+    "ROOT_USER_PASSWORD": env.get("ROOT_USER_PASSWORD")
 }

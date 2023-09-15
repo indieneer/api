@@ -1,13 +1,23 @@
 from functools import wraps
+from flask import g
+
+from config import configuration
+from middlewares import AuthError
 
 
-def requires_role(f, role: str):
-    """Determines if the Admin role in the validated token exists
-    """
+def requires_role(role: str):
+    """Determines if the Admin role in the validated token exists"""
 
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        pass
-        # TODO Parse the "role" field from claims and check if it's equal to "admin"
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            payload = g.get('payload')
+            roles = payload.get(configuration.get("AUTH0_NAMESPACE") + "/roles")
+            if role.capitalize() in roles:
+                return f(*args, **kwargs)
+            else:
+                raise AuthError("no permission", 403)
 
-    return decorated
+        return decorated
+
+    return decorator
