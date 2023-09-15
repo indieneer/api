@@ -1,8 +1,7 @@
-import json
-from six.moves.urllib.request import urlopen
+import requests
 from functools import wraps
 
-from flask import _request_ctx_stack, current_app
+from flask import current_app, g
 from jose import jwt
 
 from . import AuthError, get_token_auth_header
@@ -18,8 +17,8 @@ def requires_auth(f):
         AUTH0_AUDIENCE = current_app.config.get("AUTH0_AUDIENCE")
 
         token = get_token_auth_header()
-        jsonurl = urlopen("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json")
-        jwks = json.loads(jsonurl.read())
+        data_json = requests.get("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json").json()
+        jwks = data_json
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
         for key in jwks["keys"]:
@@ -54,7 +53,11 @@ def requires_auth(f):
                                      "Unable to parse authentication"
                                      " token."}, 401)
 
-            _request_ctx_stack.top.current_user = payload
+            # g stands for global and tears down as soon as the request is processed
+            g.payload = payload
+
+            # will be deprecated in 2.4
+            # _request_ctx_stack.top.current_user = payload
             return f(*args, **kwargs)
         raise AuthError({"code": "invalid_header",
                          "description": "Unable to find appropriate key"}, 401)
