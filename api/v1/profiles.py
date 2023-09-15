@@ -1,7 +1,7 @@
 from auth0.authentication import GetToken
 from auth0.management import Auth0
 from bson import ObjectId
-from flask import Blueprint, request, _request_ctx_stack
+from flask import Blueprint, request, _request_ctx_stack, g
 from os import environ as env
 
 from pymongo import ReturnDocument
@@ -82,7 +82,13 @@ def create_profile():
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
+@requires_auth
 def update_profile(profile_id):
+    invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
+
+    if not invoker_id == profile_id:
+        return respond_error("Forbidden", 403)
+
     try:
         data = request.get_json()
 
@@ -107,7 +113,7 @@ def update_profile(profile_id):
 @profiles_controller.route('/<string:user_id>', methods=["DELETE"])
 @requires_auth
 def delete_profile(user_id):
-    invoker_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']
+    invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
 
     if not invoker_id == user_id:
         return respond_error("Forbidden", 403)
@@ -125,7 +131,7 @@ def delete_profile(user_id):
 
         auth0 = Auth0(domain, mgmt_api_token)
 
-        auth0.users.delete(_request_ctx_stack.top.current_user['sub'])
+        auth0.users.delete(g.get("payload").get('sub'))
 
         result = dbs.client.indieneer.profiles.find_one_and_delete(filter_criteria)
 
@@ -140,7 +146,7 @@ def delete_profile(user_id):
 @profiles_controller.route('/me', methods=["GET"])
 @requires_auth
 def get_authenticated_profile():
-    profile_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']
+    profile_id = g.get("payload").get('https://indieneer.com/profile_id')
 
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
