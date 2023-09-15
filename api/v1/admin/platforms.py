@@ -56,9 +56,9 @@ def create_platform():
         return respond_error(str(e), 500)
 
 
-@platforms_controller.route('/<string:profile_id>', methods=["PATCH"])
+@platforms_controller.route('/<string:platform_id>', methods=["PATCH"])
 @requires_auth
-def update_platform(profile_id):
+def update_platform(platform_id):
     try:
         data = request.get_json()
 
@@ -69,11 +69,11 @@ def update_platform(profile_id):
             if key not in PLATFORM_FIELDS:
                 return respond_error(f'The key "{key}" is not allowed.', 422)
 
-        filter_criteria = {"_id": ObjectId(profile_id)}
+        filter_criteria = {"_id": ObjectId(platform_id)}
         result = dbs.client.get_default_database()["platforms"].find_one_and_update(filter_criteria, {"$set": data},
                                                                                     return_document=ReturnDocument.AFTER)
         if result is None:
-            return respond_error(f'The platform with id {profile_id} was not found.', 404)
+            return respond_error(f'The platform with id {platform_id} was not found.', 404)
 
         result["_id"] = str(result["_id"])
 
