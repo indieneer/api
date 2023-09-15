@@ -38,4 +38,6 @@ def index():
 
 
 if __name__ == '__main__':
+    import on_startup  # all the code will be executed
+
     app.run(debug=True, port=configuration["PORT"])

@@ -11,8 +11,6 @@ from services.database import Database as dbs
 from tools.http_utils import respond_error, respond_success
 from middlewares import requires_auth
 
-from flask import current_app
-
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
 # available fields for a profile object
@@ -23,6 +21,8 @@ PROFILE_FIELDS = [
     "nickname",
     "date_of_birth"
 ]
+
+USER_ROLE_ID = 'rol_S6powqdVXBR9jmDI'  # maybe we should put such constants in a specific file?
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
@@ -64,9 +64,11 @@ def create_profile():
 
     auth0 = Auth0(domain, mgmt_api_token)
 
-    user = auth0.users.create({"email": email, "password": password, "email_verified": True, "connection": "Username-Password-Authentication"})
+    user = auth0.users.create({"email": email, "password": password, "email_verified": True,
+                               "connection": "Username-Password-Authentication"})
 
     idp_id = user["identities"][0]["user_id"]
+    auth0.users.add_roles("auth0|" + idp_id, [USER_ROLE_ID])
 
     try:
         new_profile["idp_id"] = idp_id
@@ -92,7 +94,8 @@ def update_profile(profile_id):
 
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        result = dbs.client.indieneer.profiles.find_one_and_update(filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
+        result = dbs.client.indieneer.profiles.find_one_and_update(filter_criteria, {"$set": data},
+                                                                   return_document=ReturnDocument.AFTER)
 
         if result is None:
             return respond_error(f'The user with id {profile_id} was not found.', 404)

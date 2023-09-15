@@ -2,7 +2,7 @@ from bson import ObjectId
 from flask import Blueprint, request
 from pymongo import ReturnDocument
 
-from middlewares import requires_auth
+from middlewares import requires_auth, requires_role
 from services.database import Database as dbs
 from slugify import slugify
 from tools.http_utils import respond_success, respond_error
@@ -20,6 +20,7 @@ PLATFORM_FIELDS = [
 
 @platforms_controller.route('/', methods=["GET"])
 @requires_auth
+@requires_role("admin")
 def get_platforms():
     try:
         db = dbs.client.get_default_database()
@@ -37,6 +38,7 @@ def get_platforms():
 
 @platforms_controller.route('/', methods=["POST"])
 @requires_auth
+@requires_role("admin")
 def create_platform():
     try:
         db = dbs.client.get_default_database()
@@ -58,6 +60,7 @@ def create_platform():
 
 @platforms_controller.route('/<string:profile_id>', methods=["PATCH"])
 @requires_auth
+@requires_role("admin")
 def update_platform(profile_id):
     try:
         data = request.get_json()
@@ -85,6 +88,7 @@ def update_platform(profile_id):
 
 @platforms_controller.route('/<string:platform_id>', methods=["DELETE"])
 @requires_auth
+@requires_role("admin")
 def delete_platform(platform_id):
     try:
         db = dbs.client.get_default_database()
