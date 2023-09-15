@@ -53,7 +53,7 @@ Indieneer API provides a service for interacting with profiles, products, logins
     ```
 
 ## Endpoints
-(Documentation about the API endpoints and how to use them.)
+You can look at our design docs and conventions that cover endpoint creation and management [here](https://www.notion.so/Endpoints-02c5f03a25484ad9b720e1385724c15d?pvs=4).
 
 ## Tests
 Run the unittests by executing the following command in your terminal:
