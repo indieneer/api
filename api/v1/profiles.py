@@ -1,8 +1,8 @@
-from auth0.authentication import GetToken
-from auth0.management import Auth0
 from bson import ObjectId
 from flask import Blueprint, request, _request_ctx_stack
-from os import environ as env
+
+from config import ROLES
+from services import auth0
 
 from pymongo import ReturnDocument
 from pymongo.errors import ServerSelectionTimeoutError
@@ -21,9 +21,6 @@ PROFILE_FIELDS = [
     "nickname",
     "date_of_birth"
 ]
-
-USER_ROLE_ID = 'rol_S6powqdVXBR9jmDI'  # maybe we should put such constants in a specific file?
-
 
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id):
@@ -54,21 +51,11 @@ def create_profile():
     email = new_profile["email"]
     password = new_profile["password"]
 
-    domain = env.get("AUTH0_DOMAIN")
-    client_id = env.get("AUTH0_CLIENT_ID")
-    client_secret = env.get("AUTH0_CLIENT_SECRET")
-
-    get_token = GetToken(domain, client_id, client_secret=client_secret)
-    token = get_token.client_credentials('https://{}/api/v2/'.format(domain))
-    mgmt_api_token = token['access_token']
-
-    auth0 = Auth0(domain, mgmt_api_token)
-
     user = auth0.users.create({"email": email, "password": password, "email_verified": True,
                                "connection": "Username-Password-Authentication"})
 
     idp_id = user["identities"][0]["user_id"]
-    auth0.users.add_roles("auth0|" + idp_id, [USER_ROLE_ID])
+    auth0.users.add_roles("auth0|" + idp_id, [ROLES['User']])
 
     try:
         new_profile["idp_id"] = idp_id
@@ -112,23 +99,13 @@ def update_profile(profile_id):
 @profiles_controller.route('/<string:user_id>', methods=["DELETE"])
 @requires_auth
 def delete_profile(user_id):
-    invoker_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']
+    invoker_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']  # better use g, from flask import g
 
     if not invoker_id == user_id:
         return respond_error("Forbidden", 403)
 
     try:
         filter_criteria = {"_id": ObjectId(user_id)}
-
-        domain = env.get("AUTH0_DOMAIN")
-        client_id = env.get("AUTH0_CLIENT_ID")
-        client_secret = env.get("AUTH0_CLIENT_SECRET")
-
-        get_token = GetToken(domain, client_id, client_secret=client_secret)
-        token = get_token.client_credentials('https://{}/api/v2/'.format(domain))
-        mgmt_api_token = token['access_token']
-
-        auth0 = Auth0(domain, mgmt_api_token)
 
         auth0.users.delete(_request_ctx_stack.top.current_user['sub'])
 
@@ -145,7 +122,7 @@ def delete_profile(user_id):
 @profiles_controller.route('/me', methods=["GET"])
 @requires_auth
 def get_authenticated_profile():
-    profile_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']
+    profile_id = _request_ctx_stack.top.current_user['https://indieneer.com/profile_id']  # better use g
 
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
