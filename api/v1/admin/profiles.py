@@ -54,12 +54,6 @@ def change_profile(profile_id):
 
         profiles = dbs.client.get_default_database()["profiles"]
 
-        # check if the given email already exists
-        if "email" in data and profiles.find_one({"email": data["email"]}):
-            # check if the given email is not the email of the given profile_id
-            if profiles.find_one(filter_criteria).get("email") != data["email"]:
-                return respond_error("Email already exists", 400)
-
         result = profiles.find_one_and_update(filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
         if result is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
