@@ -2,6 +2,7 @@ from flask import Flask
 from authlib.integrations.flask_client import OAuth
 from flask_cors import CORS
 
+import os
 from os import environ as env
 from api.v1.router import v1_router
 from config import configuration
@@ -37,6 +38,6 @@ def index():
 
 
 if __name__ == '__main__':
-    import initializers  # all the code will be executed
+    import on_startup  # all the code will be executed
 
     app.run(debug=True, port=configuration["PORT"])
