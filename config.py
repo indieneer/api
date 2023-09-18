@@ -14,11 +14,11 @@ configuration = {
     "AUTH0_CLIENT_SECRET": env.get("AUTH0_CLIENT_SECRET"),
     "AUTH0_AUDIENCE": env.get("AUTH0_AUDIENCE"),
     "AUTH0_NAMESPACE": env.get("AUTH0_NAMESPACE"),
-    "ROLES": env.get("ROLES"),
+    "AUTH0_ROLES": env.get("AUTH0_ROLES"),
     "MONGO_URI": env.get("MONGO_URI"),
     "ROOT_USER_EMAIL": env.get("ROOT_USER_EMAIL"),
     "ROOT_USER_PASSWORD": env.get("ROOT_USER_PASSWORD")
 }
 
 # comprehension to create dict in format ROLE: ID
-ROLES = {key: value for key, value in [x.split(':') for x in configuration["ROLES"].split(',')]}
+AUTH0_ROLES = {key: value for key, value in [x.split(':') for x in configuration["AUTH0_ROLES"].split(',')]}

@@ -1,7 +1,7 @@
 from services import auth0
 from auth0.exceptions import Auth0Error
 
-from config import configuration, ROLES
+from config import configuration, AUTH0_ROLES
 from services.database import Database as dbs
 
 
@@ -22,7 +22,7 @@ def create_root_profile():
                                    "connection": "Username-Password-Authentication"})
 
         idp_id = user["identities"][0]["user_id"]
-        auth0.users.add_roles(f"auth0|{idp_id}", [ROLES["Admin"]])  # it is important to pass roles as list
+        auth0.users.add_roles(f"auth0|{idp_id}", [AUTH0_ROLES["Admin"]])  # it is important to pass roles as list
 
         admin_profile["idp_id"] = idp_id
         profiles.insert_one(admin_profile)

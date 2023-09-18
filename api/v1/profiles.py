@@ -1,5 +1,5 @@
 from bson import ObjectId
-from config import ROLES
+from config import AUTH0_ROLES
 from services import auth0
 from flask import Blueprint, request, _request_ctx_stack, g
 from os import environ as env
@@ -55,7 +55,7 @@ def create_profile():
                                "connection": "Username-Password-Authentication"})
 
     idp_id = user["identities"][0]["user_id"]
-    auth0.users.add_roles("auth0|" + idp_id, [ROLES['User']])
+    auth0.users.add_roles("auth0|" + idp_id, [AUTH0_ROLES['User']])
 
     try:
         new_profile["idp_id"] = idp_id
