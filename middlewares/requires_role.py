@@ -3,6 +3,7 @@ from flask import g
 
 from config import configuration
 from middlewares import AuthError
+from tools.http_utils import respond_error
 
 
 def requires_role(role: str):
@@ -12,7 +13,10 @@ def requires_role(role: str):
         @wraps(f)
         def decorated(*args, **kwargs):
             payload = g.get('payload')
-            roles = payload.get(configuration.get("AUTH0_NAMESPACE") + "/roles")
+            if not payload:
+                return respond_error("missing decoded user", 500)
+
+            roles = payload.get(configuration.get("AUTH0_NAMESPACE") + "/roles")  # Implement custom payload
             if role.capitalize() in roles:
                 return f(*args, **kwargs)
             else:

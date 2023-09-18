@@ -1,6 +1,6 @@
-from auth0.authentication import GetToken
-from auth0.management import Auth0
 from bson import ObjectId
+from config import ROLES
+from services import auth0
 from flask import Blueprint, request, _request_ctx_stack, g
 from os import environ as env
 
@@ -10,8 +10,6 @@ from pymongo.errors import ServerSelectionTimeoutError
 from services.database import Database as dbs
 from tools.http_utils import respond_error, respond_success
 from middlewares import requires_auth
-
-from flask import current_app
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
@@ -23,7 +21,6 @@ PROFILE_FIELDS = [
     "nickname",
     "date_of_birth"
 ]
-
 
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id):
@@ -54,19 +51,11 @@ def create_profile():
     email = new_profile["email"]
     password = new_profile["password"]
 
-    domain = env.get("AUTH0_DOMAIN")
-    client_id = env.get("AUTH0_CLIENT_ID")
-    client_secret = env.get("AUTH0_CLIENT_SECRET")
-
-    get_token = GetToken(domain, client_id, client_secret=client_secret)
-    token = get_token.client_credentials('https://{}/api/v2/'.format(domain))
-    mgmt_api_token = token['access_token']
-
-    auth0 = Auth0(domain, mgmt_api_token)
-
-    user = auth0.users.create({"email": email, "password": password, "email_verified": True, "connection": "Username-Password-Authentication"})
+    user = auth0.users.create({"email": email, "password": password, "email_verified": True,
+                               "connection": "Username-Password-Authentication"})
 
     idp_id = user["identities"][0]["user_id"]
+    auth0.users.add_roles("auth0|" + idp_id, [ROLES['User']])
 
     try:
         new_profile["idp_id"] = idp_id
@@ -98,7 +87,8 @@ def update_profile(profile_id):
 
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        result = dbs.client.indieneer.profiles.find_one_and_update(filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
+        result = dbs.client.indieneer.profiles.find_one_and_update(filter_criteria, {"$set": data},
+                                                                   return_document=ReturnDocument.AFTER)
 
         if result is None:
             return respond_error(f'The user with id {profile_id} was not found.', 404)
@@ -120,16 +110,6 @@ def delete_profile(user_id):
 
     try:
         filter_criteria = {"_id": ObjectId(user_id)}
-
-        domain = env.get("AUTH0_DOMAIN")
-        client_id = env.get("AUTH0_CLIENT_ID")
-        client_secret = env.get("AUTH0_CLIENT_SECRET")
-
-        get_token = GetToken(domain, client_id, client_secret=client_secret)
-        token = get_token.client_credentials('https://{}/api/v2/'.format(domain))
-        mgmt_api_token = token['access_token']
-
-        auth0 = Auth0(domain, mgmt_api_token)
 
         auth0.users.delete(g.get("payload").get('sub'))
 
