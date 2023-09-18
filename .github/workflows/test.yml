@@ -28,5 +28,6 @@ jobs:
       - name: Run tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
+          AUTH0_ROLES: ${{ secrets.AUTH0_ROLES }}
         run: |
           python -m unittest discover
