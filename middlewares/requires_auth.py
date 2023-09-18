@@ -1,3 +1,5 @@
+import time
+
 import requests
 from functools import wraps
 
@@ -5,6 +7,8 @@ from flask import current_app, g
 from jose import jwt
 
 from . import AuthError, get_token_auth_header
+
+cache = {"data_json": None, "timestamp": float()}
 
 
 def requires_auth(f):
@@ -16,8 +20,17 @@ def requires_auth(f):
         AUTH0_DOMAIN = current_app.config.get("AUTH0_DOMAIN")
         AUTH0_AUDIENCE = current_app.config.get("AUTH0_AUDIENCE")
 
+        # self-implemented caching, if we're going to need more functionalities we can use the 'requests-cache' package
+        if cache["data_json"] is None or (time.time() - cache["timestamp"]) > 3600:  # seconds
+            data_json = requests.get("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json").json()
+            cache["data_json"] = data_json
+            cache["timestamp"] = time.time()
+            print('Created cache')
+        else:
+            data_json = cache["data_json"]
+            print('Used cache')
+
         token = get_token_auth_header()
-        data_json = requests.get("https://" + AUTH0_DOMAIN + "/.well-known/jwks.json").json()
         jwks = data_json
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
