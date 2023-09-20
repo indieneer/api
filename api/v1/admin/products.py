@@ -27,6 +27,72 @@ PRODUCT_FIELDS = [
 ]
 
 
+@products_controller.route('/', methods=["GET"])
+@requires_auth
+@requires_role('admin')
+def get_products():
+    try:
+        db = dbs.client.get_default_database()
+
+        data = (*db.products.aggregate([
+            {
+                '$lookup': {
+                    'from': 'tags',
+                    'localField': 'genres',
+                    'foreignField': '_id',
+                    'as': 'genres'
+                }
+            },
+            {
+                '$unset': 'genres._id'
+            }
+        ]),)
+
+        for d in data:
+            d["_id"] = str(d["_id"])
+
+        return respond_success(data)
+
+    except Exception as e:
+        return respond_error(f'Internal server error. {e}', 500)
+
+
+@products_controller.route('/<string:product_id>', methods=["GET"])
+@requires_auth
+@requires_role('admin')
+def get_product_by_id(product_id):
+    try:
+        db = dbs.client.get_default_database()
+
+        data = (*db.products.aggregate([
+            {
+                '$match': {
+                    '_id': ObjectId(product_id)
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'tags',
+                    'localField': 'genres',
+                    'foreignField': '_id',
+                    'as': 'genres'
+                }
+            },
+            {
+                '$unset': 'genres._id'
+            }
+        ]),)[0]
+
+        data["_id"] = str(data["_id"])
+
+        return respond_success(data)
+
+    except IndexError as e:
+        return respond_error(f'The product with ID {product_id} was not found.', 404)
+    except Exception as e:
+        return respond_error(f'Internal server error. {e}', 500)
+
+
 @products_controller.route('/', methods=["POST"])
 @requires_auth
 @requires_role('admin')
@@ -114,3 +180,4 @@ def delete_product(product_id):
 
     except Exception as e:
         return respond_error(str(e), 500)
+
