@@ -1,6 +1,6 @@
 from flask import Flask
 
-from app import (
+from . import (
     configure_app,
     register_routes
 )

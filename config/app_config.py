@@ -1,14 +1,10 @@
-from dotenv import find_dotenv, load_dotenv
+from . import environment
 from os import environ as env
 
-ENV_FILE = find_dotenv()
-if ENV_FILE:
-    load_dotenv(ENV_FILE)
-
 app_config = {
-    "VERSION": "0.0.2",
-    "ENVIRONMENT": env.get("PYTHON_ENV"),
-    "PORT": env.get("PORT"),
+    "VERSION": env.get("VERSION", "0.0.1"),
+    "ENVIRONMENT": env.get("PYTHON_ENV", "development"),
+    "PORT": env.get("PORT", 5001),
     "AUTH0_DOMAIN": env.get("AUTH0_DOMAIN"),
     "AUTH0_CLIENT_ID": env.get("AUTH0_CLIENT_ID"),
     "AUTH0_CLIENT_SECRET": env.get("AUTH0_CLIENT_SECRET"),
