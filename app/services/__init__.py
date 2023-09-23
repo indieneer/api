@@ -7,6 +7,9 @@ from .database import Database
 
 
 class ServicesExtension:
+    """Services as injectable part of a Flask application
+    """
+
     KEY = "services"
 
     auth0: ManagementAPI
@@ -25,4 +28,13 @@ class ServicesExtension:
 
 
 def get_services(app: Flask):
+    """Retrieves the Services extension from a Flask app
+
+    Args:
+        app (Flask): flask application
+
+    Returns:
+        ServicesExtension: services
+    """
+
     return cast(ServicesExtension, app.extensions[ServicesExtension.KEY])

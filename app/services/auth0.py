@@ -3,6 +3,9 @@ from auth0.management import Auth0
 
 
 class ManagementAPI:
+    """Used to interact with Auth0 management API
+    """
+
     __client: Auth0
 
     def __init__(

@@ -2,8 +2,10 @@ from pymongo import MongoClient, database
 
 
 class Database:
+    """Used to interact with the database
+    """
+
     __client: MongoClient
-    __connection: database.Database
 
     def __init__(
         self,
@@ -19,12 +21,10 @@ class Database:
             connectTimeoutMS=timeoutMS * 3,
         )
 
-        self.__connection = self.__client.get_default_database()
-
     @property
     def client(self):
         return self.__client
 
     @property
     def connection(self):
-        return self.__connection
+        return self.__client.get_default_database()
