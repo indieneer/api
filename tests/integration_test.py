@@ -10,6 +10,8 @@ from app.services import (
 
 
 class IntegrationTest(TestCase):
+    DISCOVERY_PATTERN = "test_integration_*.py"
+
     def setUp(self):
         self.app = app.test_client()
 
