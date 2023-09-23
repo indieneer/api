@@ -1,5 +1,4 @@
 from bson import ObjectId
-from config import AUTH0_ROLES
 from services import auth0
 from flask import Blueprint, request, _request_ctx_stack, g
 from os import environ as env
@@ -22,12 +21,14 @@ PROFILE_FIELDS = [
     "date_of_birth"
 ]
 
+
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id):
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        profile = dbs.client.get_default_database()["profiles"].find_one(filter_criteria)
+        profile = dbs.client.get_default_database(
+        )["profiles"].find_one(filter_criteria)
 
         if profile is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
@@ -65,7 +66,8 @@ def create_profile():
 
     new_profile["_id"] = str(new_profile["_id"])  # I hate this line
 
-    auth0.users.update(f'auth0|{idp_id}', {"user_metadata": {"profile_id": new_profile["_id"]}})
+    auth0.users.update(f'auth0|{idp_id}', {"user_metadata": {
+                       "profile_id": new_profile["_id"]}})
 
     return respond_success(new_profile, None, 201)
 
@@ -113,7 +115,8 @@ def delete_profile(user_id):
 
         auth0.users.delete(g.get("payload").get('sub'))
 
-        result = dbs.client.indieneer.profiles.find_one_and_delete(filter_criteria)
+        result = dbs.client.indieneer.profiles.find_one_and_delete(
+            filter_criteria)
 
         if result is None:
             return respond_error(f'The profile with id {user_id} was not found.', 404)

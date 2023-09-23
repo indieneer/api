@@ -1,3 +1,9 @@
-from .create_root_profile import create_root_profile
+from app.services import ServicesExtension
 
-create_root_profile()
+from . import (
+    create_root_profile
+)
+
+
+def run(services: ServicesExtension):
+    create_root_profile.run(services)

@@ -1,42 +1,44 @@
 from flask import Flask
-from authlib.integrations.flask_client import OAuth
-from flask_cors import CORS
 
-from os import environ as env
-from api.v1.router import v1_router
-from config import configuration
+from app import (
+    configure_app,
+    register_routes
+)
+from config import app_config
+
 
 app = Flask(__name__)
-CORS(app, resources={r"/v1/*": {"origins": "*"}})
-app.secret_key = env.get("APP_SECRET_KEY")
-app.url_map.strict_slashes = False
 
-oauth = OAuth(app)
-
-oauth.register(
-    "auth0",
-    client_id=env.get("AUTH0_CLIENT_ID"),
-    client_secret=env.get("AUTH0_CLIENT_SECRET"),
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-    server_metadata_url=f'https://{env.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
-)
-
-app.config.update(
-    **configuration
-)
-
-# blueprint registration
-app.register_blueprint(v1_router)
-
-
-@app.route('/')
-def index():
-    return 'Hello, Flask!'
+configure_app(app)
+register_routes(app)
 
 
 if __name__ == '__main__':
-    import initializers  # all the code will be executed
+    import initializers
+    from app.services import (
+        Database,
+        ManagementAPI,
+        ServicesExtension
+    )
 
-    app.run(debug=True, port=configuration["PORT"])
+    # create dependencies
+    # todo: add dependency injection for test runs
+    db = Database(app_config["MONGO_URI"], timeoutMS=3000)
+    auth0 = ManagementAPI(
+        app_config["AUTH0_DOMAIN"],
+        app_config["AUTH0_CLIENT_ID"],
+        app_config["AUTH0_CLIENT_SECRET"],
+        app_config["AUTH0_AUDIENCE"]
+    )
+
+    services = ServicesExtension(
+        auth0=auth0,
+        db=db
+    )
+    services.init_app(app)
+
+    # run initializers
+    initializers.run(services)
+
+    # start the server
+    app.run(debug=True, port=app_config["PORT"])
