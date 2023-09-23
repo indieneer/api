@@ -10,5 +10,5 @@ class Auth0Role(Enum):
 AUTH0_ROLES: dict[str, str] = {
     key: value for
     key, value in
-    [x.split(':') for x in env.get("AUTH0_ROLES", "").split(',')]
+    [x.split(':') for x in env.get("AUTH0_ROLES", ":").split(',')]
 }
