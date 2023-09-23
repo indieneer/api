@@ -1,10 +1,10 @@
 from bson import ObjectId
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from pymongo import ReturnDocument
 
-from middlewares import requires_auth, requires_role
-from services.database import Database as dbs
-from tools.http_utils import respond_success, respond_error
+from app.middlewares import requires_auth, requires_role
+from app.services import get_services
+from lib.http_utils import respond_success, respond_error
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
@@ -23,7 +23,7 @@ PROFILE_FIELDS = [
 @requires_role('admin')
 def get_profiles():
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
 
         profiles = []
         for profile in db["profiles"].find():
@@ -52,9 +52,10 @@ def change_profile(profile_id):
 
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        profiles = dbs.client.get_default_database()["profiles"]
+        profiles = get_services(current_app).db.connection["profiles"]
 
-        result = profiles.find_one_and_update(filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
+        result = profiles.find_one_and_update(
+            filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
         if result is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
 

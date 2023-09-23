@@ -1,15 +1,18 @@
 from flask import Blueprint, current_app
 from pymongo.errors import ServerSelectionTimeoutError
 
-from tools.http_utils import respond_success, respond_error
-from services.database import Database as dbs
+from lib.http_utils import respond_success, respond_error
+from app.services import get_services
 
 health_controller = Blueprint('health', __name__, url_prefix='/health')
+
 
 @health_controller.route('/')
 def health():
     try:
-        mongodb_status = dbs.client.indineer.command("ping")
+        db = get_services(current_app).db
+
+        mongodb_status = db.connection.command("ping")
         health_obj = {
             "db": mongodb_status,
             "env": current_app.config.get("ENVIRONMENT"),

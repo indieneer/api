@@ -1,13 +1,14 @@
 from bson import ObjectId
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from pymongo import ReturnDocument
-
-from middlewares import requires_auth, requires_role
-from services.database import Database as dbs
 from slugify import slugify
-from tools.http_utils import respond_success, respond_error
 
-platforms_controller = Blueprint('platforms', __name__, url_prefix='/platforms')
+from app.middlewares import requires_auth, requires_role
+from app.services import get_services
+from lib.http_utils import respond_success, respond_error
+
+platforms_controller = Blueprint(
+    'platforms', __name__, url_prefix='/platforms')
 
 PLATFORM_FIELDS = [
     "slug",
@@ -23,7 +24,7 @@ PLATFORM_FIELDS = [
 @requires_role("admin")
 def get_platforms():
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
 
         platforms = []
         for platform in db["platforms"].find():
@@ -41,7 +42,7 @@ def get_platforms():
 @requires_role("admin")
 def create_platform():
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
         platforms = db["platforms"]
 
         data = request.get_json()
@@ -73,8 +74,8 @@ def update_platform(profile_id):
                 return respond_error(f'The key "{key}" is not allowed.', 422)
 
         filter_criteria = {"_id": ObjectId(profile_id)}
-        result = dbs.client.get_default_database()["platforms"].find_one_and_update(filter_criteria, {"$set": data},
-                                                                                    return_document=ReturnDocument.AFTER)
+        result = get_services(current_app).db.connection["platforms"].find_one_and_update(filter_criteria, {"$set": data},
+                                                                                          return_document=ReturnDocument.AFTER)
         if result is None:
             return respond_error(f'The platform with id {profile_id} was not found.', 404)
 
@@ -91,7 +92,7 @@ def update_platform(profile_id):
 @requires_role("admin")
 def delete_platform(platform_id):
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
         platforms = db["platforms"]
 
         if platforms.delete_one({"_id": ObjectId(platform_id)}).deleted_count == 0:

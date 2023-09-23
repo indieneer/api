@@ -1,7 +1,7 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
-def respond_success(data: Any, meta: Dict = None, status_code: int = 200):
+def respond_success(data: Any, meta: Optional[Dict] = None, status_code: int = 200):
     response_object = {
         "status": "ok",
         "data": data,

@@ -1,12 +1,12 @@
 from bson import ObjectId
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from pymongo import ReturnDocument
 from validator import rules as R, validate
 
-from middlewares import requires_auth, requires_role
-from tools.http_utils import respond_error, respond_success
+from app.middlewares import requires_auth, requires_role
+from app.services import get_services
+from lib.http_utils import respond_error, respond_success
 
-from services.database import Database as dbs
 
 products_controller = Blueprint('products', __name__, url_prefix='/products')
 
@@ -32,7 +32,7 @@ PRODUCT_FIELDS = [
 @requires_role('admin')
 def get_products():
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
 
         data = (*db.products.aggregate([
             {
@@ -62,7 +62,7 @@ def get_products():
 @requires_role('admin')
 def get_product_by_id(product_id):
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
 
         data = (*db.products.aggregate([
             {
@@ -119,15 +119,18 @@ def create_product():
             "requirements": R.Dict()
         }
 
-        validation_result, data, errors = validate(data, rules, return_info=True)
-
         if any([x not in rules.keys() for x in fields]):
-            validation_result = False
-
-        if not validation_result:
             return respond_error(f'Bad request.', 400)
 
-        db = dbs.client.get_default_database()
+        validation_result = validate(data, rules, return_info=True)
+        if isinstance(validation_result, bool):
+            if not validation_result:
+                return respond_error(f'Bad request.', 400)
+        else:
+            _, data, errors = validation_result
+            return respond_error(f'Bad request. {errors}', 400)
+
+        db = get_services(current_app).db.connection
 
         db.products.insert_one(data)
 
@@ -151,7 +154,8 @@ def update_product(product_id):
 
         filter_criteria = {"_id": ObjectId(product_id)}
 
-        result = dbs.client.indieneer.products.find_one_and_update(filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
+        result = get_services(current_app).db.connection["products"].find_one_and_update(
+            filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
 
         if result is None:
             return respond_error(f'The product with id {product_id} was not found.', 404)
@@ -171,7 +175,8 @@ def delete_product(product_id):
     try:
         filter_criteria = {"_id": ObjectId(product_id)}
 
-        result = dbs.client.indieneer.products.find_one_and_delete(filter_criteria)
+        result = get_services(current_app).db.connection["products"].find_one_and_delete(
+            filter_criteria)
 
         if result is None:
             return respond_error(f'The product with id {product_id} was not found.', 404)
@@ -180,4 +185,3 @@ def delete_product(product_id):
 
     except Exception as e:
         return respond_error(str(e), 500)
-

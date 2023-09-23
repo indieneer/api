@@ -1,14 +1,14 @@
 from bson import ObjectId
-from services import auth0
-from flask import Blueprint, request, _request_ctx_stack, g
-from os import environ as env
+from flask import Blueprint, request, g, current_app
 
 from pymongo import ReturnDocument
 from pymongo.errors import ServerSelectionTimeoutError
 
-from services.database import Database as dbs
-from tools.http_utils import respond_error, respond_success
-from middlewares import requires_auth
+from app.services import get_services
+from config.constants import AUTH0_ROLES, Auth0Role
+from app.middlewares import requires_auth
+from lib.http_utils import respond_error, respond_success
+from lib import db_utils
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
@@ -27,8 +27,8 @@ def get_profile(profile_id):
     try:
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        profile = dbs.client.get_default_database(
-        )["profiles"].find_one(filter_criteria)
+        db = get_services(current_app).db.connection
+        profile = db["profiles"].find_one(filter_criteria)
 
         if profile is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
@@ -42,7 +42,10 @@ def get_profile(profile_id):
 
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
-    db = dbs.client.get_default_database()
+    services = get_services(current_app)
+    db = services.db.connection
+    auth0_mgmt = services.auth0.client
+
     profiles = db["profiles"]
 
     data = request.get_json()
@@ -52,11 +55,11 @@ def create_profile():
     email = new_profile["email"]
     password = new_profile["password"]
 
-    user = auth0.users.create({"email": email, "password": password, "email_verified": True,
-                               "connection": "Username-Password-Authentication"})
+    user = auth0_mgmt.users.create({"email": email, "password": password, "email_verified": True,
+                                    "connection": "Username-Password-Authentication"})
 
-    idp_id = user["identities"][0]["user_id"]
-    auth0.users.add_roles("auth0|" + idp_id, [AUTH0_ROLES['User']])
+    idp_id = user["user_id"]
+    auth0_mgmt.users.add_roles(idp_id, [AUTH0_ROLES[Auth0Role.User.value]])
 
     try:
         new_profile["idp_id"] = idp_id
@@ -64,10 +67,10 @@ def create_profile():
     except ServerSelectionTimeoutError as e:
         return respond_error(str(e), 500)
 
-    new_profile["_id"] = str(new_profile["_id"])  # I hate this line
+    new_profile = db_utils.as_json(new_profile)
 
-    auth0.users.update(f'auth0|{idp_id}', {"user_metadata": {
-                       "profile_id": new_profile["_id"]}})
+    auth0_mgmt.users.update(
+        idp_id, {"user_metadata": {"profile_id": new_profile["_id"]}})
 
     return respond_success(new_profile, None, 201)
 
@@ -87,17 +90,16 @@ def update_profile(profile_id):
             if key not in PROFILE_FIELDS:
                 return respond_error(f'The key "{key}" is not allowed.', 422)
 
+        db = get_services(current_app).db.connection
         filter_criteria = {"_id": ObjectId(profile_id)}
 
-        result = dbs.client.indieneer.profiles.find_one_and_update(filter_criteria, {"$set": data},
-                                                                   return_document=ReturnDocument.AFTER)
+        result = db["profiles"].find_one_and_update(filter_criteria, {"$set": data},
+                                                    return_document=ReturnDocument.AFTER)
 
         if result is None:
             return respond_error(f'The user with id {profile_id} was not found.', 404)
 
-        result["_id"] = str(result["_id"])
-
-        return respond_success(result)
+        return respond_success(db_utils.as_json(result))
     except Exception as e:
         return respond_error(str(e), 500)
 
@@ -111,12 +113,13 @@ def delete_profile(user_id):
         return respond_error("Forbidden", 403)
 
     try:
-        filter_criteria = {"_id": ObjectId(user_id)}
+        services = get_services(current_app)
+        db = services.db.connection
+        auth0_mgmt = services.auth0.client
 
-        auth0.users.delete(g.get("payload").get('sub'))
+        auth0_mgmt.users.delete(g.get("payload").get('sub'))
 
-        result = dbs.client.indieneer.profiles.find_one_and_delete(
-            filter_criteria)
+        result = db["profiles"].find_one_and_delete({"_id": ObjectId(user_id)})
 
         if result is None:
             return respond_error(f'The profile with id {user_id} was not found.', 404)
@@ -132,15 +135,12 @@ def get_authenticated_profile():
     profile_id = g.get("payload").get('https://indieneer.com/profile_id')
 
     try:
-        filter_criteria = {"_id": ObjectId(profile_id)}
-
-        profile = dbs.client.indieneer.profiles.find_one(filter_criteria)
+        db = get_services(current_app).db.connection
+        profile = db["profiles"].find_one({"_id": ObjectId(profile_id)})
 
         if profile is None:
             return respond_error(f'The profile with id {profile_id} was not found.', 404)
 
-        profile["_id"] = str(profile["_id"])
-
-        return respond_success(profile)
+        return respond_success(db_utils.as_json(profile))
     except Exception as e:
         return respond_error(str(e), 500)

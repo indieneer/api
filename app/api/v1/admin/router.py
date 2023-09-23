@@ -1,8 +1,8 @@
 from flask import Blueprint
 
-from api.v1.admin.platforms import platforms_controller
-from api.v1.admin.profiles import profiles_controller
-from api.v1.admin.products import products_controller
+from .platforms import platforms_controller
+from .profiles import profiles_controller
+from .products import products_controller
 
 admin_controller = Blueprint('admin', __name__, url_prefix='/admin')
 

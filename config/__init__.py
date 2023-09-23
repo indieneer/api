@@ -1,4 +1,4 @@
-import env
-import constants
+from . import env
 
-from app_config import app_config
+from .app_config import app_config
+from .constants import Auth0Role, AUTH0_ROLES

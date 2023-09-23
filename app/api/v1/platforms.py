@@ -1,14 +1,15 @@
-from flask import Blueprint, request
-from services.database import Database as dbs
-from tools.http_utils import respond_success, respond_error
+from flask import Blueprint, request, current_app
+from app.services import get_services
+from lib.http_utils import respond_success, respond_error
 
-platforms_controller = Blueprint('platforms', __name__, url_prefix='/platforms')
+platforms_controller = Blueprint(
+    'platforms', __name__, url_prefix='/platforms')
 
 
 @platforms_controller.route('/', methods=["GET"])
 def get_platforms():
     try:
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
 
         if request.args.get('enabled') == 'true':
             platforms = []

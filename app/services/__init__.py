@@ -1,3 +1,5 @@
+from typing import cast
+
 from flask import Flask
 
 from .auth0 import ManagementAPI
@@ -20,3 +22,7 @@ class ServicesExtension:
 
     def init_app(self, app: Flask):
         app.extensions[self.KEY] = self
+
+
+def get_services(app: Flask):
+    return cast(ServicesExtension, app.extensions[ServicesExtension.KEY])

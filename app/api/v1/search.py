@@ -1,12 +1,10 @@
-from bson import ObjectId
-from flask import Blueprint, request
-
-
 import re
 from math import ceil
 
-from tools.http_utils import respond_success, respond_error
-from services.database import Database as dbs
+from flask import Blueprint, request, current_app
+
+from lib.http_utils import respond_success, respond_error
+from app.services import get_services
 
 search_controller = Blueprint('search', __name__, url_prefix='/search')
 
@@ -17,7 +15,7 @@ def search():
         page = request.args.get("page", 1, type=int)
         query = request.args.get("query", "")
 
-        db = dbs.client.get_default_database()
+        db = get_services(current_app).db.connection
         products = db["products"]
 
         ITEMS_PER_PAGE = 15

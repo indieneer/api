@@ -1,8 +1,8 @@
 from auth0.authentication import GetToken
 from flask import Blueprint, request
-from os import environ as env
 
-from tools.http_utils import respond_success
+from config import app_config
+from lib.http_utils import respond_success
 
 logins_controller = Blueprint('logins', __name__, url_prefix='/logins')
 
@@ -14,12 +14,20 @@ def logins():
     email = data["email"]
     password = data["password"]
 
-    domain = env.get("AUTH0_DOMAIN")
-    client_id = env.get("AUTH0_CLIENT_ID")
-    client_secret = env.get("AUTH0_CLIENT_SECRET")
+    domain = app_config["AUTH0_DOMAIN"]
+    client_id = app_config["AUTH0_CLIENT_ID"]
+    client_secret = app_config["AUTH0_CLIENT_SECRET"]
+    audience = app_config["AUTH0_AUDIENCE"]
 
     token = GetToken(domain, client_id, client_secret=client_secret)
 
-    response = token.login(username=email, password=password, realm='Username-Password-Authentication', scope="openid profile email address phone offline_access", grant_type="password", audience="https://api.indieneer.com")
+    response = token.login(
+        username=email,
+        password=password,
+        realm='Username-Password-Authentication',
+        scope="openid profile email address phone offline_access",
+        grant_type="password",
+        audience=audience
+    )
 
     return respond_success(response)

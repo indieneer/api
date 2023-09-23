@@ -1,9 +1,9 @@
 from functools import wraps
 from flask import g
 
-from config.app_config import configuration
-from middlewares import AuthError
-from tools.http_utils import respond_error
+from config import app_config
+from app.middlewares import AuthError
+from lib.http_utils import respond_error
 
 
 def requires_role(role: str):
@@ -16,9 +16,7 @@ def requires_role(role: str):
             if not payload:
                 return respond_error("missing decoded user", 500)
 
-            # Implement custom payload
-            roles = payload.get(configuration.get(
-                "AUTH0_NAMESPACE") + "/roles")
+            roles = payload.get(app_config["AUTH0_NAMESPACE"] + "/roles")
             if role.capitalize() in roles:
                 return f(*args, **kwargs)
             else:
