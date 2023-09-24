@@ -1,7 +1,7 @@
 import argparse
 import unittest
-from . import UnitTest, IntegrationTest
-
+from . import UnitTest, IntegrationTest, CustomTextTestResult
+import io
 
 cli_parser = argparse.ArgumentParser(description='CLI for test runs')
 
@@ -19,5 +19,13 @@ elif args.type == "integration":
 else:
     cli_parser.error("invalid value for argument \"type\"")
 
-test_runner = unittest.runner.TextTestRunner()
-test_runner.run(suite)
+
+# Pipe the default test output to this stream
+stream = io.StringIO()
+
+unittest.runner.TextTestRunner(
+    stream=stream,
+    resultclass=CustomTextTestResult
+).run(suite)
+
+stream.close()
