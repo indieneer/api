@@ -12,13 +12,13 @@ class AuthError(Exception):
 def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
-    auth = request.headers.get("Authorization", None)
-    if not auth:
+    auth = request.headers.get("Authorization", "")
+    parts = auth.split()
+
+    if len(parts) == 0:
         raise AuthError({"code": "authorization_header_missing",
                          "description":
                              "Authorization header is expected"}, 401)
-
-    parts = auth.split()
 
     if parts[0].lower() != "bearer":
         raise AuthError({"code": "invalid_header",
@@ -38,5 +38,5 @@ def get_token_auth_header():
     return token
 
 
-from .requires_auth import requires_auth
-from .requires_role import requires_role
+from .requires_auth import requires_auth  # nopep8
+from .requires_role import requires_role  # nopep8
