@@ -1,9 +1,8 @@
 from flask import Flask
 
-from . import (
-    configure_app,
-    register_routes
-)
+from .configure_app import configure_app
+from .register_routes import register_routes
+from .register_error_handlers import register_error_handlers
 from config import app_config
 
 
@@ -11,7 +10,7 @@ app = Flask(__name__)
 
 configure_app(app)
 register_routes(app)
-
+register_error_handlers(app)
 
 if __name__ == '__main__':
     import initializers
@@ -19,6 +18,10 @@ if __name__ == '__main__':
         Database,
         ManagementAPI,
         ServicesExtension
+    )
+    from app.models import (
+        ModelsExtension,
+        ProfilesModel
     )
 
     # create dependencies
@@ -28,14 +31,20 @@ if __name__ == '__main__':
         app_config["AUTH0_DOMAIN"],
         app_config["AUTH0_CLIENT_ID"],
         app_config["AUTH0_CLIENT_SECRET"],
-        app_config["AUTH0_AUDIENCE"]
+        'https://{}/api/v2/'.format(app_config["AUTH0_DOMAIN"])
     )
+    print(auth0.client)
 
     services = ServicesExtension(
         auth0=auth0,
         db=db
     )
     services.init_app(app)
+
+    models = ModelsExtension(
+        profiles=ProfilesModel(db=db, auth0=auth0)
+    )
+    models.init_app(app)
 
     # run initializers
     initializers.run(services)

@@ -2,7 +2,7 @@ from auth0.authentication import GetToken
 from auth0.management import Auth0
 
 
-class ManagementAPI:
+class ManagementAPI():
     """Used to interact with Auth0 management API
     """
 
