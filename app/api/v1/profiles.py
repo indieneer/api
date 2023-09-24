@@ -38,7 +38,6 @@ def get_profile(profile_id):
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
     profiles = get_models(current_app).profiles
-
     data = request.get_json()
 
     input = ProfileCreate(
