@@ -1,6 +1,6 @@
 from flask import Flask
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock, MagicMock
 
 from app.middlewares import requires_auth, AuthError
 
@@ -16,6 +16,8 @@ class RequiresAuthTestCase(unittest.TestCase):
         def handler():
             return "test"
 
+    @patch('app.middlewares.requires_auth.requests.get', Mock(return_value=Mock()))
+    @patch('app.middlewares.requires_auth.app_config', MagicMock())
     @patch('app.middlewares.requires_auth.get_token_auth_header')
     def test_incorrect_token(self, get_token_auth_header):
         # given
@@ -26,5 +28,5 @@ class RequiresAuthTestCase(unittest.TestCase):
         response = self.app.test_client().get('/')
 
         # then
-        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.get_json()["error"], "test error")
+        self.assertEqual(response.status_code, 401)
