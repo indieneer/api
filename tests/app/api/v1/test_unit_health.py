@@ -74,4 +74,5 @@ class HealthTestCase(UnitTest):
 
         # then
         self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.get_json()['error'], 'zero division')
+        self.assertEqual(response.get_json()[
+                         'error'], 'Exception: zero division')
