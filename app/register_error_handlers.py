@@ -14,7 +14,7 @@ def handle_not_found_exception(e: exceptions.NotFoundException):
 
 
 def handle_uncaught_exceptions(e: Exception):
-    return respond_error(str(e), 500)
+    return respond_error(f'{e.__class__.__name__}: {str(e)}', 500)
 
 
 def register_error_handlers(app: Flask):
