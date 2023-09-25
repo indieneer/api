@@ -4,6 +4,7 @@ from flask import Flask
 
 from .base import BaseDocument, Serializable
 from .profiles import ProfilesModel
+from .logins import LoginsModel
 
 
 class ModelsExtension():
@@ -13,12 +14,15 @@ class ModelsExtension():
     KEY = "models"
 
     profiles: ProfilesModel
+    logins: LoginsModel
 
     def __init__(
         self,
-        profiles: ProfilesModel
+        profiles: ProfilesModel,
+        logins: LoginsModel
     ) -> None:
         self.profiles = profiles
+        self.logins = logins
 
     def init_app(self, app: Flask):
         app.extensions[self.KEY] = self
