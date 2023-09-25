@@ -1,7 +1,7 @@
-from pymongo import MongoClient, database
+from pymongo import MongoClient
 
 
-class Database:
+class Database():
     """Used to interact with the database
     """
 

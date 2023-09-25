@@ -2,12 +2,13 @@ from bson import ObjectId
 from flask import Blueprint, request, g, current_app
 
 from pymongo import ReturnDocument
-from pymongo.errors import ServerSelectionTimeoutError
 
-from app.services import get_services
-from config.constants import AUTH0_ROLES, Auth0Role
 from app.middlewares import requires_auth
 from lib.http_utils import respond_error, respond_success
+
+from app.services import get_services
+from app.models import get_models, exceptions
+from app.models.profiles import Profile, ProfileCreate
 from lib import db_utils
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
@@ -24,60 +25,35 @@ PROFILE_FIELDS = [
 
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id):
-    try:
-        filter_criteria = {"_id": ObjectId(profile_id)}
+    profiles = get_models(current_app).profiles
 
-        db = get_services(current_app).db.connection
-        profile = db["profiles"].find_one(filter_criteria)
+    profile = profiles.get(profile_id)
 
-        if profile is None:
-            return respond_error(f'The profile with id {profile_id} was not found.', 404)
+    if profile is None:
+        raise exceptions.NotFoundException(Profile.__name__)
 
-        profile["_id"] = str(profile["_id"])
-
-        return respond_success(profile)
-    except Exception as e:
-        return respond_error(str(e), 500)
+    return respond_success(profile.as_json())
 
 
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
-    services = get_services(current_app)
-    db = services.db.connection
-    auth0_mgmt = services.auth0.client
-
-    profiles = db["profiles"]
-
+    profiles = get_models(current_app).profiles
     data = request.get_json()
 
-    new_profile = {key: data.get(key) for key in PROFILE_FIELDS}
+    input = ProfileCreate(
+        email=data.get("email"),
+        password=data.get("password")
+    )
 
-    email = new_profile["email"]
-    password = new_profile["password"]
+    profile = profiles.create(input)
 
-    user = auth0_mgmt.users.create({"email": email, "password": password, "email_verified": True,
-                                    "connection": "Username-Password-Authentication"})
-
-    idp_id = user["user_id"]
-    auth0_mgmt.users.add_roles(idp_id, [AUTH0_ROLES[Auth0Role.User.value]])
-
-    try:
-        new_profile["idp_id"] = idp_id
-        profiles.insert_one(new_profile)
-    except ServerSelectionTimeoutError as e:
-        return respond_error(str(e), 500)
-
-    new_profile = db_utils.as_json(new_profile)
-
-    auth0_mgmt.users.update(
-        idp_id, {"user_metadata": {"profile_id": new_profile["_id"]}})
-
-    return respond_success(new_profile, None, 201)
+    return respond_success(profile.as_json(), None, 201)
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
 @requires_auth
 def update_profile(profile_id):
+    # todo: rework
     invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
 
     if not invoker_id == profile_id:
@@ -112,35 +88,26 @@ def delete_profile(user_id):
     if not invoker_id == user_id:
         return respond_error("Forbidden", 403)
 
-    try:
-        services = get_services(current_app)
-        db = services.db.connection
-        auth0_mgmt = services.auth0.client
+    profiles = get_models(current_app).profiles
 
-        auth0_mgmt.users.delete(g.get("payload").get('sub'))
+    profile = profiles.delete(user_id)
 
-        result = db["profiles"].find_one_and_delete({"_id": ObjectId(user_id)})
+    if profile is None:
+        raise exceptions.NotFoundException(Profile.__name__)
 
-        if result is None:
-            return respond_error(f'The profile with id {user_id} was not found.', 404)
-
-        return respond_success([f'Successfully deleted the profile with id {result["_id"]}.'])
-    except Exception as e:
-        return respond_error(str(e), 500)
+    return respond_success({"acknowledged": True})
 
 
 @profiles_controller.route('/me', methods=["GET"])
 @requires_auth
 def get_authenticated_profile():
+    profiles = get_models(current_app).profiles
+
     profile_id = g.get("payload").get('https://indieneer.com/profile_id')
 
-    try:
-        db = get_services(current_app).db.connection
-        profile = db["profiles"].find_one({"_id": ObjectId(profile_id)})
+    profile = profiles.get(profile_id)
 
-        if profile is None:
-            return respond_error(f'The profile with id {profile_id} was not found.', 404)
+    if profile is None:
+        raise exceptions.NotFoundException(Profile.__name__)
 
-        return respond_success(db_utils.as_json(profile))
-    except Exception as e:
-        return respond_error(str(e), 500)
+    return respond_success(profile.as_json())

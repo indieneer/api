@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from config import app_config
-from app import app
+from app.main import app
 from app.services import (
     Database,
     ManagementAPI,

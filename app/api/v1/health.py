@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app
 from pymongo.errors import ServerSelectionTimeoutError
 
-from lib.http_utils import respond_success, respond_error
+from lib.http_utils import respond_success
 from app.services import get_services
 from config import app_config
 
@@ -29,5 +29,3 @@ def health():
             "version": app_config.get("VERSION")
         }
         return respond_success(health_obj)
-    except Exception as e:
-        return respond_error(str(e), 500)
