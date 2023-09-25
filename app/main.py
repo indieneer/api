@@ -12,7 +12,8 @@ configure_app(app)
 register_routes(app)
 register_error_handlers(app)
 
-if __name__ == '__main__':
+
+def main():
     import initializers
     from app.services import (
         Database,
@@ -33,7 +34,6 @@ if __name__ == '__main__':
         app_config["AUTH0_CLIENT_SECRET"],
         'https://{}/api/v2/'.format(app_config["AUTH0_DOMAIN"])
     )
-    print(auth0.client)
 
     services = ServicesExtension(
         auth0=auth0,
@@ -48,6 +48,10 @@ if __name__ == '__main__':
 
     # run initializers
     initializers.run(services)
+
+
+if __name__ == "__main__":
+    main()
 
     # start the server
     app.run(debug=True, port=app_config["PORT"])
