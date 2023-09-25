@@ -9,15 +9,64 @@ import sys
 class CustomTextTestResult(unittest.runner.TextTestResult):
     start_time = 0.0
     results = {}
+    failed_count = 0
+    total_count = 0
+
+    def addSubTest(self, test: unittest.TestCase, subtest: unittest.TestCase, err: Any | None) -> None:
+        super().addSubTest(test, subtest, err)
+
+        self.total_count += 1
+        if err is not None:
+            self.failed_count += 1
+
+        test_title = self.getDescription(test)
+        subtest_title = self.getDescription(subtest)
+
+        if self.results.get(test_title) is None:
+            print(test_title, "...", "RUNNING")
+
+            self.results[test_title] = {
+                "subtests": []
+            }
+
+        failure = None if len(self.failures) == 0 else self.failures.pop()
+        error = None if len(self.errors) == 0 else self.errors.pop()
+
+        if failure is not None:
+            status = "FAIL"
+        elif error is not None:
+            status = "ERROR"
+        else:
+            status = "PASS"
+
+        print("\t" + subtest_title.replace(test_title + " ", ""),
+              "...", self.colorize_status(status))
+
+        self.results[test_title]["subtests"].append({
+            "name": subtest_title.replace(test_title + " ", ""),
+            "success": err is None,
+            "status": status,
+            "error": error[1] if error is not None else None,
+            "failure": failure[1] if failure is not None else None,
+        })
 
     def addSuccess(self, test: unittest.TestCase) -> None:
-        self.results[self.getDescription(test)] = {
+        self.total_count += 1
+
+        title = self.getDescription(test)
+        result = {} if self.results.get(title) is None else self.results[title]
+
+        self.results[title] = {
+            **result,
             "success": True,
             "status": "PASS"
         }
 
     def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
+
+        self.total_count += 1
+        self.failed_count += 1
 
         failure = self.failures.pop()
 
@@ -29,6 +78,9 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
     def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
+
+        self.total_count += 1
+        self.failed_count += 1
 
         error = self.errors.pop()
 
@@ -44,41 +96,78 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
     def stopTest(self, test) -> None:
         description = self.getDescription(test)
 
-        status = self.results[description]["status"]
+        result = self.results[description]
 
-        status = Fore.GREEN + status + \
-            Fore.RESET if status == "PASS" else Fore.RED + status + Fore.RESET
+        if result.get("subtests") is not None:
+            return
+
+        status = result["status"]
+
+        status = self.colorize_status(status)
         print(description, "...", status)
 
     def stopTestRun(self) -> None:
         total_time = time.perf_counter() - self.start_time
 
-        failed = [(k, v) for (k, v) in self.results.items()
-                  if v["status"] != "PASS"]
-        succeded_tests_count = self.testsRun - len(failed)
+        for test_name, result in self.results.items():
+            if result.get("status") == "PASS":
+                continue
 
-        for test_name, test in failed:
-            result = self.results[test_name]
+            if result.get("subtests") is not None:
+                failed_subtests = [
+                    x for x in result["subtests"] if x["status"] != "PASS"]
 
-            print("\n")
-            title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
-            print("=" * len(title))
-            print(title)
-            print("=" * len(title))
-
-            tab = " " * 4
-
-            for type in ["failure", "error"]:
-                message = result.get(type)
-                if message is None:
+                if len(failed_subtests) == 0:
                     continue
 
-                lines = message.split("\n")
-                lines = "\n".join([f'{tab}{line}' for line in lines])
-                print(lines)
+                print("\n")
+                title = f'{Fore.RED + "FAIL" + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
+                print("=" * len(title))
+                print(title)
+                print("=" * len(title))
+                for subtest in failed_subtests:
+                    tab = " " * 4
 
+                    title = f'{Fore.RED + subtest["status"] + Fore.RESET}: {Fore.YELLOW + subtest["name"] + Fore.RESET}'
+                    print(tab + title)
+                    print(tab + "=" * len(title))
+
+                    for type in ["failure", "error"]:
+                        message = subtest.get(type)
+                        if message is None:
+                            continue
+
+                        lines = message.split("\n")
+                        lines = "\n".join(
+                            [f'{tab * 2}{line}' for line in lines])
+                        print(lines)
+            else:
+                print("\n")
+                title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
+                print("=" * len(title))
+                print(title)
+                print("=" * len(title))
+
+                tab = " " * 4
+
+                for type in ["failure", "error"]:
+                    message = result.get(type)
+                    if message is None:
+                        continue
+
+                    lines = message.split("\n")
+                    lines = "\n".join([f'{tab}{line}' for line in lines])
+                    print(lines)
+
+        succeded_tests_count = self.total_count - self.failed_count
         print("\nSucceded %d of %d tests. Finished test run in %.3fs" %
-              (succeded_tests_count, self.testsRun, total_time))
+              (succeded_tests_count, self.total_count, total_time))
 
-        if len(failed) != 0:
+        if self.failed_count != 0:
             sys.exit(1)
+
+    def colorize_status(self, status: str):
+        if status == "PASS":
+            return Fore.GREEN + status + Fore.RESET
+        else:
+            return Fore.RED + status + Fore.RESET
