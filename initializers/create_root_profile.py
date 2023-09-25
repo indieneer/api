@@ -1,39 +1,55 @@
-from services import auth0
 from auth0.exceptions import Auth0Error
 
-from config import configuration, AUTH0_ROLES
-from services.database import Database as dbs
+from app.services import ServicesExtension
+from config import app_config
+from config.constants import (
+    AUTH0_ROLES,
+    Auth0Role
+)
 
 
-def create_root_profile():
+def run(services: ServicesExtension):
+    """Creates a root admin profile for future management
+
+    Args:
+        services (ServicesExtension): services
+    """
+
     try:
-        db = dbs.client.get_default_database()
-        profiles = db["profiles"]
+        auth0_mgmt = services.auth0.client
+        profiles = services.db.connection["profiles"]
 
+        user = services.auth0.client.users.create({
+            "email": app_config["ROOT_USER_EMAIL"],
+            "password": app_config["ROOT_USER_PASSWORD"],
+            "email_verified": True,
+            "connection": "Username-Password-Authentication"
+        })
+
+        roles = [AUTH0_ROLES[Auth0Role.Admin.value]]
+        auth0_mgmt.users.add_roles(user["user_id"], roles)
+
+        # todo: delegate profile creation to profile model
         admin_profile = {
-            "email": configuration["ROOT_USER_EMAIL"],
-            "password": configuration["ROOT_USER_PASSWORD"]
+            "email": user["email"],
+            "idpId": user["idp_id"],
         }
-
-        email = admin_profile["email"]
-        password = admin_profile["password"]
-
-        user = auth0.users.create({"email": email, "password": password, "email_verified": True,
-                                   "connection": "Username-Password-Authentication"})
-
-        idp_id = user["identities"][0]["user_id"]
-        auth0.users.add_roles(f"auth0|{idp_id}", [AUTH0_ROLES["Admin"]])  # it is important to pass roles as list
-
-        admin_profile["idp_id"] = idp_id
         profiles.insert_one(admin_profile)
 
-        admin_profile["_id"] = str(admin_profile["_id"])
+        # update user's metadata in auth0 with internal
+        # profile id in order to later easily verify
+        # user identity
+        auth0_mgmt.users.update(user["user_id"], {
+            "user_metadata": {
+                "profile_id": str(admin_profile["_id"])
+            }
+        })
 
-        auth0.users.update(f'auth0|{idp_id}', {"user_metadata": {"profile_id": admin_profile["_id"]}})
-
-        print(f'Root user {configuration["ROOT_USER_EMAIL"]} successfully created!')
-
+        print(f'Root profile created.')
     except Auth0Error as e:
-        print(f"Creating Root User: {str(e)}")
+        if e.status_code == 409:
+            print('Skipping root profile creation.')
+        else:
+            print(f"ERROR: {str(e)}")
     except Exception as e:
-        print(str(e))
+        print(f"ERROR: {str(e)}")

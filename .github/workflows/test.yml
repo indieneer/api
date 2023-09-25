@@ -9,22 +9,45 @@ on:
       - master
 
 jobs:
-  integration:
+  unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python 3.11.5
         uses: actions/setup-python@v4
         with:
           python-version: 3.11.5
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run tests
+        run: |
+          python -m tests.run_tests unit
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.11.5
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11.5
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
           mongodb-version: 7.0
+
       - name: Run tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -34,6 +57,5 @@ jobs:
           AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
           AUTH0_NAMESPACE: ${{ secrets.AUTH0_NAMESPACE }}
           AUTH0_ROLES: ${{ secrets.AUTH0_ROLES }}
-
         run: |
-          python -m unittest discover
+          python -m tests.run_tests integration
