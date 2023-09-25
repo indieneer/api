@@ -18,6 +18,26 @@ PROFILE_FIELDS = [
 ]
 
 
+@profiles_controller.route('/<string:profile_id>', methods=["GET"])
+@requires_auth
+@requires_role('admin')
+def get_profile(profile_id):
+    try:
+        filter_criteria = {"_id": ObjectId(profile_id)}
+
+        profile = dbs.client.get_default_database()["profiles"].find_one(filter_criteria)
+
+        if profile is None:
+            return respond_error(f'The profile with id {profile_id} was not found.', 404)
+
+        profile["_id"] = str(profile["_id"])
+
+        return respond_success(profile)
+    except Exception as e:
+        print(e)
+        return respond_error(str(e), 500)
+
+
 @profiles_controller.route('/', methods=["GET"])
 @requires_auth
 @requires_role('admin')

@@ -5,11 +5,15 @@ from config import configuration
 class Database:
     TIMEOUT_TIME = 500
 
-    client = MongoClient(
-        configuration["MONGO_URI"],
-        timeoutMS=TIMEOUT_TIME,
-        retryWrites=False,
-        waitQueueTimeoutMS=TIMEOUT_TIME,
-        serverSelectionTimeoutMS=TIMEOUT_TIME,
-        connectTimeoutMS=TIMEOUT_TIME * 3,
-    )
+    client = None
+
+    @staticmethod
+    def initialize():
+        Database.client = MongoClient(
+            configuration["MONGO_URI"],
+            timeoutMS=Database.TIMEOUT_TIME,
+            retryWrites=False,
+            waitQueueTimeoutMS=Database.TIMEOUT_TIME,
+            serverSelectionTimeoutMS=Database.TIMEOUT_TIME,
+            connectTimeoutMS=Database.TIMEOUT_TIME * 3,
+        )

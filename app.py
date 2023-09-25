@@ -5,8 +5,10 @@ from flask_cors import CORS
 from os import environ as env
 from api.v1.router import v1_router
 from config import configuration
+from services.database import Database as dbs
 
 app = Flask(__name__)
+
 CORS(app, resources={r"/v1/*": {"origins": "*"}})
 app.secret_key = env.get("APP_SECRET_KEY")
 app.url_map.strict_slashes = False
@@ -37,6 +39,11 @@ def index():
 
 
 if __name__ == '__main__':
-    import initializers  # all the code will be executed
+    from initializers import values  # all the code will be executed
+
+    for value in values:
+        value()
 
     app.run(debug=True, port=configuration["PORT"])
+    if not app.testing:
+        dbs.initialize()

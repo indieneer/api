@@ -6,10 +6,11 @@ from services.database import Database as dbs
 
 health_controller = Blueprint('health', __name__, url_prefix='/health')
 
+
 @health_controller.route('/')
 def health():
     try:
-        mongodb_status = dbs.client.indineer.command("ping")
+        mongodb_status = dbs.client.get_default_database().command("ping")
         health_obj = {
             "db": mongodb_status,
             "env": current_app.config.get("ENVIRONMENT"),

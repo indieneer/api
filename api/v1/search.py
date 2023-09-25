@@ -58,6 +58,8 @@ def search():
             }
         ]),)
 
+        print("DEBUG MESSAGE REAL: ", data, count)
+
         item_count = count[0].get("count", 0)
 
         for d in data:
