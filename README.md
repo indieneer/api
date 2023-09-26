@@ -47,9 +47,9 @@ Indieneer API provides a service for interacting with profiles, products, logins
     pip install -r requirements.txt
     ```
 6. Copy the contents of `.env.example` into a `.env` file and define the variables (get them from someone from the Indieneer team).
-7. Run the Flask server by executing the `app.py` file:
+7. Run the Flask server:
     ```bash
-    python app.py
+    python -m app.main
     ```
 
 ## Endpoints
@@ -58,5 +58,9 @@ You can look at our design docs and conventions that cover endpoint creation and
 ## Tests
 Run the unittests by executing the following command in your terminal:
 ```bash
-python -m unittest
+python -m tests.run_tests unit
+```
+OR
+```bash
+python -m tests.run_tests integration
 ```
