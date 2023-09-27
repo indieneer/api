@@ -24,20 +24,21 @@ class RequiresAuthTestCase(unittest.TestCase):
 
         for test_case in test_cases:
             # when
-            headers = {}
-            if test_case["authorization"]:
-                headers["Authorization"] = test_case["authorization"]
+            with self.subTest(test_case["message"]):
+                headers = {}
+                if test_case["authorization"]:
+                    headers["Authorization"] = test_case["authorization"]
 
-            with app.test_request_context(
-                "/", method="GET", headers=headers
-            ):
-                with self.assertRaises(AuthError) as e:
-                    get_token_auth_header()
-
-                # then
-                self.assertEqual(e.exception.status_code, test_case["code"])
-                self.assertEqual(
-                    e.exception.error["description"], test_case["message"])
+                with app.test_request_context(
+                    "/", method="GET", headers=headers
+                ):
+                    with self.assertRaises(AuthError) as e:
+                        get_token_auth_header()
+                    # then
+                    self.assertEqual(e.exception.status_code,
+                                     test_case["code"])
+                    self.assertEqual(
+                        e.exception.error["description"], test_case["message"])
 
     def test_returns_token(self):
         # given

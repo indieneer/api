@@ -7,10 +7,21 @@ from app.services import (
     ManagementAPI,
     ServicesExtension
 )
+from app.models import (
+    ProfilesModel,
+    ModelsExtension,
+    LoginsModel
+)
+
+from tests.factory import Factory, ProfilesFactory
 
 
 class IntegrationTest(TestCase):
     DISCOVERY_PATTERN = "test_integration_*.py"
+
+    services: ServicesExtension
+    models: ModelsExtension
+    factory: Factory
 
     def setUp(self) -> None:
         app.testing = True
@@ -21,11 +32,22 @@ class IntegrationTest(TestCase):
             app_config["AUTH0_DOMAIN"],
             app_config["AUTH0_CLIENT_ID"],
             app_config["AUTH0_CLIENT_SECRET"],
-            app_config["AUTH0_AUDIENCE"]
+            f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
         )
 
-        services = ServicesExtension(
+        self.services = ServicesExtension(
             auth0=auth0,
             db=db
         )
-        services.init_app(app)
+        self.services.init_app(app)
+
+        self.models = ModelsExtension(
+            profiles=ProfilesModel(auth0=auth0, db=db),
+            logins=LoginsModel(auth0=auth0)
+        )
+        self.models.init_app(app)
+
+        self.factory = Factory(
+            profiles=ProfilesFactory(
+                services=self.services, models=self.models)
+        )

@@ -7,6 +7,7 @@ class ManagementAPI():
     """
 
     __client: Auth0
+    __token: GetToken
 
     def __init__(
             self,
@@ -16,8 +17,8 @@ class ManagementAPI():
             audience: str
     ):
         # todo: handle token expiration
-        get_token = GetToken(domain, client_id, client_secret=client_secret)
-        token = get_token.client_credentials(audience)
+        self.__token = GetToken(domain, client_id, client_secret=client_secret)
+        token = self.__token.client_credentials(audience)
         mgmt_api_token = token['access_token']
 
         self.__client = Auth0(domain, mgmt_api_token)
@@ -25,3 +26,7 @@ class ManagementAPI():
     @property
     def client(self):
         return self.__client
+
+    @property
+    def token(self):
+        return self.__token
