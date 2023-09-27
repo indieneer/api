@@ -20,41 +20,44 @@ def search():
 
         ITEMS_PER_PAGE = 15
 
-        data = (*products.aggregate([
+        result = (*products.aggregate([
             {
                 '$match': {
                     'name': {'$regex': re.compile(f'(?i)({query})')}
                 }
             },
             {
-                '$skip': (page - 1) * ITEMS_PER_PAGE
-            },
-            {
-                '$limit': ITEMS_PER_PAGE
-            },
-            {
-                '$lookup': {
-                    'from': 'tags',
-                    'localField': 'genres',
-                    'foreignField': '_id',
-                    'as': 'genres'
+                '$facet': {
+                    'items': [
+                        {
+                            '$skip': (page - 1) * ITEMS_PER_PAGE
+                        },
+                        {
+                            '$limit': ITEMS_PER_PAGE
+                        },
+                        {
+                            '$lookup': {
+                                'from': 'tags',
+                                'localField': 'genres',
+                                'foreignField': '_id',
+                                'as': 'genres'
+                            }
+                        },
+                        {
+                            '$unset': 'genres._id'
+                        }
+                    ],
+                    'count': [
+                        {
+                            '$count': "count"
+                        }
+                    ]
                 }
             },
-            {
-                '$unset': 'genres._id'
-            }
+
         ]),)
 
-        count = (*products.aggregate([
-            {
-                '$match': {
-                    'name': {'$regex': re.compile(f'(?i)({query})')}
-                }
-            },
-            {
-                '$count': "count"
-            }
-        ]),)
+        data, count = result[0].values()
 
         item_count = count[0].get("count", 0)
 
