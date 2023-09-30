@@ -44,7 +44,7 @@ def main():
 
     models = ModelsExtension(
         profiles=ProfilesModel(db=db, auth0=auth0),
-        # logins=LoginsModel(auth0=auth0)
+        logins=LoginsModel(auth0=auth0)
     )
     models.init_app(app)
 
