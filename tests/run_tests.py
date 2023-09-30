@@ -20,11 +20,11 @@ from . import UnitTest, IntegrationTest, CustomTextTestResult
 #
 # 1. Find all tests in any subdirectory and match a specific function that contains "profiles"
 #   $ python -m tests.run_tests --run profiles
-# 2. Find all tests in any subdirectory and match a specific function that starts with "test_profiles"
+# 2. Find all tests in any subdirectory and match a specific function that starts with "test_get_profiles"
 #   $ python -m tests.run_tests --run ^test_get_profiles
-# 3. Find all UNIT tests in any subdirectory and match a specific function that starts with "test_profiles"
+# 3. Find all UNIT tests in any subdirectory and match a specific function that starts with "test_get_profiles"
 #   $ python -m tests.run_tests --type unit --run ^test_get_profiles
-# 4. Find all INTEGRATION tests in any subdirectory and match a specific function that starts with "test_profiles"
+# 4. Find all INTEGRATION tests in any subdirectory and match a specific function that starts with "test_get_profiles"
 #   $ python -m tests.run_tests --type integration --run ^test_get_profiles
 # 5. Find all UNIT tests in any subdirectory
 #   $ python -m tests.run_tests --type unit
