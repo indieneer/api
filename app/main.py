@@ -49,7 +49,9 @@ def main():
     models.init_app(app)
 
     # run initializers
-    initializers.run(services)
+
+    if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
+        initializers.run(services)
 
 
 if __name__ == "__main__":
