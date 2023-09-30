@@ -10,7 +10,7 @@ class LoginsModel():
         self.auth0 = auth0
 
     def login(self, email: str, password: str):
-        return self.auth0.token.login(
+        return self.auth0.auth0_token.login(
             username=email,
             password=password,
             realm='Username-Password-Authentication',
