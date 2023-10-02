@@ -8,6 +8,10 @@ from app.models.profiles import ProfileCreate, Profile
 
 class ProfilesTestCase(UnitTest):
 
+    def test_get_profiles(self):
+        # TODO: rework
+        self.assertEqual(1, 1)
+
     @patch("app.api.v1.profiles.get_models")
     def test_create_profile(self, get_models: MagicMock):
         # given

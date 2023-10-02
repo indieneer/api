@@ -26,7 +26,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m tests.run_tests unit
+          python -m tests.run_tests -t unit
 
   integration:
     runs-on: ubuntu-latest
@@ -58,4 +58,4 @@ jobs:
           AUTH0_NAMESPACE: ${{ secrets.AUTH0_NAMESPACE }}
           AUTH0_ROLES: ${{ secrets.AUTH0_ROLES }}
         run: |
-          python -m tests.run_tests integration
+          python -m tests.run_tests -t integration
