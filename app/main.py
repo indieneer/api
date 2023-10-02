@@ -22,7 +22,8 @@ def main():
     )
     from app.models import (
         ModelsExtension,
-        ProfilesModel
+        ProfilesModel,
+        LoginsModel
     )
 
     # create dependencies
@@ -42,12 +43,15 @@ def main():
     services.init_app(app)
 
     models = ModelsExtension(
-        profiles=ProfilesModel(db=db, auth0=auth0)
+        profiles=ProfilesModel(db=db, auth0=auth0),
+        logins=LoginsModel(auth0=auth0)
     )
     models.init_app(app)
 
     # run initializers
-    initializers.run(services)
+
+    if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
+        initializers.run(services)
 
 
 if __name__ == "__main__":
