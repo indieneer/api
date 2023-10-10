@@ -28,7 +28,7 @@ class ProfilesFactory():
 
         profile = self.models.profiles.create(input)
 
-        return (profile, lambda: self.cleanup(profile.email))
+        return profile, lambda: self.cleanup(profile.email)
 
     def create_admin(self, input: ProfileCreate):
         profile, cleanup = self.create(input)
@@ -36,4 +36,4 @@ class ProfilesFactory():
         users = self.services.auth0.client.users
         users.add_roles(profile.idp_id, [AUTH0_ROLES[Auth0Role.Admin.value]])
 
-        return (profile, cleanup)
+        return profile, cleanup

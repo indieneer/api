@@ -8,18 +8,25 @@ platforms_controller = Blueprint(
 
 @platforms_controller.route('/', methods=["GET"])
 def get_platforms():
-    try:
-        db = get_services(current_app).db.connection
+    """
+    Retrieve platforms from the database.
 
-        if request.args.get('enabled') == 'true':
-            platforms = []
-            for platform in db["platforms"].find({'enabled': True}):
-                platform["_id"] = str(platform["_id"])
-                platforms.append(platform)
+    The function fetches platforms that are enabled from the database.
+    If the 'enabled' parameter is not provided or is not 'true',
+    it returns a "not found" error.
 
-            return respond_success(platforms, status_code=200)
+    :return: A list of enabled platforms or an error message.
+    :rtype: Response
+    """
 
-        return respond_error("not found", 404)
+    db = get_services(current_app).db.connection
 
-    except Exception as e:
-        return respond_error(str(e), 500)
+    if request.args.get('enabled') == 'true':
+        platforms = [
+            {**platform, "_id": str(platform["_id"])}
+            for platform in db["platforms"].find({'enabled': True})
+        ]
+
+        return respond_success(platforms)
+
+    return respond_error("not found", 404)
