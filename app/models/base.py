@@ -4,7 +4,7 @@ from typing import Optional
 from lib.db_utils import as_json
 
 
-class Serializable():
+class Serializable:
     def to_json(self):
         return vars(self)
 
