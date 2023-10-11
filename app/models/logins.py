@@ -2,7 +2,7 @@ from app.services import Database, ManagementAPI
 from config import app_config
 
 
-class LoginsModel():
+class LoginsModel:
     auth0: ManagementAPI
     collection: str = "profiles"
 

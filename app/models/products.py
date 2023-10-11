@@ -68,8 +68,9 @@ class Media:
 
 @dataclass
 class Requirements:
-    pc: Dict[str, str]
-    mac: Dict[str, str]
+    pc: Optional[Dict[str, str]] = None
+    mac: Optional[Dict[str, str]] = None
+    linux: Optional[Dict[str, str]] = None
 
 
 @dataclass

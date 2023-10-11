@@ -5,10 +5,12 @@ from flask import Flask
 from .base import BaseDocument, Serializable
 from .profiles import ProfilesModel
 from .logins import LoginsModel
+from .products import ProductsModel
 
 
-class ModelsExtension():
-    """Models as injectable part of a Flask application
+class ModelsExtension:
+    """
+    Models as injectable part of a Flask application
     """
 
     KEY = "models"
@@ -18,9 +20,11 @@ class ModelsExtension():
 
     def __init__(
         self,
+        products: ProductsModel,
         profiles: ProfilesModel,
         logins: LoginsModel
     ) -> None:
+        self.products = products
         self.profiles = profiles
         self.logins = logins
 

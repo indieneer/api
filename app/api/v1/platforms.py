@@ -22,11 +22,11 @@ def get_platforms():
     db = get_services(current_app).db.connection
 
     if request.args.get('enabled') == 'true':
-        platforms = [
-            {**platform, "_id": str(platform["_id"])}
-            for platform in db["platforms"].find({'enabled': True})
-        ]
+        platforms = []
+        for platform in db["platforms"].find({'enabled': True}):
+            platform["_id"] = str(platform["_id"])
+            platforms.append(platform)
 
-        return respond_success(platforms)
+        return respond_success(platforms, status_code=200)
 
     return respond_error("not found", 404)

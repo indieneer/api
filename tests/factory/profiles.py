@@ -4,7 +4,7 @@ from app.models.profiles import ProfileCreate
 from config.constants import AUTH0_ROLES, Auth0Role
 
 
-class ProfilesFactory():
+class ProfilesFactory:
     services: ServicesExtension
     models: ModelsExtension
 

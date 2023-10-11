@@ -1,5 +1,6 @@
 from flask import Flask
 
+from app.models import ProductsModel
 from .configure_app import configure_app
 from .register_routes import register_routes
 from .register_error_handlers import register_error_handlers
@@ -44,7 +45,8 @@ def main():
 
     models = ModelsExtension(
         profiles=ProfilesModel(db=db, auth0=auth0),
-        logins=LoginsModel(auth0=auth0)
+        logins=LoginsModel(auth0=auth0),
+        products=ProductsModel(db=db),
     )
     models.init_app(app)
 
