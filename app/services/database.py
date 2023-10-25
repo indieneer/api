@@ -1,8 +1,9 @@
 from pymongo import MongoClient
 
 
-class Database():
-    """Used to interact with the database
+class Database:
+    """
+    Used to interact with the database
     """
 
     __client: MongoClient

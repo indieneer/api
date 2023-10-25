@@ -2,12 +2,9 @@ from typing import Optional
 from bson import ObjectId
 from dataclasses import dataclass
 
-from pymongo import ReturnDocument
-
 from app.services import Database, ManagementAPI
 from config.constants import AUTH0_ROLES, Auth0Role
 from . import BaseDocument, Serializable
-from .exceptions import NotFoundException
 
 
 class Profile(BaseDocument):
@@ -39,7 +36,7 @@ class ProfilePatch(Serializable):
     password: Optional[str] = None
 
 
-class ProfilesModel():
+class ProfilesModel:
     db: Database
     auth0: ManagementAPI
     collection: str = "profiles"
@@ -56,11 +53,11 @@ class ProfilesModel():
         if profile is not None:
             return Profile(**profile)
 
-    def create(self, input: ProfileCreate):
-        # create the user in Auth0
+    def create(self, input_data: ProfileCreate):
+        # Create the user in Auth0
         auth0_user = self.auth0.client.users.create({
-            "email": input.email,
-            "password": input.password,
+            "email": input_data.email,
+            "password": input_data.password,
             "email_verified": True,
             "connection": "Username-Password-Authentication"
         })
@@ -68,14 +65,14 @@ class ProfilesModel():
         idp_id = auth0_user["user_id"]
         roles = [AUTH0_ROLES[Auth0Role.User.value]]
 
-        # assign a role to user
+        # Assign a role to user
         self.auth0.client.users.add_roles(idp_id, roles)
 
-        # create a user in database
-        profile = Profile(**input.to_json(), idp_id=idp_id).to_json()
+        # Create a user in database
+        profile = Profile(**input_data.to_json(), idp_id=idp_id).to_json()
         self.db.connection[self.collection].insert_one(profile)
 
-        # store internal user id on Auth0 user's metadata
+        # Store internal user id on Auth0 user's metadata
         self.auth0.client.users.update(
             idp_id,
             {
@@ -87,8 +84,8 @@ class ProfilesModel():
 
         return Profile(**profile)
 
-    def patch(self, user_id: str, input: ProfilePatch):
-        raise Exception("not implemented")
+    def patch(self, user_id: str, input_data: ProfilePatch):
+        raise Exception("Not implemented.")
 
     def delete(self, user_id: str):
         profile = self.db.connection[self.collection].find_one_and_delete(

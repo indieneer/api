@@ -1,15 +1,8 @@
 from bson import ObjectId
 from typing import Optional
+from lib.db_utils import Serializable
 
 from lib.db_utils import as_json
-
-
-class Serializable():
-    def to_json(self):
-        return vars(self)
-
-    def as_json(self):
-        return as_json(self.to_json())
 
 
 class BaseDocument(Serializable):

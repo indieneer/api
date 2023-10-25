@@ -9,23 +9,29 @@ health_controller = Blueprint('health', __name__, url_prefix='/health')
 
 
 @health_controller.route('/')
-def health():
+def health() -> dict:
+    """
+    Check the health status of the Indieneer API.
+
+    This endpoint pings the database and retrieves the application environment and version.
+    It's primarily used for monitoring the application's health.
+
+    :return: A dictionary that contains the database info: status, environment, and version.
+    :rtype: dict
+    """
+
+    health_obj = {
+        "db": None,
+        "env": app_config.get("ENVIRONMENT"),
+        "version": app_config.get("VERSION")
+    }
+
     try:
         db = get_services(current_app).db
-
         mongodb_status = db.connection.command("ping")
+        health_obj["db"] = mongodb_status
+    except ServerSelectionTimeoutError as error:
+        health_obj["db"] = str(error)
 
-        health_obj = {
-            "db": mongodb_status,
-            "env": app_config.get("ENVIRONMENT"),
-            "version": app_config.get("VERSION")
-        }
+    return respond_success(health_obj)
 
-        return respond_success(health_obj)
-    except ServerSelectionTimeoutError as e:
-        health_obj = {
-            "db": str(e),
-            "env": app_config.get("ENVIRONMENT"),
-            "version": app_config.get("VERSION")
-        }
-        return respond_success(health_obj)
