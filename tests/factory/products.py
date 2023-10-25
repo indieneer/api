@@ -16,5 +16,5 @@ class ProductsFactory:
         self.db.connection[self.models.products.collection].delete_one({"_id": product_id})
 
     def create(self, input_data: ProductCreate):
-        product = self.model.create(input_data)
+        product = self.models.products.create(input_data)
         return product, lambda: self.cleanup(product._id)

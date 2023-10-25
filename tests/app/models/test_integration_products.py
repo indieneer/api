@@ -5,11 +5,7 @@ from tests.integration_test import IntegrationTest
 
 class ProductsModelTestCase(IntegrationTest):
 
-    def setUp(self):
-        app.testing = True
-        self.app = app.test_client()
-
-    def test_create_and_get_product(self):
+    def test_get_product(self):
         products_model = ProductsModel(self.services.db)
 
         # given

@@ -59,7 +59,7 @@ class Product(BaseDocument):
 
 
 @dataclass
-class Media:
+class Media(Serializable):
     header_url: str
     background_url: str
     screenshots: List[Dict[str, str]]
@@ -67,7 +67,7 @@ class Media:
 
 
 @dataclass
-class Requirements:
+class Requirements(Serializable):
     pc: Optional[Dict[str, str]] = None
     mac: Optional[Dict[str, str]] = None
     linux: Optional[Dict[str, str]] = None
@@ -108,15 +108,32 @@ class ProductPatch(Serializable):
 
 
 class ProductsModel:
+    """
+    Model class for handling product-related database operations.
+
+    :param db: The database instance.
+    :type db: Database
+    """
+
     db: Database
     collection: str = "products"
 
     def __init__(self, db: Database) -> None:
+        """
+        Initialize the ProductsModel.
+
+        :param db: The database instance.
+        :type db: Database
+        """
         self.db = db
 
     def get(self, product_id: str) -> Optional[Product]:
         """
         Retrieve a product by its ID.
+
+        :param str product_id: The ID of the product to be retrieved.
+        :return: The product data if found.
+        :rtype: Optional[Product]
         """
         product_data = self.db.connection[self.collection].find_one({"_id": ObjectId(product_id)})
 
@@ -127,6 +144,11 @@ class ProductsModel:
     def create(self, input_data: ProductCreate) -> Product:
         """
         Create a new product in the database.
+
+        :param input_data: The product data to be created.
+        :type input_data: ProductCreate
+        :return: The created product data.
+        :rtype: Product
         """
         product_data = input_data.to_json()
         inserted_id = self.db.connection[self.collection].insert_one(product_data).inserted_id
@@ -136,7 +158,13 @@ class ProductsModel:
 
     def patch(self, product_id: str, input_data: ProductPatch) -> Optional[Product]:
         """
-        Update an existing product.
+        Update an existing product in the database.
+
+        :param str product_id: The ID of the product to be updated.
+        :param input_data: The product data updates.
+        :type input_data: ProductPatch
+        :return: The updated product data if the update was successful.
+        :rtype: Optional[Product]
         """
         updates = {key: value for key, value in input_data.to_json().items() if value is not None}  # Filtering out None values
         self.db.connection[self.collection].update_one({"_id": ObjectId(product_id)}, {"$set": updates})
@@ -149,6 +177,10 @@ class ProductsModel:
     def delete(self, product_id: str) -> int:
         """
         Delete a product by its ID.
+
+        :param str product_id: The ID of the product to be deleted.
+        :return: The number of products deleted.
+        :rtype: int
         """
         deletion_result = self.db.connection[self.collection].delete_one({"_id": ObjectId(product_id)})
         return deletion_result.deleted_count

@@ -20,7 +20,7 @@ from app.models import (
     LoginsModel, ProductsModel
 )
 
-from tests.factory import Factory, ProfilesFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory
 from tests.fixtures import Fixtures
 
 
@@ -64,6 +64,9 @@ class IntegrationTest(TestCase):
         self.factory = Factory(
             profiles=ProfilesFactory(
                 services=self.services, models=self.models
+            ),
+            products=ProductsFactory(
+                db=db, models=self.models
             )
         )
 
@@ -113,14 +116,14 @@ class IntegrationTest(TestCase):
                                 "full_url": "https://example.com"
                             },
                         ]
-                    ),
+                    ).as_json(),
                     release_date="2014-12-22T00:00:00",
                     required_age=0,
                     requirements=Requirements(
                         pc={
                             "minimum": "Avg PC"
                         }
-                    )
+                    ).as_json()
                 )
             )[0],
         )
