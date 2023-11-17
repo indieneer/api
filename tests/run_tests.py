@@ -99,7 +99,8 @@ if args.run is not None:
 stream = io.StringIO()
 
 # Global setup
-setup_integration_tests(suite)
+if args.type == "integration":
+    setup_integration_tests(suite)
 
 # Start the test run
 unittest.runner.TextTestRunner(
