@@ -1,6 +1,7 @@
 from app.main import app
-from app.models.products import ProductsModel, ProductPatch
+from app.models.products import ProductsModel, ProductPatch, ProductCreate, Product
 from tests.integration_test import IntegrationTest
+from copy import deepcopy
 
 
 class ProductsModelTestCase(IntegrationTest):
@@ -15,7 +16,10 @@ class ProductsModelTestCase(IntegrationTest):
         retrieved_product = products_model.get(str(product._id))
 
         # then
-        self.assertEqual(product._id, retrieved_product._id)
+        if retrieved_product is None:
+            self.assertIsNotNone(retrieved_product)
+        else:
+            self.assertEqual(product._id, retrieved_product._id)
 
     def test_patch_product(self):
         products_model = ProductsModel(self.services.db)
@@ -28,13 +32,17 @@ class ProductsModelTestCase(IntegrationTest):
         updated_product = products_model.patch(str(product._id), patch_data)
 
         # then
-        self.assertEqual(updated_product.name, "Updated Name")
+        if updated_product is None:
+            self.assertIsNotNone(updated_product)
+        else:
+            self.assertEqual(updated_product.name, "Updated Name")
 
     def test_delete_product(self):
         products_model = ProductsModel(self.services.db)
-
         # given
-        product = self.fixtures.product
+        product, cleanup = self.factory.products.create(
+            self.fixtures.product.clone())
+        self.addCleanup(cleanup)
 
         # when
         deleted_count = products_model.delete(str(product._id))
