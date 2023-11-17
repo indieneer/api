@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, List, Dict, Union
 from bson import ObjectId
 from dataclasses import dataclass, field
@@ -97,7 +98,8 @@ class ProductPatch(Serializable):
     required_age: Optional[int] = None
     detailed_description: Optional[str] = None
     short_description: Optional[str] = None
-    supported_languages: Optional[List[str]] = field(default_factory=list) # A necessary measure to prevent mutability pitfall
+    # A necessary measure to prevent mutability pitfall
+    supported_languages: Optional[List[str]] = field(default_factory=list)
     media: Optional[Media] = None
     requirements: Optional[Requirements] = None
     developers: Optional[List[str]] = field(default_factory=list)
@@ -135,7 +137,8 @@ class ProductsModel:
         :return: The product data if found.
         :rtype: Optional[Product]
         """
-        product_data = self.db.connection[self.collection].find_one({"_id": ObjectId(product_id)})
+        product_data = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(product_id)})
 
         if product_data:
             return Product(**product_data)
@@ -150,8 +153,22 @@ class ProductsModel:
         :return: The created product data.
         :rtype: Product
         """
+        product_data = input_data.as_json()
+        inserted_id = self.db.connection[self.collection].insert_one(
+            product_data).inserted_id
+        product_data["_id"] = inserted_id
+
+        return Product(**product_data)
+
+    def put(self, input_data: Product) -> Product:
+        """
+        TBD
+        """
         product_data = input_data.to_json()
-        inserted_id = self.db.connection[self.collection].insert_one(product_data).inserted_id
+        del product_data["_id"]
+
+        inserted_id = self.db.connection[self.collection].insert_one(
+            product_data).inserted_id
         product_data["_id"] = inserted_id
 
         return Product(**product_data)
@@ -166,10 +183,13 @@ class ProductsModel:
         :return: The updated product data if the update was successful.
         :rtype: Optional[Product]
         """
-        updates = {key: value for key, value in input_data.to_json().items() if value is not None}  # Filtering out None values
-        self.db.connection[self.collection].update_one({"_id": ObjectId(product_id)}, {"$set": updates})
+        updates = {key: value for key, value in input_data.to_json(
+        ).items() if value is not None}  # Filtering out None values
+        self.db.connection[self.collection].update_one(
+            {"_id": ObjectId(product_id)}, {"$set": updates})
 
-        updated_product_data = self.db.connection[self.collection].find_one({"_id": ObjectId(product_id)})
+        updated_product_data = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(product_id)})
         if updated_product_data:
             return Product(**updated_product_data)
         return None
@@ -182,5 +202,6 @@ class ProductsModel:
         :return: The number of products deleted.
         :rtype: int
         """
-        deletion_result = self.db.connection[self.collection].delete_one({"_id": ObjectId(product_id)})
+        deletion_result = self.db.connection[self.collection].delete_one(
+            {"_id": ObjectId(product_id)})
         return deletion_result.deleted_count

@@ -5,6 +5,7 @@ import os
 import re
 
 from . import UnitTest, IntegrationTest, CustomTextTestResult
+from tests.test_setup import setup_integration_tests
 
 # Usage
 #
@@ -96,6 +97,9 @@ if args.run is not None:
 
 # Pipe the default test output to this stream
 stream = io.StringIO()
+
+# Global setup
+setup_integration_tests(suite)
 
 # Start the test run
 unittest.runner.TextTestRunner(

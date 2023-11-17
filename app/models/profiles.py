@@ -53,6 +53,14 @@ class ProfilesModel:
         if profile is not None:
             return Profile(**profile)
 
+    def find_by_email(self, email: str):
+        profile = self.db.connection[self.collection].find_one(
+            {"email": email}
+        )
+
+        if profile is not None:
+            return Profile(**profile)
+
     def create(self, input_data: ProfileCreate):
         # Create the user in Auth0
         auth0_user = self.auth0.client.users.create({
