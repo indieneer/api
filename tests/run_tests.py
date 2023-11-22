@@ -3,6 +3,7 @@ import unittest
 import io
 import os
 import re
+import sys
 
 from . import UnitTest, IntegrationTest, CustomTextTestResult
 from tests.test_setup import setup_integration_tests
@@ -99,14 +100,23 @@ if args.run is not None:
 stream = io.StringIO()
 
 # Global setup
-if args.type == "integration":
-    setup_integration_tests(suite)
+cleanup = None
+if args.type == "integration" or args.type is None:
+    cleanup = setup_integration_tests(suite)
 
 # Start the test run
-unittest.runner.TextTestRunner(
-    stream=stream,
-    resultclass=CustomTextTestResult
-).run(suite)
+try:
+    unittest.runner.TextTestRunner(
+        stream=stream,
+        resultclass=CustomTextTestResult,
+    ).run(suite)
+except Exception as e:
+    print(e)
+    sys.exit(1)
+finally:
+    # Dispose resources
+    if cleanup is not None:
+        print("Tear down")
+        cleanup()
 
-# Dispose resources
-stream.close()
+    stream.close()

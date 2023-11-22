@@ -3,7 +3,6 @@ import unittest
 import time
 import unittest.case
 from colorama import Fore
-import sys
 
 
 class CustomTextTestResult(unittest.runner.TextTestResult):
@@ -164,7 +163,7 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
               (succeded_tests_count, self.total_count, total_time))
 
         if self.failed_count != 0:
-            sys.exit(1)
+            raise Exception("Test run failed")
 
     def colorize_status(self, status: str):
         if status == "PASS":
