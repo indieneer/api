@@ -10,13 +10,15 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
     results = {}
     failed_count = 0
     total_count = 0
+    subtests_failed_count = 0
+    subtests_count = 0
 
     def addSubTest(self, test: unittest.TestCase, subtest: unittest.TestCase, err: Any | None) -> None:
         super().addSubTest(test, subtest, err)
 
-        self.total_count += 1
+        self.subtests_count += 1
         if err is not None:
-            self.failed_count += 1
+            self.subtests_failed_count += 1
 
         test_title = self.getDescription(test)
         subtest_title = self.getDescription(subtest)
@@ -159,8 +161,9 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
                     print(lines)
 
         succeded_tests_count = self.total_count - self.failed_count
-        print("\nSucceded %d of %d tests. Finished test run in %.3fs" %
-              (succeded_tests_count, self.total_count, total_time))
+        succeded_subtests_count = self.subtests_count - self.subtests_failed_count
+        print("\nSucceded %d of %d tests, %d of %d subtests. Finished test run in %.3fs" %
+              (succeded_tests_count, self.total_count, succeded_subtests_count, self.subtests_count, total_time))
 
         if self.failed_count != 0:
             raise Exception("Test run failed")
