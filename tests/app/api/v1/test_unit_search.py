@@ -1,14 +1,11 @@
-import unittest
-from unittest.mock import patch, Mock
-from app.main import app
+from unittest.mock import patch
+
 from bson import ObjectId
 from tests.mocks.services import mock_database_connection
+from tests import UnitTest
 
-class SearchTestCase(unittest.TestCase):
 
-    def setUp(self):
-        app.testing = True
-        self.app = app.test_client()
+class SearchTestCase(UnitTest):
 
     @patch('app.api.v1.search.get_services')
     def test_search(self, mock_client):
@@ -27,11 +24,11 @@ class SearchTestCase(unittest.TestCase):
         ]
 
         meta1 = {
-                "total_count": 2,
-                "items_on_page": 2,
-                "items_per_page": 15,
-                "page_count": 1,
-                "page": 1
+            "total_count": 2,
+            "items_on_page": 2,
+            "items_per_page": 15,
+            "page_count": 1,
+            "page": 1
         }
 
         def aggregate_side_effect():
