@@ -38,7 +38,7 @@ def get_profile(profile_id: str):
     profile = profile_model.get(profile_id)
 
     if profile is None:
-        raise models_exceptions.NotFoundException(f"Profile with ID {profile_id} not found.")
+        raise models_exceptions.NotFoundException(Profile.__name__)
 
     return respond_success(profile.as_json())
 

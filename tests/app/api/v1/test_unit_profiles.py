@@ -99,8 +99,62 @@ class ProfilesTestCase(UnitTest):
                 test()
                 create_profile_mock.reset_mock()
 
-    def test_get_profile(self):
-        pass
+    @patch("app.api.v1.profiles.get_models")
+    def test_get_profile(self, get_models: MagicMock):
+        get_profile_mock = get_models.return_value.profiles.get
+
+        def call_api(profileId):
+            return self.app.get(
+                f"/v1/profiles/{profileId}",
+                content_type='application/json'
+            )
+
+        def finds_and_returns_a_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test")
+            get_profile_mock.return_value = mock_profile
+
+            expected_response = {
+                "status": "ok",
+                "data": mock_profile.as_json()
+            }
+
+            # when
+            response = call_api(mock_profile._id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_profile_mock.assert_called_once_with(mock_profile._id)
+
+        def does_not_find_a_profile_and_returns_an_error():
+            # given
+            mock_id = "1"
+            get_profile_mock.return_value = None
+
+            expected_response = {
+                "status": "error",
+                "error": "\"Profile\" not found."
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 404)
+            get_profile_mock.assert_called_once_with(mock_id)
+
+        tests = [
+            finds_and_returns_a_profile,
+            does_not_find_a_profile_and_returns_an_error
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+                get_profile_mock.reset_mock()
 
     def test_update_profile(self):
         pass
