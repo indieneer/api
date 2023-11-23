@@ -16,12 +16,12 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
     def addSubTest(self, test: unittest.TestCase, subtest: unittest.TestCase, err: Any | None) -> None:
         super().addSubTest(test, subtest, err)
 
+        test_title = self.getDescription(test)
+        subtest_title = self.getDescription(subtest)
+
         self.subtests_count += 1
         if err is not None:
             self.subtests_failed_count += 1
-
-        test_title = self.getDescription(test)
-        subtest_title = self.getDescription(subtest)
 
         if self.results.get(test_title) is None:
             print(test_title, "...", "RUNNING")
@@ -53,7 +53,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
     def addSuccess(self, test: unittest.TestCase) -> None:
         self.total_count += 1
-
         title = self.getDescription(test)
         result = {} if self.results.get(title) is None else self.results[title]
 
@@ -69,9 +68,13 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         self.total_count += 1
         self.failed_count += 1
 
+        title = self.getDescription(test)
+        result = {} if self.results.get(title) is None else self.results[title]
+
         failure = self.failures.pop()
 
-        self.results[self.getDescription(test)] = {
+        self.results[title] = {
+            **result,
             "failure": failure[1],
             "success": False,
             "status": "FAIL"
@@ -83,9 +86,13 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         self.total_count += 1
         self.failed_count += 1
 
+        title = self.getDescription(test)
+        result = {} if self.results.get(title) is None else self.results[title]
+
         error = self.errors.pop()
 
-        self.results[self.getDescription(test)] = {
+        self.results[title] = {
+            **result,
             "error": error[1],
             "success": False,
             "status": "ERROR"
@@ -97,7 +104,11 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
     def stopTest(self, test) -> None:
         description = self.getDescription(test)
 
-        result = self.results[description]
+        result = self.results.get(description)
+        if result is None:
+            print(description, "...", "SKIPPED")
+
+            return
 
         if result.get("subtests") is not None:
             return
@@ -110,9 +121,32 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
     def stopTestRun(self) -> None:
         total_time = time.perf_counter() - self.start_time
 
+        for test_case, reason in self.skipped:
+            print("\n")
+            title = f'{Fore.LIGHTBLACK_EX + "SKIPPED" + Fore.RESET}: {self.getDescription(test_case)}'
+            print("=" * len(title))
+            print(" " * len("SKIPPED: ") + Fore.YELLOW + reason + Fore.RESET)
+            print(title)
+            print("=" * len(title))
+
         for test_name, result in self.results.items():
-            if result.get("status") == "PASS":
-                continue
+            if result.get("status") != "PASS":
+                print("\n")
+                title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
+                print("=" * len(title))
+                print(title)
+                print("=" * len(title))
+
+                tab = " " * 4
+
+                for type in ["failure", "error"]:
+                    message = result.get(type)
+                    if message is None:
+                        continue
+
+                    lines = message.split("\n")
+                    lines = "\n".join([f'{tab}{line}' for line in lines])
+                    print(lines)
 
             if result.get("subtests") is not None:
                 failed_subtests = [
@@ -142,28 +176,11 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
                         lines = "\n".join(
                             [f'{tab * 2}{line}' for line in lines])
                         print(lines)
-            else:
-                print("\n")
-                title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
-                print("=" * len(title))
-                print(title)
-                print("=" * len(title))
-
-                tab = " " * 4
-
-                for type in ["failure", "error"]:
-                    message = result.get(type)
-                    if message is None:
-                        continue
-
-                    lines = message.split("\n")
-                    lines = "\n".join([f'{tab}{line}' for line in lines])
-                    print(lines)
 
         succeded_tests_count = self.total_count - self.failed_count
         succeded_subtests_count = self.subtests_count - self.subtests_failed_count
-        print("\nSucceded %d of %d tests, %d of %d subtests. Finished test run in %.3fs" %
-              (succeded_tests_count, self.total_count, succeded_subtests_count, self.subtests_count, total_time))
+        print("\nSucceded %d of %d tests, %d of %d subtests. Skipped %d. Finished test run in %.3fs" %
+              (succeded_tests_count, self.total_count, succeded_subtests_count, self.subtests_count, len(self.skipped), total_time))
 
         if self.failed_count != 0:
             raise Exception("Test run failed")

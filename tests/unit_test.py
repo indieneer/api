@@ -8,3 +8,4 @@ class UnitTest(TestCase):
     def setUp(self) -> None:
         app.testing = True
         self.app = app.test_client()
+        self.app_context = app.app_context

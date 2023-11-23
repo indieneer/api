@@ -1,9 +1,9 @@
+from unittest.mock import patch, MagicMock  # nopep8
 import json
-from unittest.mock import patch, MagicMock
 
 from tests import UnitTest
-
-from app.models.profiles import ProfileCreate, Profile
+from app.models.profiles import ProfileCreate, Profile, ProfilePatch
+from app.middlewares.requires_auth import create_test_token
 
 
 class ProfilesTestCase(UnitTest):
@@ -103,9 +103,9 @@ class ProfilesTestCase(UnitTest):
     def test_get_profile(self, get_models: MagicMock):
         get_profile_mock = get_models.return_value.profiles.get
 
-        def call_api(profileId):
+        def call_api(profile_id):
             return self.app.get(
-                f"/v1/profiles/{profileId}",
+                f"/v1/profiles/{profile_id}",
                 content_type='application/json'
             )
 
@@ -156,8 +156,54 @@ class ProfilesTestCase(UnitTest):
                 test()
                 get_profile_mock.reset_mock()
 
-    def test_update_profile(self):
-        pass
+    # TODO: rework
+    @patch("app.api.v1.profiles.get_models")
+    def test_patch_profile(self, get_models: MagicMock):
+        self.skipTest("Needs reworking")
+        patch_profile_mock = get_models.return_value.profiles.patch
+
+        def call_api(profile_id, body):
+            token = create_test_token(profile_id)
+
+            return self.app.patch(
+                f"/v1/profiles/{profile_id}",
+                data=json.dumps(body),
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+        def patches_and_returns_the_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test")
+            patch_profile_mock.return_value = mock_profile
+
+            expected_input = ProfilePatch(
+                email=mock_profile.email,
+            )
+            expected_response = {
+                "status": "ok",
+                "data": mock_profile.as_json()
+            }
+
+            response = call_api(mock_profile._id, {
+                "email": expected_input.email,
+            })
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            patch_profile_mock.assert_called_once_with(
+                str(mock_profile._id), expected_input)
+
+        tests = [
+            patches_and_returns_the_profile
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+                patch_profile_mock.reset_mock()
 
     def test_delete_profile(self):
         pass

@@ -93,19 +93,22 @@ def create_callback():
 
         return False
 
-    def count_and_skip_if_matches(test_case: unittest.TestCase, pattern: Pattern[Any]):
-        count_test(test_case)
-
+    def count_and_pick_if_matches(test_case: unittest.TestCase, pattern: Pattern[Any]):
         matches = pattern.search(test_case.id().split('.').pop())
 
-        return matches is not None
+        if matches is None:
+            return False
+
+        count_test(test_case)
+
+        return True
 
     if args.run is None:
-        return count_test
+        return lambda test_case: count_test(test_case)
     else:
         pattern = re.compile(args.run)
 
-        return lambda test_case: count_and_skip_if_matches(test_case, pattern)
+        return lambda test_case: count_and_pick_if_matches(test_case, pattern)
 
 
 def scan_skip_recursively(suite: unittest.TestSuite, callback: Callable[[unittest.TestCase], bool]):
@@ -118,10 +121,12 @@ def scan_skip_recursively(suite: unittest.TestSuite, callback: Callable[[unittes
 
             scan_skip_recursively(test_case, callback)
         else:
-            should_skip = callback(test_case)
+            should_pick = callback(test_case)
 
-            if should_skip:
-                to_remove.append(test_case)
+            if should_pick:
+                continue
+
+            to_remove.append(test_case)
 
     for test_case in to_remove:
         suite._tests.remove(test_case)
@@ -150,7 +155,10 @@ try:
         resultclass=CustomTextTestResult,
     ).run(suite)
 except Exception as e:
-    print(e)
+    import traceback
+    print(traceback.format_exc())
+    print(e.__class__, str(e))
+
     sys.exit(1)
 finally:
     # Dispose resources

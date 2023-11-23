@@ -1,14 +1,64 @@
 import time
+from datetime import datetime, timedelta
 from functools import wraps
 
 import requests
-from flask import g
+from flask import g, current_app
 from jose import jwt, exceptions
 
 from . import AuthError, get_token_auth_header
 from config import app_config
 
 cache = {"data_json": None, "timestamp": float()}
+
+TEST_SECRET_KEY = "testsecretkey"
+
+
+def create_test_token(profile_id, idp_id='auth0|1', roles=[]):
+    AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
+    AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
+    AUTH0_NAMESPACE = app_config["AUTH0_NAMESPACE"]
+
+    return jwt.encode(
+        {
+            "sub": idp_id,
+            "iat": int(datetime.utcnow().timestamp()),
+            "exp": int((datetime.now() + timedelta(days=1)).utcnow().timestamp()),
+            "scope": [],
+            f"{AUTH0_NAMESPACE}/profile_id": profile_id,
+            f"{AUTH0_NAMESPACE}/roles": roles,
+            "aud": AUTH0_AUDIENCE,
+            "iss": "https://" + AUTH0_DOMAIN + "/"
+        },
+        TEST_SECRET_KEY,
+        algorithm="HS256"
+    )
+
+
+def mocked_requires_auth(f):
+    """Used for unit testing
+    """
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
+        AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
+
+        token = get_token_auth_header()
+
+        payload = jwt.decode(
+            token,
+            TEST_SECRET_KEY,
+            algorithms=["HS256"],
+            audience=AUTH0_AUDIENCE,
+            issuer=f"https://{AUTH0_DOMAIN}/"
+        )
+
+        g.payload = payload
+
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 def requires_auth(f):
@@ -17,6 +67,10 @@ def requires_auth(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
+        # Use mocked wrapper for test purposes
+        if current_app.testing:
+            return mocked_requires_auth(f)(*args, **kwargs)
+
         AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
         AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
 
