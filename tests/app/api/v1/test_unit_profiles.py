@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock  # nopep8
+from unittest.mock import patch, MagicMock
 import json
 
 from tests import UnitTest

@@ -7,7 +7,7 @@ class BadRequestException(IndieneerBaseException):
 
 
 class UnprocessableEntityException(IndieneerBaseException):
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str = "Bad Request.") -> None:
         super().__init__(message)
 
 

@@ -1,6 +1,5 @@
 from flask import Flask
 
-from app.models import ProductsModel
 from .configure_app import configure_app
 from .register_routes import register_routes
 from .register_error_handlers import register_error_handlers
@@ -24,11 +23,13 @@ def main():
     from app.models import (
         ModelsExtension,
         ProfilesModel,
-        LoginsModel
+        ProductsModel,
+        LoginsModel,
+        TagsModel
     )
 
     # create dependencies
-    # todo: add dependency injection for test runs
+    # TODO: add dependency injection for test runs
     db = Database(app_config["MONGO_URI"], timeoutMS=3000)
     auth0 = ManagementAPI(
         app_config["AUTH0_DOMAIN"],
@@ -47,6 +48,7 @@ def main():
         profiles=ProfilesModel(db=db, auth0=auth0),
         logins=LoginsModel(auth0=auth0),
         products=ProductsModel(db=db),
+        tags=TagsModel(db=db),
     )
     models.init_app(app)
 

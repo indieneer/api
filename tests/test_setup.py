@@ -17,7 +17,9 @@ from app.services import (
 from app.models import (
     ProfilesModel,
     ModelsExtension,
-    LoginsModel, ProductsModel
+    LoginsModel,
+    ProductsModel,
+    TagsModel
 )
 
 from tests.factory import Factory, ProfilesFactory, ProductsFactory
@@ -54,6 +56,7 @@ def setup_integration_tests(suite: TestSuite):
             profiles=ProfilesModel(auth0=auth0, db=db),
             logins=LoginsModel(auth0=auth0),
             products=ProductsModel(db=db),
+            tags=TagsModel(db=db),
         )
 
         models.init_app(app)
