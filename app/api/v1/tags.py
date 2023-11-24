@@ -2,18 +2,18 @@ from flask import Blueprint, request, current_app
 from app.services import get_services
 from lib.http_utils import respond_success, respond_error
 
-genres_controller = Blueprint(
-    'genres', __name__, url_prefix='/genres')
+tags_controller = Blueprint(
+    'tags', __name__, url_prefix='/tags')
 
 
-@genres_controller.route('/', methods=["GET"])
-def get_genres():
+@tags_controller.route('/', methods=["GET"])
+def get_tags():
     """
-    Retrieve genres from the database.
+    Retrieve tags from the database.
 
-    The function fetches genres from the database.
+    The function fetches tags from the database.
 
-    :return: A list of genres or an error message.
+    :return: A list of tags or an error message.
     :rtype: Response
     """
 

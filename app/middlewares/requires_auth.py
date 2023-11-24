@@ -14,7 +14,10 @@ cache = {"data_json": None, "timestamp": float()}
 TEST_SECRET_KEY = "testsecretkey"
 
 
-def create_test_token(profile_id, idp_id='auth0|1', roles=[]):
+def create_test_token(profile_id, idp_id='auth0|1', roles=None):
+    if roles is None:
+        roles = []
+
     AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
     AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
     AUTH0_NAMESPACE = app_config["AUTH0_NAMESPACE"]
@@ -23,10 +26,10 @@ def create_test_token(profile_id, idp_id='auth0|1', roles=[]):
         {
             "sub": idp_id,
             "iat": int(datetime.utcnow().timestamp()),
-            "exp": int((datetime.now() + timedelta(days=1)).utcnow().timestamp()),
+            "exp": int((datetime.utcnow() + timedelta(days=1)).timestamp()),
             "scope": [],
             f"{AUTH0_NAMESPACE}/profile_id": profile_id,
-            f"{AUTH0_NAMESPACE}/roles": roles,
+            f"{AUTH0_NAMESPACE}/roles": [role.capitalize() for role in roles],
             "aud": AUTH0_AUDIENCE,
             "iss": "https://" + AUTH0_DOMAIN + "/"
         },

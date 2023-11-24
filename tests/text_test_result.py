@@ -3,6 +3,7 @@ import unittest
 import time
 import unittest.case
 from colorama import Fore
+from pprint import pprint
 
 
 class CustomTextTestResult(unittest.runner.TextTestResult):
@@ -129,8 +130,9 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
             print("=" * len(title))
 
         for test_name, result in self.results.items():
-            if result.get("status") != "PASS":
+            if result.get("status", "PASS") != "PASS":
                 print("\n")
+                pprint(result)
                 title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
                 print("=" * len(title))
                 print(title)

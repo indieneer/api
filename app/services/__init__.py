@@ -7,8 +7,7 @@ from .database import Database
 
 
 class ServicesExtension:
-    """Services as injectable part of a Flask application
-    """
+    """Services as injectable part of a Flask application"""
 
     KEY = "services"
 
@@ -28,7 +27,8 @@ class ServicesExtension:
 
 
 def get_services(app: Flask):
-    """Retrieves the Services extension from a Flask app
+    """
+    Retrieves the Services extension from a Flask app
 
     Args:
         app (Flask): flask application

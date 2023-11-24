@@ -1,5 +1,6 @@
 import argparse
 import unittest
+import traceback
 import io
 import os
 import re
@@ -155,7 +156,6 @@ try:
         resultclass=CustomTextTestResult,
     ).run(suite)
 except Exception as e:
-    import traceback
     print(traceback.format_exc())
     print(e.__class__, str(e))
 
