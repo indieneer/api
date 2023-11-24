@@ -105,9 +105,8 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         description = self.getDescription(test)
 
         result = self.results.get(description)
-        if result is None:
-            print(description, "...", "SKIPPED")
 
+        if result is None:
             return
 
         if result.get("subtests") is not None:

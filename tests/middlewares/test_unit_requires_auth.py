@@ -9,7 +9,6 @@ class RequiresAuthTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
         self.app = Flask(__name__)
-        self.app.testing = True
 
     @patch('app.middlewares.requires_auth.app_config', MagicMock())
     @patch('app.middlewares.requires_auth.get_token_auth_header', Mock(return_value="Bearer test"))

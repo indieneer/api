@@ -91,7 +91,7 @@ def create_callback():
         else:
             tests_count["other"] += 1
 
-        return False
+        return True
 
     def count_and_pick_if_matches(test_case: unittest.TestCase, pattern: Pattern[Any]):
         matches = pattern.search(test_case.id().split('.').pop())
