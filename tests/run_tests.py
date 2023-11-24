@@ -3,6 +3,8 @@ import unittest
 import io
 import os
 import re
+import sys
+from typing import Callable, Any, Pattern
 
 from . import UnitTest, IntegrationTest, CustomTextTestResult
 from tests.test_setup import setup_integration_tests
@@ -49,9 +51,9 @@ cli_parser.add_argument(
 # Parse args
 args = cli_parser.parse_args()
 
-if args.file is None and args.type is None and args.run is None:
-    cli_parser.error(
-        "Either \"--file\", \"--type\" or \"--run\" must be present")
+# if args.file is None and args.type is None and args.run is None:
+#     cli_parser.error(
+#         "Either \"--file\", \"--type\" or \"--run\" must be present")
 
 start_dir = "."
 discovery_pattern = "test_*.py"
@@ -71,42 +73,97 @@ else:
 test_loader = unittest.TestLoader()
 suite = test_loader.discover(start_dir, discovery_pattern)
 
-# Filter tests
-if args.run is not None:
-    pattern = re.compile(args.run)
+tests_count = {
+    "unit": 0,
+    "integration": 0,
+    "other": 0
+}
 
-    def match_and_skip_recursively(suite: unittest.TestSuite):
-        to_remove = []
+# Scan tests
 
-        for test_case in suite:
-            if isinstance(test_case, unittest.TestSuite):
-                if test_case.countTestCases() == 0:
-                    continue
 
-                match_and_skip_recursively(test_case)
-            else:
-                matches = pattern.search(test_case.id().split('.').pop())
+def create_callback():
+    def count_test(test_case: unittest.TestCase):
+        if isinstance(test_case, UnitTest):
+            tests_count["unit"] += 1
+        elif isinstance(test_case, IntegrationTest):
+            tests_count["integration"] += 1
+        else:
+            tests_count["other"] += 1
 
-                if matches is None:
-                    to_remove.append(test_case)
+        return True
 
-        for test_case in to_remove:
-            suite._tests.remove(test_case)
+    def count_and_pick_if_matches(test_case: unittest.TestCase, pattern: Pattern[Any]):
+        matches = pattern.search(test_case.id().split('.').pop())
 
-    match_and_skip_recursively(suite)
+        if matches is None:
+            return False
+
+        count_test(test_case)
+
+        return True
+
+    if args.run is None:
+        return lambda test_case: count_test(test_case)
+    else:
+        pattern = re.compile(args.run)
+
+        return lambda test_case: count_and_pick_if_matches(test_case, pattern)
+
+
+def scan_skip_recursively(suite: unittest.TestSuite, callback: Callable[[unittest.TestCase], bool]):
+    to_remove = []
+
+    for test_case in suite:
+        if isinstance(test_case, unittest.TestSuite):
+            if test_case.countTestCases() == 0:
+                continue
+
+            scan_skip_recursively(test_case, callback)
+        else:
+            should_pick = callback(test_case)
+
+            if should_pick:
+                continue
+
+            to_remove.append(test_case)
+
+    for test_case in to_remove:
+        suite._tests.remove(test_case)
+
+
+callback = create_callback()
+scan_skip_recursively(suite, callback)
+
+# Display test run
+print()
+print("\n".join([f"{k}: {v}" for (k, v) in tests_count.items()]))
+print()
 
 # Pipe the default test output to this stream
 stream = io.StringIO()
 
 # Global setup
-if args.type == "integration":
-    setup_integration_tests(suite)
+cleanup = None
+if tests_count["integration"] != 0:
+    cleanup = setup_integration_tests(suite)
 
 # Start the test run
-unittest.runner.TextTestRunner(
-    stream=stream,
-    resultclass=CustomTextTestResult
-).run(suite)
+try:
+    unittest.runner.TextTestRunner(
+        stream=stream,
+        resultclass=CustomTextTestResult,
+    ).run(suite)
+except Exception as e:
+    import traceback
+    print(traceback.format_exc())
+    print(e.__class__, str(e))
 
-# Dispose resources
-stream.close()
+    sys.exit(1)
+finally:
+    # Dispose resources
+    if cleanup is not None:
+        print("Tear down")
+        cleanup()
+
+    stream.close()

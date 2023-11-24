@@ -1,14 +1,11 @@
-from bson import ObjectId
 from flask import Blueprint, request, g, current_app
-
-from pymongo import ReturnDocument
 
 from app.middlewares import requires_auth
 from lib.http_utils import respond_error, respond_success
 
 from app.services import get_services
 from app.models import get_models, exceptions as models_exceptions
-from app.models.profiles import Profile, ProfileCreate
+from app.models.profiles import Profile, ProfileCreate, ProfilePatch
 from lib import db_utils
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
@@ -38,7 +35,7 @@ def get_profile(profile_id: str):
     profile = profile_model.get(profile_id)
 
     if profile is None:
-        raise models_exceptions.NotFoundException(f"Profile with ID {profile_id} not found.")
+        raise models_exceptions.NotFoundException(Profile.__name__)
 
     return respond_success(profile.as_json())
 
@@ -99,16 +96,13 @@ def update_profile(profile_id: str):
         if key not in PROFILE_FIELDS:
             return respond_error(f'The key "{key}" is not allowed.', 422)
 
-    db = get_services(current_app).db.connection
-    filter_criteria = {"_id": ObjectId(profile_id)}
+    profiles = get_models(current_app).profiles
+    updated = profiles.patch(profile_id, ProfilePatch(**data))
 
-    result = db["profiles"].find_one_and_update(filter_criteria, {"$set": data},
-                                                return_document=ReturnDocument.AFTER)
-
-    if result is None:
+    if updated is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(db_utils.as_json(result))
+    return respond_success(updated.as_json())
 
 
 @profiles_controller.route('/<string:user_id>', methods=["DELETE"])

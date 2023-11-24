@@ -15,7 +15,7 @@ def handle_not_found_exception(e: models_exceptions.NotFoundException):
     return respond_error(str(e), 404)
 
 
-def handle_forbidden_exception(e: models_exceptions.NotFoundException):
+def handle_forbidden_exception(e: models_exceptions.ForbiddenException):
     return respond_error(str(e), 403)
 
 
@@ -49,4 +49,3 @@ def register_error_handlers(app: Flask):
     app.register_error_handler(
         handlers_exceptions.InternalServerErrorException, handle_internal_server_error_exception)
     app.register_error_handler(Exception, handle_uncaught_exceptions)
-

@@ -48,7 +48,8 @@ def search():
                     },
                     {'$unset': 'genres._id'}
                 ],
-                'count': [{'$count': "count"}]  # Take out of facet when problems start
+                # Take out of facet when problems start
+                'count': [{'$count': "count"}]
             }
         },
     ]
@@ -56,16 +57,16 @@ def search():
     result = (*products.aggregate(aggregation_pipeline),)
 
     data, count = result[0].values()
-    item_count = count[0].get("count", 0)
+    count = count[0].get("count", 0) if len(count) != 0 else 0
 
     for item in data:
         item["_id"] = str(item["_id"])
 
     meta = {
-        "total_count": item_count,
+        "total_count": count,
         "items_per_page": ITEMS_PER_PAGE,
         "items_on_page": len(data),
-        "page_count": ceil(item_count / ITEMS_PER_PAGE),
+        "page_count": ceil(count / ITEMS_PER_PAGE),
         "page": page
     }
 
