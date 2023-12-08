@@ -2,6 +2,7 @@ from unittest import TestSuite
 
 from bson import ObjectId
 
+from app.models.background_jobs import BackgroundJobsModel
 from app.models.products import ProductCreate
 from app.models.profiles import ProfileCreate
 
@@ -57,6 +58,7 @@ def setup_integration_tests(suite: TestSuite):
             logins=LoginsModel(auth0=auth0),
             products=ProductsModel(db=db),
             tags=TagsModel(db=db),
+            background_jobs=BackgroundJobsModel(db=db)
         )
 
         models.init_app(app)
