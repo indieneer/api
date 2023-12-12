@@ -4,6 +4,7 @@ from bson import ObjectId
 
 from app.models.products import ProductCreate
 from app.models.profiles import ProfileCreate
+from app.models.tags import TagCreate
 
 from app.models.products import Media, Requirements
 
@@ -22,7 +23,7 @@ from app.models import (
     TagsModel
 )
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory
 from tests.fixtures import Fixtures
 
 from tests.integration_test import IntegrationTest
@@ -66,6 +67,9 @@ def setup_integration_tests(suite: TestSuite):
                 services=services, models=models
             ),
             products=ProductsFactory(
+                db=db, models=models
+            ),
+            tags=TagsFactory(
                 db=db, models=models
             )
         )
@@ -131,12 +135,19 @@ def setup_integration_tests(suite: TestSuite):
                 )
             )
         )
+
+        tag, cleanup = factory.tags.create(TagCreate(
+            "Test tag",
+        ))
+        cleanups.append(cleanup)
+
         cleanups.append(cleanup)
 
         fixtures = Fixtures(
             regular_user=regular_user,
             admin_user=admin_user,
             product=product,
+            tag=tag,
         )
 
         # Inject dependencies
