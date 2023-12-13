@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Optional, List, Dict, Union
 from bson import ObjectId
 from dataclasses import dataclass, field
+from .utils import slugify
 
 from app.services import Database
 from . import BaseDocument, Serializable
@@ -146,7 +147,7 @@ class ProductsModel:
 
     def create(self, input_data: ProductCreate) -> Product:
         """
-        Create a new product in the database.
+        Create a new product in the database, including a slugified name.
 
         :param input_data: The product data to be created.
         :type input_data: ProductCreate
@@ -154,6 +155,7 @@ class ProductsModel:
         :rtype: Product
         """
         product_data = input_data.as_json()
+        product_data["slug"] = slugify(product_data["name"])
         inserted_id = self.db.connection[self.collection].insert_one(
             product_data).inserted_id
         product_data["_id"] = inserted_id
@@ -162,10 +164,16 @@ class ProductsModel:
 
     def put(self, input_data: Product) -> Product:
         """
-        TBD
+        Update a product in the database, including updating the slug field.
+
+        :param input_data: The product data to be updated.
+        :type input_data: Product
+        :return: The updated product data.
+        :rtype: Product
         """
         product_data = input_data.to_json()
         del product_data["_id"]
+        product_data["slug"] = slugify(product_data["name"])
 
         inserted_id = self.db.connection[self.collection].insert_one(
             product_data).inserted_id
