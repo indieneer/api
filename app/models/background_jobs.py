@@ -1,7 +1,6 @@
 import datetime
-import json
 from enum import Enum
-from typing import Optional, Any, Dict
+from typing import Optional, Dict, List
 from bson import ObjectId
 from dataclasses import dataclass
 
@@ -25,8 +24,19 @@ class EsSeederMetadata(BaseMetadata):
 
 
 class MetadataFactory:
+    """
+    Factory class to create metadata objects based on the job type.
+    """
+
     @staticmethod
-    def create_metadata(job_type: JobType, **kwargs) -> EsSeederMetadata:
+    def create_metadata(job_type: str, **kwargs) -> BaseMetadata:
+        """
+        Creates a metadata object based on the job type.
+
+        :param job_type: The job type.
+        :param kwargs: The metadata.
+        :return: The metadata object.
+        """
         if job_type == JobType.ES_SEEDER.value:
             return EsSeederMetadata(**kwargs)
         else:
@@ -40,10 +50,41 @@ class StatusType(Enum):
     ERROR = "error"
 
 
+class EventType(Enum):
+    ERROR = "error"
+    INFO = "info"
+
+
+class Event(Serializable):
+    """
+    Event class of Background Job.
+    """
+
+    type: str
+    message: str
+    date: datetime.datetime
+
+    def __init__(
+            self,
+            type: str,
+            message: str
+    ):
+        self.type = type
+        self.message = message
+        self.date = datetime.datetime.utcnow()
+
+
+@dataclass
+class EventCreate(Serializable):
+    type: str
+    message: str
+
+
 class BackgroundJob(BaseDocument):
-    type: JobType
+    type: str
+    events: Optional[List[Event]]
     metadata: BaseMetadata
-    status: StatusType
+    status: str
     message: Optional[str]
     created_by: str
     started_at: Optional[datetime.datetime]
@@ -52,20 +93,21 @@ class BackgroundJob(BaseDocument):
 
     def __init__(
             self,
-            type: JobType,
+            type: str,
             metadata: Dict[str, any],
             created_by: str,
-            status: StatusType = StatusType.PENDING.value,
+            events=None,
+            status: str = StatusType.PENDING.value,
             message: Optional[str] = "",
             started_at: Optional[datetime.datetime] = None,
             created_at: Optional[datetime.datetime] = datetime.datetime.utcnow(),
             updated_at: Optional[datetime.datetime] = datetime.datetime.utcnow(),
-            _id: Optional[ObjectId] = None,
-            **kwargs
+            _id: Optional[ObjectId] = None
     ) -> None:
         super().__init__(_id)
 
         self.type = type
+        self.events = events if events is not None else []
         self.metadata = MetadataFactory.create_metadata(self.type, **metadata)
         self.status = status
         self.message = message
@@ -77,15 +119,15 @@ class BackgroundJob(BaseDocument):
 
 @dataclass
 class BackgroundJobCreate(Serializable):
-    type: JobType
+    type: str
     metadata: Dict[str, any]
     created_by: str
 
 
 @dataclass
 class BackgroundJobPatch(Serializable):
-    status: Optional[StatusType] = None
-    message: Optional[str] = None
+    status: Optional[str] = None
+    metadata: Optional[Dict[str, any]] = None
 
 
 class BackgroundJobsModel:
@@ -95,15 +137,44 @@ class BackgroundJobsModel:
     def __init__(self, db: Database) -> None:
         self.db = db
 
+    def validate_job_type(self, job_type):
+        try:
+            JobType(job_type)
+        except ValueError:
+            raise ValueError("unsupported job type")
+
+    def validate_status(self, status):
+        try:
+            StatusType(status)
+        except ValueError:
+            raise ValueError("unsupported status")
+
+    def validate_event_type(self, event_type):
+        try:
+            EventType(event_type)
+        except ValueError:
+            raise ValueError("unsupported event type")
+
+    def get_all(self):
+        background_jobs = []
+
+        for background_job in self.db.connection[self.collection].find():
+            background_job["_id"] = str(background_job["_id"])
+            background_jobs.append(background_job)
+
+        return background_jobs
+
     def get(self, background_job_id: str):
         background_job = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(background_job_id)}
+            {"_id": background_job_id}
         )
 
         if background_job is not None:
             return BackgroundJob(**background_job)
 
     def create(self, input_data: BackgroundJobCreate):
+        self.validate_job_type(input_data.type)
+
         background_job = BackgroundJob(**input_data.to_json()).as_json()
         self.db.connection[self.collection].insert_one(background_job)
 
@@ -111,21 +182,47 @@ class BackgroundJobsModel:
 
     def patch(self, background_job_id: str, input_data: BackgroundJobPatch):
         if len(input_data.to_json().values()) == 0:
-            raise ValueError("No updates provided")
+            raise ValueError("no updates provided")
 
-        payload = input_data.to_json()
-        if input_data.to_json().get("metadata"):
-            background_job = self.db.connection[self.collection].find_one({"_id": ObjectId(background_job_id)})
+        background_job = self.db.connection[self.collection].find_one({"_id": background_job_id})
+        if background_job is None:
+            return None
+
+        payload = {key: value for key, value in input_data.to_json().items() if value is not None}
+        if payload.get("metadata") is not None:
             for key, value in background_job["metadata"].items():
                 if not input_data.to_json()["metadata"].get(key):
                     payload["metadata"][key] = value
+            payload["metadata"] = MetadataFactory.create_metadata(background_job["type"],
+                                                                  **payload["metadata"]).to_json()
 
-        return BackgroundJob(**self.db.connection[self.collection].find_one_and_update({"_id": ObjectId(background_job_id)}, {"$set": payload}, return_document=ReturnDocument.AFTER))
+        if payload.get("status") is not None:
+            self.validate_status(payload["status"])
+
+        return BackgroundJob(
+            **self.db.connection[self.collection].find_one_and_update({"_id": background_job_id},
+                                                                      {"$set": payload},
+                                                                      return_document=ReturnDocument.AFTER))
 
     def delete(self, background_job_id: str):
         background_job = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": ObjectId(background_job_id)}
+            {"_id": background_job_id}
         )
 
         if background_job is not None:
             return BackgroundJob(**background_job)
+
+    def create_and_append_event(self, background_job_id: str, event: EventCreate):
+        background_job = self.db.connection[self.collection].find_one(
+            {"_id": background_job_id}
+        )
+        if background_job is None:
+            return None
+
+        payload = {"events": background_job["events"]}
+        payload["events"].append(Event(**event.to_json()).to_json())
+
+        return BackgroundJob(
+            **self.db.connection[self.collection].find_one_and_update({"_id": background_job_id},
+                                                                      {"$set": payload},
+                                                                      return_document=ReturnDocument.AFTER))
