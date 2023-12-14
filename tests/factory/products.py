@@ -2,7 +2,7 @@ from app.models import ModelsExtension
 from app.models.products import Product, ProductCreate, ProductsModel
 from app.services import Database
 from bson import ObjectId
-
+from typing import Union
 
 class ProductsFactory:
     db: Database
@@ -16,7 +16,7 @@ class ProductsFactory:
         self.db.connection[self.models.products.collection].delete_one({
                                                                        "_id": product_id})
 
-    def create(self, input_data: Product | ProductCreate):
+    def create(self, input_data: Union[Product, ProductCreate]):
         if isinstance(input_data, Product):
             product = self.models.products.put(input_data)
         else:
