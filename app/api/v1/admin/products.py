@@ -4,6 +4,8 @@ from pymongo import ReturnDocument
 from validator import rules as R, validate
 
 from app.middlewares import requires_auth, requires_role
+from app.models import get_models
+from app.models.products import ProductCreate
 from app.services import get_services
 from lib.http_utils import respond_error, respond_success
 
@@ -124,15 +126,13 @@ def create_product():
                 return respond_error(f'Bad request.', 400)
         else:
             _, data, errors = validation_result
-            return respond_error(f'Bad request. {errors}', 400)
+            if errors:
+                return respond_error(f'Bad request. {errors}', 400)
 
-        db = get_services(current_app).db.connection
+        products_model = get_models(current_app).products
+        created_product = products_model.create(ProductCreate(**data))
 
-        db.products.insert_one(data)
-
-        data["_id"] = str(data["_id"])
-
-        return respond_success(data)
+        return respond_success(created_product.as_json())
     except Exception as e:
         return respond_error(f'Internal server error. {e}', 500)
 

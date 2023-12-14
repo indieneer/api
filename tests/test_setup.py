@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.models.background_jobs import BackgroundJobsModel
 from app.models.products import ProductCreate
 from app.models.profiles import ProfileCreate
+from app.models.tags import TagCreate
 
 from app.models.products import Media, Requirements
 
@@ -23,7 +24,7 @@ from app.models import (
     TagsModel
 )
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory
 from tests.fixtures import Fixtures
 
 from tests.integration_test import IntegrationTest
@@ -43,7 +44,7 @@ def setup_integration_tests(suite: TestSuite):
             f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
         )
 
-        # TODO: extract to somewhere to make accessable in tests
+        # TODO: extract to somewhere to make accessible in tests
         strong_password = "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:"
         weak_password = "12345678"
 
@@ -68,6 +69,9 @@ def setup_integration_tests(suite: TestSuite):
                 services=services, models=models
             ),
             products=ProductsFactory(
+                db=db, models=models
+            ),
+            tags=TagsFactory(
                 db=db, models=models
             )
         )
@@ -133,16 +137,22 @@ def setup_integration_tests(suite: TestSuite):
                 )
             )
         )
+
+        tag, cleanup = factory.tags.create(TagCreate(
+            "Test tag",
+        ))
+        cleanups.append(cleanup)
+
         cleanups.append(cleanup)
 
         fixtures = Fixtures(
             regular_user=regular_user,
             admin_user=admin_user,
             product=product,
+            tag=tag,
         )
 
         # Inject dependencies
-
         def inject_recursively(suite: TestSuite):
             for test_case in suite:
                 if isinstance(test_case, TestSuite):
@@ -159,4 +169,4 @@ def setup_integration_tests(suite: TestSuite):
     except Exception as e:
         print(e)
 
-    return lambda: [cleanup() for cleanup in cleanups]
+    return lambda: [fixture_cleanup() for fixture_cleanup in cleanups]

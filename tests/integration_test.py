@@ -1,28 +1,14 @@
 from unittest import TestCase
-import unittest.result
 import typing
-
-from bson import ObjectId
-
-from app.models.products import ProductCreate
-from app.models.profiles import ProfileCreate
-
-from app.models.products import Media, Requirements
-
-from config import app_config
 from app.main import app
 from app.services import (
-    Database,
-    ManagementAPI,
     ServicesExtension
 )
 from app.models import (
-    ProfilesModel,
     ModelsExtension,
-    LoginsModel, ProductsModel
 )
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory
+from tests.factory import Factory
 from tests.fixtures import Fixtures
 
 

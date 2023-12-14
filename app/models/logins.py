@@ -1,6 +1,6 @@
 from app.services import Database, ManagementAPI
 from config import app_config
-
+from auth0.authentication import GetToken
 
 class LoginsModel:
     auth0: ManagementAPI
@@ -16,5 +16,15 @@ class LoginsModel:
             realm='Username-Password-Authentication',
             scope="openid profile email address phone offline_access",
             grant_type="password",
+            audience=app_config["AUTH0_AUDIENCE"]
+        )
+
+    def login_m2m(self, client_id: str, client_secret: str):
+        return GetToken(
+            app_config["AUTH0_DOMAIN"],
+            client_id,
+            client_secret=client_secret
+        ).client_credentials(
+            grant_type="client_credentials",
             audience=app_config["AUTH0_AUDIENCE"]
         )
