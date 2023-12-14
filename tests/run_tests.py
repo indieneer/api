@@ -42,6 +42,7 @@ from tests.test_setup import setup_integration_tests
 
 cli_parser = argparse.ArgumentParser(description='CLI for test runs')
 
+# Setup arguments for CLI
 cli_parser.add_argument(
     "-t", "--type", type=str, help="\"unit\" or \"integration\"")
 cli_parser.add_argument(
@@ -49,16 +50,18 @@ cli_parser.add_argument(
 cli_parser.add_argument(
     "-r", "--run", type=str, help="regular expression that matches a test function, e.g. \"^test_incorrect_token\"")
 
-# Parse args
+# Parse CLI arguments
 args = cli_parser.parse_args()
 
 # if args.file is None and args.type is None and args.run is None:
 #     cli_parser.error(
 #         "Either \"--file\", \"--type\" or \"--run\" must be present")
 
+# Settings for discovery
 start_dir = "."
 discovery_pattern = "test_*.py"
 
+# Adjust discovery pattern based on specified test type
 if args.type is not None:
     if args.type == "unit":
         discovery_pattern = UnitTest.DISCOVERY_PATTERN
@@ -81,8 +84,6 @@ tests_count = {
 }
 
 # Scan tests
-
-
 def create_callback():
     def count_test(test_case: unittest.TestCase):
         if isinstance(test_case, UnitTest):
@@ -122,12 +123,8 @@ def scan_skip_recursively(suite: unittest.TestSuite, callback: Callable[[unittes
 
             scan_skip_recursively(test_case, callback)
         else:
-            should_pick = callback(test_case)
-
-            if should_pick:
-                continue
-
-            to_remove.append(test_case)
+            if not callback(test_case):
+                to_remove.append(test_case)
 
     for test_case in to_remove:
         suite._tests.remove(test_case)
