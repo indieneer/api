@@ -1,5 +1,6 @@
-from flask import Blueprint, request, current_app
+from flask import Blueprint, request, current_app, g
 
+from app.middlewares import requires_auth
 from app.models import get_models
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobPatch, EventCreate
 from lib.http_utils import respond_success, respond_error
@@ -9,6 +10,7 @@ background_jobs_controller = Blueprint(
 
 
 @background_jobs_controller.route('/health', methods=["GET"])
+@requires_auth
 def health():
     return respond_success({
         "alive": True
@@ -16,6 +18,7 @@ def health():
 
 
 @background_jobs_controller.route('/<string:job_id>', methods=["GET"])
+@requires_auth
 def get_background_job(job_id: str):
     """
     Retrieve a background job by its ID.
@@ -33,6 +36,7 @@ def get_background_job(job_id: str):
 
 
 @background_jobs_controller.route('/', methods=["GET"])
+@requires_auth
 def get_background_jobs():
     """
     Retrieve all background jobs.
@@ -44,6 +48,7 @@ def get_background_jobs():
 
 
 @background_jobs_controller.route('/', methods=["POST"])
+@requires_auth
 def create_background_job():
     """
     Create a new background job.
@@ -58,12 +63,13 @@ def create_background_job():
     if data is None or not all(key in data for key in ('type', 'metadata')):
         return respond_error("Bad request.", 400)
 
-    background_job = background_job_model.create(BackgroundJobCreate(**data, created_by="admin"))
+    background_job = background_job_model.create(BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
 
     return respond_success(background_job.to_json(), status_code=201)
 
 
 @background_jobs_controller.route('/<string:job_id>', methods=["PATCH"])
+@requires_auth
 def update_background_job(job_id: str):
     """
     Update a background job.
@@ -89,6 +95,7 @@ def update_background_job(job_id: str):
 
 
 @background_jobs_controller.route('/<string:job_id>/events', methods=["POST"])
+@requires_auth
 def create_background_job_event(job_id: str):
     """
     Create a new background job event.
