@@ -36,3 +36,25 @@ def logins():
 
     return respond_success(tokens)
 
+@logins_controller.route('/m2m', methods=["POST"])
+def logins_m2m():
+    """
+    TBD
+    """
+    logins_model = get_models(current_app).logins
+
+    data = request.get_json()
+
+    client_id = data.get("client_id")
+    client_secret = data.get("client_secret")
+
+    # Input validation
+    if not client_id or not client_secret:
+        return respond_error("Client ID and client secret are required.", 400)
+
+    try:
+        tokens = logins_model.login_m2m(client_id, client_secret)
+    except Auth0Error as error:
+        return respond_error(error.message, error.status_code)
+
+    return respond_success(tokens)
