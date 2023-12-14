@@ -43,7 +43,7 @@ def setup_integration_tests(suite: TestSuite):
             f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
         )
 
-        # TODO: extract to somewhere to make accessable in tests
+        # TODO: extract to somewhere to make accessible in tests
         strong_password = "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:"
         weak_password = "12345678"
 
@@ -151,7 +151,6 @@ def setup_integration_tests(suite: TestSuite):
         )
 
         # Inject dependencies
-
         def inject_recursively(suite: TestSuite):
             for test_case in suite:
                 if isinstance(test_case, TestSuite):
@@ -168,4 +167,4 @@ def setup_integration_tests(suite: TestSuite):
     except Exception as e:
         print(e)
 
-    return lambda: [cleanup() for cleanup in cleanups]
+    return lambda: [fixture_cleanup() for fixture_cleanup in cleanups]
