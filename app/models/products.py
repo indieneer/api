@@ -145,6 +145,38 @@ class ProductsModel:
             return Product(**product_data)
         return None
 
+    def get_all(self):
+        """
+        Retrieve all products from the database.
+
+        This method fetches all products from the database and returns them as a list of Product objects.
+        If there are no products found, it returns an empty list.
+
+        :return: A list of Product objects representing all the products in the database.
+        :rtype: list[Product]
+        """
+        products = [Product(**item) for item in self.db.connection[self.collection].find()]
+
+        return products if products else []
+
+    def get_by_slug(self, product_slug: str) -> Optional[Product]:
+        """
+        Retrieve a product by its slug.
+
+        This method fetches a product from the database based on its unique slug.
+        A slug is a human-readable, URL-friendly identifier used to represent a product.
+
+        :param str product_slug: The slug of the product to be retrieved.
+        :return: The product data if found, otherwise None.
+        :rtype: Optional[Product]
+        """
+        product_data = self.db.connection[self.collection].find_one(
+            {"slug": product_slug})
+
+        if product_data:
+            return Product(**product_data)
+        return None
+
     def create(self, input_data: ProductCreate) -> Product:
         """
         Create a new product in the database, including a slugified name.
