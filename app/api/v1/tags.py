@@ -12,7 +12,6 @@ def get_tags():
     """
     Retrieve all tags.
 
-    This endpoint requires authentication and is accessible only to users with an 'admin' role.
     It retrieves all tags from the database.
 
     :return: A success response with the list of all tags.
