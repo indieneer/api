@@ -1,6 +1,7 @@
-from flask import Blueprint, request, current_app
-from app.services import get_services
-from lib.http_utils import respond_success, respond_error
+from flask import Blueprint, current_app
+
+from app.models import get_models
+from lib.http_utils import respond_success
 
 tags_controller = Blueprint(
     'tags', __name__, url_prefix='/tags')
@@ -9,22 +10,15 @@ tags_controller = Blueprint(
 @tags_controller.route('/', methods=["GET"])
 def get_tags():
     """
-    Retrieve tags from the database.
+    Retrieve all tags.
 
-    The function fetches tags from the database.
+    This endpoint requires authentication and is accessible only to users with an 'admin' role.
+    It retrieves all tags from the database.
 
-    :return: A list of tags or an error message.
-    :rtype: Response
+    :return: A success response with the list of all tags.
+    :rtype: dict
     """
+    tags_model = get_models(current_app).tags
+    tags = [tag.as_json() for tag in tags_model.get_all()]
 
-    db = get_services(current_app).db.connection
-
-    tags = []
-    for tag in db["tags"].find({}):
-        tag["_id"] = str(tag["_id"])
-        tags.append(tag)
-
-    if tags:
-        return respond_success(tags, status_code=200)
-
-    return respond_error("not found", 404)
+    return respond_success(tags)
