@@ -1,88 +1,16 @@
 import datetime
-from enum import Enum
-from typing import Optional, Dict, List, Type
+from typing import Optional, Dict, List
 from dataclasses import dataclass
 
 from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.services import Database
-from . import BaseDocument, Serializable
-
-
-class BaseMetadata(Serializable):
-    def __init__(self, **kwargs):
-        pass
-
-
-@dataclass
-class EsSeederMetadata(BaseMetadata):
-    match_query: str
-
-
-JOB_METADATA: Dict[str, Type[BaseMetadata]] = {
-    "es_seeder": EsSeederMetadata
-}
-JOB_TYPES = JOB_METADATA.keys()
-
-
-class JobMetadata:
-    """
-    Factory class to create metadata objects based on the job type.
-    """
-
-    @staticmethod
-    def create(job_type: str, **kwargs) -> BaseMetadata:
-        """
-        Creates a metadata object based on the job type.
-
-        :param job_type: The job type.
-        :param kwargs: The metadata.
-        :return: The metadata object.
-        """
-        metadata = JOB_METADATA.get(job_type)
-
-        if metadata is None:
-            raise ValueError(f"Unsupported job type: {job_type}")
-
-        return metadata(**kwargs)
-
-
-class StatusType(Enum):
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCESS = "success"
-    ERROR = "error"
-
-
-class EventType(Enum):
-    ERROR = "error"
-    INFO = "info"
-
-
-class Event(Serializable):
-    """
-    Event class of Background Job.
-    """
-
-    type: str
-    message: str
-    date: datetime.datetime
-
-    def __init__(
-            self,
-            type: str,
-            message: str
-    ):
-        self.type = type
-        self.message = message
-        self.date = datetime.datetime.utcnow()
-
-
-@dataclass
-class EventCreate(Serializable):
-    type: str
-    message: str
+from .event import Event, EventCreate
+from .metadata import BaseMetadata, JobMetadata
+from .status_type import StatusType
+from .validator import validate_job_type, validate_status, validate_event_type
+from ..base import BaseDocument, Serializable
 
 
 class BackgroundJob(BaseDocument):
@@ -141,22 +69,6 @@ class BackgroundJobsModel:
     def __init__(self, db: Database) -> None:
         self.db = db
 
-    def validate_job_type(self, job_type):
-        if job_type not in JOB_TYPES:
-            raise ValueError("Unsupported job type")
-
-    def validate_status(self, status):
-        try:
-            StatusType(status)
-        except ValueError:
-            raise ValueError("Unsupported status")
-
-    def validate_event_type(self, event_type):
-        try:
-            EventType(event_type)
-        except ValueError:
-            raise ValueError("Unsupported event type")
-
     def get_all(self):
         background_jobs = []
 
@@ -176,7 +88,7 @@ class BackgroundJobsModel:
             return BackgroundJob(**background_job)
 
     def create(self, input_data: BackgroundJobCreate):
-        self.validate_job_type(input_data.type)
+        validate_job_type(input_data.type)
 
         # temporary... very temporary
         background_job = BackgroundJob(**input_data.to_json())
@@ -202,7 +114,7 @@ class BackgroundJobsModel:
                                                      **payload["metadata"]).to_json()
 
         if payload.get("status") is not None:
-            self.validate_status(payload["status"])
+            validate_status(payload["status"])
 
         updated = self.db.connection[self.collection].find_one_and_update({"_id": ObjectId(background_job_id)},
                                                                           {"$set": payload},
@@ -219,6 +131,8 @@ class BackgroundJobsModel:
             return BackgroundJob(**background_job)
 
     def create_and_append_event(self, background_job_id: str, event: EventCreate):
+        validate_event_type(event.type)
+
         updated = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(background_job_id)},
             {"$push": {"events": Event(**event.to_json()).to_json()}},

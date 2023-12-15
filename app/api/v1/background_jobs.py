@@ -1,8 +1,6 @@
-import json
-
 from flask import Blueprint, request, current_app, g
 
-from app.middlewares import requires_auth
+from app.middlewares import requires_auth, requires_service_account
 from app.models import get_models, exceptions as models_exceptions
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate
 from lib.http_utils import respond_success
@@ -28,6 +26,7 @@ def get_background_job(job_id: str):
 
     :param str job_id: The ID of the background job to retrieve.
     :return: The requested background job in JSON format.
+    :raises NotFoundException: If the background job with the given ID does not exist.
     :rtype: dict
     """
     background_job = get_models(current_app).background_jobs.get(job_id)
@@ -55,6 +54,7 @@ def get_background_jobs():
 
 @background_jobs_controller.route('/', methods=["POST"])
 @requires_auth
+@requires_service_account
 def create_background_job():
     """
     Create a new background job.
@@ -82,6 +82,7 @@ def update_background_job(job_id: str):
 
     :param str job_id: The ID of the background job to update.
     :return: The updated background job in JSON format.
+    :raises NotFoundException: If the background job with the given ID does not exist.
     :rtype: dict
     """
     data = request.get_json()
@@ -108,6 +109,7 @@ def create_background_job_event(job_id: str):
 
     :param str job_id: The ID of the background job to update.
     :return: The updated background job in JSON format.
+    :raises NotFoundException: If the background job with the given ID does not exist.
     :rtype: dict
     """
     data = request.get_json()
