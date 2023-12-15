@@ -13,8 +13,9 @@ def requires_service_account(f):
         sub = g.get("payload").get("sub")
         if not sub:
             return respond_error("missing decoded user", 500)
-
-        if sub.split("@")[1] == "clients":
+        print(sub, "sub")
+        # try:
+        if "@" in sub and sub.split("@")[1] == "clients":
             return f(*args, **kwargs)
         else:
             raise AuthError("no permission", 403)

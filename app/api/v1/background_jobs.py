@@ -12,6 +12,7 @@ background_jobs_controller = Blueprint(
 
 @background_jobs_controller.route('/health', methods=["GET"])
 @requires_auth
+@requires_service_account
 def health():
     return respond_success({
         "alive": True
@@ -20,6 +21,7 @@ def health():
 
 @background_jobs_controller.route('/<string:job_id>', methods=["GET"])
 @requires_auth
+@requires_service_account
 def get_background_job(job_id: str):
     """
     Retrieve a background job by its ID.
@@ -39,6 +41,7 @@ def get_background_job(job_id: str):
 
 @background_jobs_controller.route('/', methods=["GET"])
 @requires_auth
+@requires_service_account
 def get_background_jobs():
     """
     Retrieve all background jobs.
@@ -76,6 +79,7 @@ def create_background_job():
 
 @background_jobs_controller.route('/<string:job_id>', methods=["PATCH"])
 @requires_auth
+@requires_service_account
 def update_background_job(job_id: str):
     """
     Update a background job.
@@ -103,6 +107,7 @@ def update_background_job(job_id: str):
 
 @background_jobs_controller.route('/<string:job_id>/events', methods=["POST"])
 @requires_auth
+@requires_service_account
 def create_background_job_event(job_id: str):
     """
     Create a new background job event.

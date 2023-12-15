@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from bson import ObjectId
 from pymongo import ReturnDocument
 
+from ..base import BaseDocument, Serializable
 from app.services import Database
 from .event import Event, EventCreate
 from .metadata import BaseMetadata, JobMetadata
 from .status_type import StatusType
 from .validator import validate_job_type, validate_status, validate_event_type
-from ..base import BaseDocument, Serializable
 
 
 class BackgroundJob(BaseDocument):

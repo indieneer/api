@@ -28,12 +28,14 @@ class ModelsExtension:
             products: ProductsModel,
             profiles: ProfilesModel,
             logins: LoginsModel,
-            tags: TagsModel
+            tags: TagsModel,
+            background_jobs: BackgroundJobsModel
     ) -> None:
         self.products = products
         self.profiles = profiles
         self.logins = logins
         self.tags = tags
+        self.background_jobs = background_jobs
 
     def init_app(self, app: Flask):
         app.extensions[self.KEY] = self
