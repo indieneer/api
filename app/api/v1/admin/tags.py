@@ -98,7 +98,7 @@ def create_tag():
 
     created_tag = tags_model.create(TagCreate(validated_data["name"]))
 
-    return respond_success(created_tag.as_json(), status_code=201)
+    return respond_success(created_tag.to_json(), status_code=201)
 
 
 @tags_controller.route('/<string:tag_id>', methods=["PATCH"])
