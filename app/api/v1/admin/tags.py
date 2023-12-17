@@ -5,6 +5,7 @@ from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.tags import TagCreate, TagPatch
 from lib.http_utils import respond_error, respond_success
+from lib import db_utils
 from app.api.exceptions import UnprocessableEntityException
 
 tags_controller = Blueprint('tags', __name__, url_prefix='/tags')
@@ -27,10 +28,9 @@ def get_tags():
     :return: A success response with the list of all tags.
     :rtype: dict
     """
-    tags_model = get_models(current_app).tags
-    tags = [tag.as_json() for tag in tags_model.get_all()]
+    tags = get_models(current_app).tags.get_all()
 
-    return respond_success(tags)
+    return respond_success(db_utils.to_json(tags))
 
 
 @tags_controller.route('/<string:tag_id>', methods=["GET"])
@@ -48,15 +48,14 @@ def get_tag_by_id(tag_id):
     :return: A success response with the details of the requested tag.
     :rtype: dict
     """
-    tags_model = get_models(current_app).tags
-
     try:
-        tag_data = tags_model.get(tag_id)
+        tags =  get_models(current_app).tags
+        tag = tags.get(tag_id)
 
-        if tag_data is None:
+        if tag is None:
             raise IndexError(f'The tag with ID {tag_id} was not found.')
 
-        return respond_success(tag_data.as_json())
+        return respond_success(tag.to_json())
 
     except IndexError:
         return respond_error(f'The tag with ID {tag_id} was not found.', 404)
@@ -94,9 +93,9 @@ def create_tag():
         if errors:
             raise UnprocessableEntityException(f'Bad Request. {errors}')
 
-    tags_model = get_models(current_app).tags
+    tags = get_models(current_app).tags
 
-    created_tag = tags_model.create(TagCreate(validated_data["name"]))
+    created_tag = tags.create(TagCreate(validated_data["name"]))
 
     return respond_success(created_tag.to_json(), status_code=201)
 
@@ -125,14 +124,14 @@ def update_tag(tag_id):
         invalid_keys = [key for key in update_data if key not in GENRE_FIELDS]
         raise UnprocessableEntityException(f'The keys {invalid_keys} are not allowed.')
 
-    tags_model = get_models(current_app).tags
+    tags = get_models(current_app).tags
 
-    updated_tag = tags_model.patch(tag_id, TagPatch(name=update_data["name"]))
+    updated_tag = tags.patch(tag_id, TagPatch(name=update_data["name"]))
 
     if updated_tag is None:
         return respond_error(f'The tag with ID {tag_id} was not found.', 404)
 
-    return respond_success(updated_tag.as_json())
+    return respond_success(updated_tag.to_json())
 
 
 @tags_controller.route('/<string:tag_id>', methods=["DELETE"])
@@ -150,9 +149,9 @@ def delete_tag(tag_id):
     :return: A success response indicating successful deletion of the tag.
     :rtype: dict
     """
-    tags_model = get_models(current_app).tags
+    tags = get_models(current_app).tags
 
-    deleted_tag = tags_model.delete(tag_id)
+    deleted_tag = tags.delete(tag_id)
 
     if deleted_tag is None:
         return respond_error(f'The tag with ID {tag_id} was not found.', 404)
