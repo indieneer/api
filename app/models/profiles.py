@@ -15,10 +15,9 @@ class Profile(BaseDocument):
         self,
         email: str,
         idp_id: str,
-        _id: Optional[ObjectId] = None,
         **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
 
         self.email = email
         self.idp_id = idp_id
@@ -77,20 +76,20 @@ class ProfilesModel:
         self.auth0.client.users.add_roles(idp_id, roles)
 
         # Create a user in database
-        profile = Profile(**input_data.to_json(), idp_id=idp_id).to_json()
-        self.db.connection[self.collection].insert_one(profile)
+        profile = Profile(**input_data.to_json(), idp_id=idp_id)
+        self.db.connection[self.collection].insert_one(profile.to_bson())
 
         # Store internal user id on Auth0 user's metadata
         self.auth0.client.users.update(
             idp_id,
             {
                 "user_metadata": {
-                    "profile_id": str(profile["_id"])
+                    "profile_id": str(profile._id)
                 }
             }
         )
 
-        return Profile(**profile)
+        return profile
 
     def patch(self, user_id: str, input_data: ProfilePatch):
         raise Exception("Not implemented.")
