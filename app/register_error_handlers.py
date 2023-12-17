@@ -1,5 +1,3 @@
-import traceback
-
 from flask import Flask
 
 from lib.http_utils import respond_error
@@ -35,6 +33,7 @@ def handle_internal_server_error_exception(e: handlers_exceptions.InternalServer
 
 
 def handle_uncaught_exceptions(e: Exception):
+    print(str(e))
     return respond_error(f'{e.__class__.__name__}: {str(e)}', 500)
 
 
