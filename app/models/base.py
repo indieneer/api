@@ -24,7 +24,9 @@ class BaseDocument(Serializable):
         self.updated_at = kwargs.get("updated_at", now)
 
     def clone(self):
-        return deepcopy(self)
+        copied = deepcopy(self)
+        copied._id = ObjectId()
+        return copied
 
     def __str__(self) -> str:
         return json.dumps(self.to_json())
