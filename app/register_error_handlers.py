@@ -9,7 +9,7 @@ from app.api import exceptions as handlers_exceptions
 
 
 def handle_auth_error(e: AuthError):
-    return respond_error(e.error["description"], e.status_code)
+    return respond_error(e.error, e.status_code)
 
 
 # Models exceptions
