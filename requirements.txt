@@ -15,6 +15,7 @@ dnspython==2.4.2
 ecdsa==0.18.0
 Flask==2.3.3
 Flask-Cors==4.0.0
+flask-http-middleware=0.4.2
 frozenlist==1.4.0
 gunicorn==21.2.0
 idna==3.4
