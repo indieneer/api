@@ -54,7 +54,7 @@ class TagsTestCase(UnitTest):
             )
             expected_response = {
                 "status": "error",
-                "error": "Exception: BANG!"
+                "error": "BANG!"
             }
 
             # when
