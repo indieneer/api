@@ -1,6 +1,4 @@
 from flask import Flask
-
-from app.models import BackgroundJobsModel
 from .configure_app import configure_app
 from .register_routes import register_routes
 from .register_middlewares import register_middlewares
@@ -25,7 +23,10 @@ def main():
         ProfilesModel,
         ProductsModel,
         LoginsModel,
-        TagsModel
+        TagsModel,
+        PlatformsModel,
+        PlatformsOSModel,
+        BackgroundJobsModel
     )
 
     # create dependencies
@@ -46,8 +47,10 @@ def main():
 
     models = ModelsExtension(
         profiles=ProfilesModel(db=db, auth0=auth0),
-        logins=LoginsModel(auth0=auth0),
         products=ProductsModel(db=db),
+        platforms=PlatformsModel(db=db),
+        platforms_os=PlatformsOSModel(db=db),
+        logins=LoginsModel(auth0=auth0),
         tags=TagsModel(db=db),
         background_jobs=BackgroundJobsModel(db=db)
     )

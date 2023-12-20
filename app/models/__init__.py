@@ -2,7 +2,8 @@ from typing import cast
 
 from flask import Flask
 
-from .base import BaseDocument, Serializable
+from .platforms import PlatformsModel
+from .platforms_os import PlatformsOSModel
 from .profiles import ProfilesModel
 from .logins import LoginsModel
 from .products import ProductsModel
@@ -24,15 +25,19 @@ class ModelsExtension:
     background_jobs: BackgroundJobsModel
 
     def __init__(
-            self,
-            products: ProductsModel,
-            profiles: ProfilesModel,
-            logins: LoginsModel,
-            tags: TagsModel,
-            background_jobs: BackgroundJobsModel
+        self,
+        products: ProductsModel,
+        profiles: ProfilesModel,
+        platforms: PlatformsModel,
+        platforms_os: PlatformsOSModel,
+        logins: LoginsModel,
+        tags: TagsModel,
+        background_jobs: BackgroundJobsModel
     ) -> None:
         self.products = products
         self.profiles = profiles
+        self.platforms = platforms
+        self.platforms_os = platforms_os
         self.logins = logins
         self.tags = tags
         self.background_jobs = background_jobs

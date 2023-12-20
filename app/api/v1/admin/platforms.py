@@ -4,7 +4,7 @@ from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.api import exceptions as handlers_exceptions
 from app.models.platforms import PlatformCreate, PlatformPatch
-from lib.http_utils import respond_success
+from lib.http_utils import respond_success, respond_error
 
 platforms_controller = Blueprint(
     'platforms', __name__, url_prefix='/platforms')
@@ -35,6 +35,32 @@ def get_platforms():
     platforms = [platform.as_json() for platform in platforms_model.get_all()]
 
     return respond_success(platforms)
+
+
+@platforms_controller.route('/<string:platform_id>', methods=["GET"])
+@requires_auth
+@requires_role("admin")
+def get_platform_by_id(platform_id: str):
+    """
+    Retrieve a specific game store platform by its ID.
+
+    This endpoint fetches details of a particular game store platform from the database, identified by the platform_id.
+    It requires authentication and admin role permission to access.
+
+    :param str platform_id: The unique identifier of the game store platform to be retrieved.
+    :raises NotFoundException: If no platform is found with the given platform_id.
+    :return: A dictionary containing the details of the requested game store platform.
+    :rtype: Response
+    """
+
+    platforms_model = get_models(current_app).platforms
+    platform = platforms_model.get(platform_id)
+
+    if not platform:
+        return respond_error(f'The platform with ID {platform_id} was not found.', 404)
+
+    return respond_success(platform.as_json())
+
 
 
 @platforms_controller.route('/', methods=["POST"])
