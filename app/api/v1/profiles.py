@@ -3,10 +3,8 @@ from flask import Blueprint, request, g, current_app
 from app.middlewares import requires_auth
 from lib.http_utils import respond_error, respond_success
 
-from app.services import get_services
 from app.models import get_models, exceptions as models_exceptions
 from app.models.profiles import Profile, ProfileCreate, ProfilePatch
-from lib import db_utils
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
