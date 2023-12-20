@@ -20,6 +20,8 @@ class ModelsExtension:
 
     profiles: ProfilesModel
     products: ProductsModel
+    platforms: PlatformsModel
+    platforms_os: PlatformsOSModel
     logins: LoginsModel
     tags: TagsModel
     background_jobs: BackgroundJobsModel

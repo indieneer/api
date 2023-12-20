@@ -18,6 +18,8 @@ from app.services import (
 )
 from app.models import (
     ProfilesModel,
+    PlatformsModel,
+    PlatformsOSModel,
     ModelsExtension,
     LoginsModel,
     ProductsModel,
@@ -56,6 +58,8 @@ def setup_integration_tests(suite: TestSuite):
 
         models = ModelsExtension(
             profiles=ProfilesModel(auth0=auth0, db=db),
+            platforms=PlatformsModel(db=db),
+            platforms_os=PlatformsOSModel(db=db),
             logins=LoginsModel(auth0=auth0),
             products=ProductsModel(db=db),
             tags=TagsModel(db=db),

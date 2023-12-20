@@ -21,6 +21,8 @@ def main():
     from app.models import (
         ModelsExtension,
         ProfilesModel,
+        PlatformsModel,
+        PlatformsOSModel,
         ProductsModel,
         LoginsModel,
         TagsModel,
