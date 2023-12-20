@@ -15,10 +15,9 @@ class Tag(BaseDocument):
     def __init__(
         self,
         name: str,
-        _id: Optional[ObjectId] = None,
         **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
 
         self.name = name
 
@@ -85,9 +84,9 @@ class TagsModel:
         :return: The created Tag object.
         :rtype: Tag
         """
-        tag_data = input_data.to_json()
-        tag = Tag(**tag_data)
-        self.db.connection[self.collection].insert_one(tag.to_json())
+        tag = Tag(**input_data.to_json())
+
+        self.db.connection[self.collection].insert_one(tag.to_bson())
 
         return tag
 

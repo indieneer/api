@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
 
 from bson import ObjectId
@@ -15,51 +15,47 @@ from .validator import validate_job_type, validate_status, validate_event_type
 
 class BackgroundJob(BaseDocument):
     type: str
-    events: List[Event]
+    created_by: str
     metadata: BaseMetadata
     status: str
+    events: List[Event]
     message: Optional[str]
-    created_by: str
     started_at: Optional[datetime.datetime]
-    created_at: datetime.datetime
-    updated_at: datetime.datetime
 
     def __init__(
             self,
             type: str,
-            metadata: Dict[str, any],
             created_by: str,
-            events=None,
-            status: str = StatusType.PENDING.value,
-            message: Optional[str] = "",
+            metadata: Dict[str, Any],
+            status: Optional[str] = None,
+            events: Optional[List[Event]] = None,
+            message: Optional[str] = None,
             started_at: Optional[datetime.datetime] = None,
-            created_at: Optional[datetime.datetime] = datetime.datetime.utcnow(),
             **kwargs
     ) -> None:
-        super().__init__(kwargs.get("_id"))
+        super().__init__(**kwargs)
 
         self.type = type
-        self.events = events if events is not None else []
-        self.metadata = JobMetadata.create(self.type, **metadata)
-        self.status = status
-        self.message = message
         self.created_by = created_by
+        self.metadata = JobMetadata.create(self.type, **metadata)
+        self.status = status if status is not None else StatusType.PENDING.value
+        self.events = events if events is not None else []
+        self.message = message
         self.started_at = started_at
-        self.created_at = created_at
-        self.updated_at = datetime.datetime.utcnow()
+            
 
 
 @dataclass
 class BackgroundJobCreate(Serializable):
     type: str
-    metadata: Dict[str, any]
+    metadata: Dict[str, Any]
     created_by: str
 
 
 @dataclass
 class BackgroundJobPatch(Serializable):
     status: Optional[str] = None
-    metadata: Optional[Dict[str, any]] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class BackgroundJobsModel:
@@ -78,11 +74,9 @@ class BackgroundJobsModel:
         return background_jobs
 
     def get(self, background_job_id: str):
-        print(background_job_id, type(background_job_id), ObjectId(background_job_id))
         background_job = self.db.connection[self.collection].find_one(
             {"_id": ObjectId(background_job_id)}
         )
-        print(background_job)
 
         if background_job is not None:
             return BackgroundJob(**background_job)
@@ -90,15 +84,11 @@ class BackgroundJobsModel:
     def create(self, input_data: BackgroundJobCreate):
         validate_job_type(input_data.type)
 
-        # temporary... very temporary
-        background_job = BackgroundJob(**input_data.to_json())
-        temp_id = background_job._id
-        background_job_2 = background_job.as_json()
-        background_job_2["_id"] = temp_id
+        background_job = BackgroundJob(**input_data.to_bson())
 
-        self.db.connection[self.collection].insert_one(background_job_2)
+        self.db.connection[self.collection].insert_one(background_job.to_bson())
 
-        return BackgroundJob(**background_job_2)
+        return background_job
 
     def patch(self, background_job_id: str, input_data: BackgroundJobPatch):
         background_job = self.db.connection[self.collection].find_one({"_id": ObjectId(background_job_id)})
@@ -130,7 +120,7 @@ class BackgroundJobsModel:
         if background_job is not None:
             return BackgroundJob(**background_job)
 
-    def create_and_append_event(self, background_job_id: str, event: EventCreate):
+    def append_event(self, background_job_id: str, event: EventCreate):
         validate_event_type(event.type)
 
         updated = self.db.connection[self.collection].find_one_and_update(

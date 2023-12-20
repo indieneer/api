@@ -31,7 +31,7 @@ class TagsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_tag.as_json()
+                "data": mock_tag.to_json()
             }
 
             # when
@@ -113,7 +113,7 @@ class TagsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_tag.as_json()
+                "data": mock_tag.to_json()
             }
 
             # when
@@ -174,7 +174,7 @@ class TagsTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_tag.as_json()
+                "data": mock_tag.to_json()
             }
 
             # when

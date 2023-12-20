@@ -16,7 +16,7 @@ def requires_role(role: str):
             if not payload:
                 return respond_error("missing decoded user", 500)
 
-            roles = payload.get(app_config["AUTH0_NAMESPACE"] + "/roles")
+            roles = payload.get(app_config["AUTH0_NAMESPACE"] + "/roles", [])
             if role.capitalize() in roles:
                 return f(*args, **kwargs)
             else:

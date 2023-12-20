@@ -35,7 +35,7 @@ def get_profile(profile_id: str):
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(profile.as_json())
+    return respond_success(profile.to_json())
 
 
 @profiles_controller.route('/', methods=["POST"])
@@ -61,7 +61,7 @@ def create_profile():
 
     profile = profile_model.create(profile_data)
 
-    return respond_success(profile.as_json(), None, 201)
+    return respond_success(profile.to_json(), None, 201)
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
@@ -100,7 +100,7 @@ def update_profile(profile_id: str):
     if updated is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(updated.as_json())
+    return respond_success(updated.to_json())
 
 
 @profiles_controller.route('/<string:user_id>', methods=["DELETE"])
@@ -164,4 +164,4 @@ def get_authenticated_profile():
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(profile.as_json())
+    return respond_success(profile.to_json())

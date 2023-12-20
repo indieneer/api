@@ -4,6 +4,7 @@ from app.models import BackgroundJobsModel
 from .configure_app import configure_app
 from .register_routes import register_routes
 from .register_error_handlers import register_error_handlers
+from .register_middlewares import register_middlewares
 from config import app_config
 
 app = Flask(__name__)
@@ -11,6 +12,7 @@ app = Flask(__name__)
 configure_app(app)
 register_routes(app)
 register_error_handlers(app)
+register_middlewares(app)
 
 
 def main():

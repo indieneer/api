@@ -4,6 +4,7 @@ from app.middlewares import requires_auth, requires_service_account
 from app.models import get_models, exceptions as models_exceptions
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate
 from lib.http_utils import respond_success
+from lib import db_utils
 import app.api.exceptions as exceptions
 
 background_jobs_controller = Blueprint(
@@ -38,7 +39,7 @@ def get_background_job(job_id: str):
     if background_job.created_by != g.get("payload").get("sub"):
         raise models_exceptions.ForbiddenException()
 
-    return respond_success(background_job.as_json())
+    return respond_success(background_job.to_json())
 
 
 @background_jobs_controller.route('/', methods=["GET"])
@@ -52,9 +53,8 @@ def get_all_background_jobs():
     :rtype: dict
     """
     jobs = get_models(current_app).background_jobs.get_all()
-    jobs = [job.as_json() for job in jobs]  # temporary
 
-    return respond_success(jobs)
+    return respond_success(db_utils.to_json(jobs))
 
 
 @background_jobs_controller.route('/', methods=["POST"])
@@ -72,11 +72,11 @@ def create_background_job():
 
     background_job_model = get_models(current_app).background_jobs
     if data is None or not all(key in data for key in ('type', 'metadata')):
-        return exceptions.BadRequestException("Not all required fields are present")
+        raise exceptions.BadRequestException("Not all required fields are present")
 
     background_job = background_job_model.create(BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
 
-    return respond_success(background_job.as_json(), status_code=201)
+    return respond_success(background_job.to_json(), status_code=201)
 
 
 @background_jobs_controller.route('/<string:job_id>', methods=["PATCH"])
@@ -94,7 +94,7 @@ def update_background_job(job_id: str):
     """
     data = request.get_json()
     if data is None or not any(key in data for key in ('status', 'metadata')):
-        return exceptions.BadRequestException("No valid fields are present")
+        raise exceptions.BadRequestException("No valid fields are present")
 
     background_job_model = get_models(current_app).background_jobs
 
@@ -109,9 +109,9 @@ def update_background_job(job_id: str):
         if background_job is None:
             raise models_exceptions.NotFoundException(BackgroundJob.__name__)
 
-        return respond_success(background_job.as_json())
+        return respond_success(background_job.to_json())
     except ValueError or TypeError as e:
-        return exceptions.BadRequestException(str(e))
+        raise exceptions.BadRequestException(str(e))
 
 
 @background_jobs_controller.route('/<string:job_id>/events', methods=["POST"])
@@ -135,10 +135,10 @@ def create_background_job_event(job_id: str):
         if background_job.created_by != g.get("payload").get("sub"):
             raise models_exceptions.ForbiddenException()
 
-        background_job = get_models(current_app).background_jobs.create_and_append_event(job_id, EventCreate(**data))
+        background_job = get_models(current_app).background_jobs.append_event(job_id, EventCreate(**data))
         if background_job is None:
             raise models_exceptions.NotFoundException(BackgroundJob.__name__)
 
-        return respond_success(background_job.as_json())
+        return respond_success(background_job.to_json())
     except ValueError as e:
-        return exceptions.BadRequestException(str(e))
+        raise exceptions.BadRequestException(str(e))
