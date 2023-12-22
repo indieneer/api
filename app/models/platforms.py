@@ -115,6 +115,33 @@ class PlatformsModel:
 
         return Platform(**platform_data)
 
+    def put(self, input_data: Platform):
+        """
+        Create a new platform in the database with a new ID.
+
+        This method creates a new platform based on the provided input data.
+        It first converts the input data into JSON, then creates a Platform object,
+        which is subsequently inserted into the database. The method generates
+        a new ID for the platform.
+
+        :param input_data: The platform data to be created.
+        :type input_data: Platform
+        :return: The created platform data with a new ID.
+        :rtype: Platform
+        """
+        platform_data = input_data.to_json()
+        # Remove the existing ID (if any) to ensure the creation of a new platform
+        platform_data.pop("_id", None)
+
+        # Generate a slug for the new platform
+        platform_data['slug'] = slugify(platform_data['name'])
+
+        # Insert the new platform into the database
+        inserted_id = self.db.connection[self.collection].insert_one(platform_data).inserted_id
+        platform_data["_id"] = inserted_id
+
+        return Platform(**platform_data)
+
     def patch(self, platform_id: str, input_data: PlatformPatch):
         """
         Update a platform in the database based on its ID.
@@ -133,13 +160,13 @@ class PlatformsModel:
         if not update_data:
             raise ValueError("No valid fields provided for update.")
 
+        update_data["slug"] = slugify(update_data["name"])
+
         updated_platform = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(platform_id)},
             {"$set": update_data},
             return_document=ReturnDocument.AFTER
         )
-
-        updated_platform["slug"] = slugify(updated_platform["name"])
 
         if updated_platform is not None:
             return Platform(**updated_platform)

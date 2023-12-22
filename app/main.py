@@ -22,7 +22,7 @@ def main():
         ModelsExtension,
         ProfilesModel,
         PlatformsModel,
-        PlatformsOSModel,
+        OperatingSystemsModel,
         ProductsModel,
         LoginsModel,
         TagsModel,
@@ -51,7 +51,7 @@ def main():
         profiles=ProfilesModel(db=db, auth0=auth0),
         products=ProductsModel(db=db),
         platforms=PlatformsModel(db=db),
-        platforms_os=PlatformsOSModel(db=db),
+        operating_systems=OperatingSystemsModel(db=db),
         logins=LoginsModel(auth0=auth0),
         tags=TagsModel(db=db),
         background_jobs=BackgroundJobsModel(db=db)

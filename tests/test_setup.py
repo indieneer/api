@@ -3,6 +3,8 @@ from unittest import TestSuite
 from bson import ObjectId
 
 from app.models.background_jobs import BackgroundJobsModel
+from app.models.operating_systems import OperatingSystemCreate
+from app.models.platforms import PlatformCreate
 from app.models.products import ProductCreate
 from app.models.profiles import ProfileCreate
 from app.models.tags import TagCreate
@@ -19,14 +21,14 @@ from app.services import (
 from app.models import (
     ProfilesModel,
     PlatformsModel,
-    PlatformsOSModel,
+    OperatingSystemsModel,
     ModelsExtension,
     LoginsModel,
     ProductsModel,
     TagsModel
 )
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, OperatingSystemsFactory
 from tests.fixtures import Fixtures
 
 from tests.integration_test import IntegrationTest
@@ -59,7 +61,7 @@ def setup_integration_tests(suite: TestSuite):
         models = ModelsExtension(
             profiles=ProfilesModel(auth0=auth0, db=db),
             platforms=PlatformsModel(db=db),
-            platforms_os=PlatformsOSModel(db=db),
+            operating_systems=OperatingSystemsModel(db=db),
             logins=LoginsModel(auth0=auth0),
             products=ProductsModel(db=db),
             tags=TagsModel(db=db),
@@ -77,7 +79,13 @@ def setup_integration_tests(suite: TestSuite):
             ),
             tags=TagsFactory(
                 db=db, models=models
-            )
+            ),
+            platforms=PlatformsFactory(
+                db=db, models=models
+            ),
+            operating_systems=OperatingSystemsFactory(
+                db=db, models=models
+            ),
         )
 
         regular_user, cleanup = factory.profiles.create(ProfileCreate(
@@ -147,12 +155,25 @@ def setup_integration_tests(suite: TestSuite):
         ))
         cleanups.append(cleanup)
 
+        platform, cleanup = factory.platforms.create(PlatformCreate(
+            name="Test Platform",
+            base_url="https://www.testplatform.com",
+            icon_url="https://www.testplatform.com/icon.ico",
+            enabled=True,
+        ))
+        cleanups.append(cleanup)
+
+        operating_system, cleanup = factory.operating_systems.create(OperatingSystemCreate(
+            name="TempleOS"
+        ))
         cleanups.append(cleanup)
 
         fixtures = Fixtures(
             regular_user=regular_user,
             admin_user=admin_user,
             product=product,
+            platform=platform,
+            operating_system=operating_system,
             tag=tag,
         )
 

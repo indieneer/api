@@ -3,7 +3,7 @@ from typing import cast
 from flask import Flask
 
 from .platforms import PlatformsModel
-from .platforms_os import PlatformsOSModel
+from .operating_systems import OperatingSystemsModel
 from .profiles import ProfilesModel
 from .logins import LoginsModel
 from .products import ProductsModel
@@ -21,7 +21,7 @@ class ModelsExtension:
     profiles: ProfilesModel
     products: ProductsModel
     platforms: PlatformsModel
-    platforms_os: PlatformsOSModel
+    platforms_os: OperatingSystemsModel
     logins: LoginsModel
     tags: TagsModel
     background_jobs: BackgroundJobsModel
@@ -31,7 +31,7 @@ class ModelsExtension:
         products: ProductsModel,
         profiles: ProfilesModel,
         platforms: PlatformsModel,
-        platforms_os: PlatformsOSModel,
+        operating_systems: OperatingSystemsModel,
         logins: LoginsModel,
         tags: TagsModel,
         background_jobs: BackgroundJobsModel
@@ -39,7 +39,7 @@ class ModelsExtension:
         self.products = products
         self.profiles = profiles
         self.platforms = platforms
-        self.platforms_os = platforms_os
+        self.operating_systems = operating_systems
         self.logins = logins
         self.tags = tags
         self.background_jobs = background_jobs
