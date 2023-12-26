@@ -212,4 +212,5 @@ class ProductsModel:
         """
         deletion_result = self.db.connection[self.collection].delete_one(
             {"_id": ObjectId(product_id)})
+
         return deletion_result.deleted_count
