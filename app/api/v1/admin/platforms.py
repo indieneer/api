@@ -139,4 +139,7 @@ def delete_platform(platform_id: str):
     platforms_model = get_models(current_app).platforms
     deleted_platform = platforms_model.delete(platform_id)
 
+    if deleted_platform is None:
+        return respond_error(f'The platform with ID {platform_id} was not found.', 404)
+
     return respond_success({"message": f"Platform id {platform_id} successfully deleted", "deleted_platform": deleted_platform.as_json()})

@@ -138,4 +138,7 @@ def delete_operating_system(operating_system_id: str):
     operating_systems_model = get_models(current_app).operating_systems
     deleted_operating_system = operating_systems_model.delete(operating_system_id)
 
+    if deleted_operating_system is None:
+        return respond_error(f'The operating system with ID {operating_system_id} was not found.', 404)
+
     return respond_success({"message": f"Operating system id {operating_system_id} successfully deleted", "deleted_os": deleted_operating_system.as_json()})
