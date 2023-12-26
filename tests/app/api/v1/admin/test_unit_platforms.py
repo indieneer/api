@@ -217,7 +217,7 @@ class PlatformsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_delete_platform(self, get_models: MagicMock):
-        # TODO: Implement tests
+        self.maxDiff = None
         delete_platform_mock = get_models.return_value.platforms.delete
 
         def call_api(platform_id):
@@ -228,5 +228,48 @@ class PlatformsTestCase(UnitTest):
             )
 
         def deletes_the_platform():
-            # TODO: Implement this test
-            ...
+            # given
+            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/", enabled=True,
+                                     icon_url="icon/url", slug="epic-games")
+            delete_platform_mock.return_value = mock_platform
+
+            expected_response = {
+                "status": "ok",
+                "data": {"deleted_platform": mock_platform.as_json(), "message": f'Platform id {mock_platform._id} successfully deleted'}
+            }
+
+            # when
+            response = call_api(mock_platform._id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            delete_platform_mock.assert_called_once_with(mock_platform._id)
+
+        def fails_to_delete_a_nonexistent_platform():
+            # given
+            mock_id = "2"
+            delete_platform_mock.return_value = None
+
+            expected_response = {
+                "status": "error",
+                "error": f"The platform with ID {mock_id} was not found."
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 404)
+            delete_platform_mock.assert_called_once_with(mock_id)
+
+        tests = [
+            deletes_the_platform,
+            fails_to_delete_a_nonexistent_platform
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+                delete_platform_mock.reset_mock()
