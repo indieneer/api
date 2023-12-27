@@ -120,7 +120,7 @@ class BackgroundJobsModel:
         if background_job is not None:
             return BackgroundJob(**background_job)
 
-    def append_event(self, background_job_id: str, event: EventCreate):
+    def add_event(self, background_job_id: str, event: EventCreate):
         validate_event_type(event.type)
 
         updated = self.db.connection[self.collection].find_one_and_update(

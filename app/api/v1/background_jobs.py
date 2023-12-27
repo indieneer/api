@@ -74,7 +74,11 @@ def create_background_job():
     if data is None or not all(key in data for key in ('type', 'metadata')):
         raise exceptions.BadRequestException("Not all required fields are present")
 
-    background_job = background_job_model.create(BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
+    try:
+        background_job = background_job_model.create(
+            BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
+    except ValueError as e:
+        raise exceptions.BadRequestException(str(e))
 
     return respond_success(background_job.to_json(), status_code=201)
 
@@ -135,7 +139,7 @@ def create_background_job_event(job_id: str):
         if background_job.created_by != g.get("payload").get("sub"):
             raise models_exceptions.ForbiddenException()
 
-        background_job = get_models(current_app).background_jobs.append_event(job_id, EventCreate(**data))
+        background_job = get_models(current_app).background_jobs.add_event(job_id, EventCreate(**data))
         if background_job is None:
             raise models_exceptions.NotFoundException(BackgroundJob.__name__)
 
