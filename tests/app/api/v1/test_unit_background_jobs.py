@@ -114,9 +114,10 @@ class BackgroundJobsTestCase(UnitTest):
     @patch("app.api.v1.background_jobs.get_models")
     def test_create_background_job(self, get_models: MagicMock):
         create_background_job_mock = get_models.return_value.background_jobs.create
+        service_account_id = "service_test@clients"
 
         def call_api(body):
-            token = create_test_token(profile_id="1", idp_id="service_test@clients")
+            token = create_test_token(profile_id="1", idp_id=service_account_id)
 
             return self.app.post(
                 "/v1/background_jobs",
@@ -125,16 +126,19 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def create_and_returns_a_background_job():
+        def creates_and_returns_a_background_job():
             # given
+            expected_input = BackgroundJobCreate(
+                type="es_seeder", metadata={"match_query": "test"}, created_by=service_account_id
+            )
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
-                type="es_seeder")
+                status="running",
+                created_by=expected_input.created_by,
+                metadata=expected_input.metadata,
+                type=expected_input.type
+            )
             create_background_job_mock.return_value = mock_background_job
 
-            expected_input = BackgroundJobCreate(
-                type="es_seeder", metadata={"match_query": "test"}, created_by="service_test@clients"
-            )
             expected_response = {
                 "status": "ok",
                 "data": mock_background_job.to_json()
@@ -143,7 +147,7 @@ class BackgroundJobsTestCase(UnitTest):
             # when
             response = call_api({
                 "type": "es_seeder",
-                "metadata": {"match_query": "test"}
+                "metadata": expected_input.metadata
             })
 
             # then
@@ -174,20 +178,22 @@ class BackgroundJobsTestCase(UnitTest):
                 "error": "Unsupported job type",
                 "status": "error"
             }
+            expected_input = BackgroundJobCreate(type="unsupported_type", metadata={}, created_by=service_account_id)
+            create_background_job_mock.side_effect = ValueError(expected_response["error"])
 
             # when
             response = call_api({
-                "type": "unsupported_type",
-                "metadata": {}
+                "type": expected_input.type,
+                "metadata": expected_input.metadata
             })
 
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 400)
-            create_background_job_mock.assert_not_called()
+            create_background_job_mock.assert_called_once_with(expected_input)
 
         tests = [
-            create_and_returns_a_background_job,
+            creates_and_returns_a_background_job,
             fails_to_create_a_background_job_when_not_all_required_fields_are_present,
             fails_to_create_a_background_job_when_type_is_not_supported
         ]
@@ -282,10 +288,12 @@ class BackgroundJobsTestCase(UnitTest):
 
     @patch("app.api.v1.background_jobs.get_models")
     def test_create_background_job_event(self, get_models: MagicMock):
+        get_background_job_mock = get_models.return_value.background_jobs.get
         create_background_job_event_mock = get_models.return_value.background_jobs.add_event
+        service_account_id = "service_test@clients"
 
         def call_api(background_job_id, body):
-            token = create_test_token(profile_id="1", idp_id="service_test@clients")
+            token = create_test_token(profile_id="1", idp_id=service_account_id)
 
             return self.app.post(
                 f"/v1/background_jobs/{background_job_id}/events",
@@ -294,20 +302,17 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def create_and_returns_a_background_job_event():
+        def creates_and_returns_a_background_job_event():
             # given
+            mock_event = Event(message="test", type="info")
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
-                type="es_seeder", events=[Event(
-                    message="test",
-                    type="info"
-                )])
+                status="running", created_by=service_account_id, metadata={"match_query": "test"},
+                type="es_seeder", events=[mock_event])
+
+            get_background_job_mock.return_value = mock_background_job
             create_background_job_event_mock.return_value = mock_background_job
 
-            expected_input = Event(
-                message="test",
-                type="info"
-            )
+            expected_input = EventCreate(message=mock_event.message, type=mock_event.type)
             expected_response = {
                 "status": "ok",
                 "data": mock_background_job.to_json()
@@ -315,8 +320,8 @@ class BackgroundJobsTestCase(UnitTest):
 
             # when
             response = call_api(mock_background_job._id, {
-                "type": "info",
-                "message": "hello"
+                "type": mock_event.type,
+                "message": mock_event.message
             })
 
             # then
@@ -325,10 +330,11 @@ class BackgroundJobsTestCase(UnitTest):
             create_background_job_event_mock.assert_called_once_with(mock_background_job._id, expected_input)
 
         tests = [
-            create_and_returns_a_background_job_event
+            creates_and_returns_a_background_job_event
         ]
 
         for test in tests:
             with self.subTest(test.__name__):
                 test()
+                get_background_job_mock.reset_mock()
                 create_background_job_event_mock.reset_mock()
