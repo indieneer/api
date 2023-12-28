@@ -46,7 +46,8 @@ cli_parser = argparse.ArgumentParser(description='CLI for test runs')
 cli_parser.add_argument(
     "-t", "--type", type=str, help="\"unit\" or \"integration\"")
 cli_parser.add_argument(
-    "-f", "--file", type=str, help="path to file starting from the current working directory, e.g. \".\\tests\\path\\to\\file.py\"")
+    "-f", "--file", type=str,
+    help="path to file starting from the current working directory, e.g. \".\\tests\\path\\to\\file.py\"")
 cli_parser.add_argument(
     "-r", "--run", type=str, help="regular expression that matches a test function, e.g. \"^test_incorrect_token\"")
 
@@ -82,6 +83,7 @@ tests_count = {
     "integration": 0,
     "other": 0
 }
+
 
 # Scan tests
 def create_callback():

@@ -148,11 +148,11 @@ def setup_integration_tests(suite: TestSuite):
 
         background_job, cleanup = factory.background_jobs.create(
             BackgroundJobCreate(
-                type="test",
+                type="es_seeder",
                 metadata={
-                    "test": "test"
+                    "match_query": "test"
                 },
-                created_by="test@clients"
+                created_by="service_test@clients"
             )
         )
         cleanups.append(cleanup)
@@ -180,6 +180,7 @@ def setup_integration_tests(suite: TestSuite):
 
         inject_recursively(suite)
     except Exception as e:
+        print("Failed to initialize integration tests")
         print(e)
 
     return lambda: [fixture_cleanup() for fixture_cleanup in cleanups]
