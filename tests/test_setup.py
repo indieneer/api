@@ -2,7 +2,7 @@ from unittest import TestSuite
 
 from bson import ObjectId
 
-from app.models.background_jobs import BackgroundJobsModel
+from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
 from app.models.products import ProductCreate
 from app.models.profiles import ProfileCreate
 from app.models.tags import TagCreate
@@ -24,7 +24,7 @@ from app.models import (
     TagsModel
 )
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, BackgroundJobsFactory
 from tests.fixtures import Fixtures
 
 from tests.integration_test import IntegrationTest
@@ -73,6 +73,9 @@ def setup_integration_tests(suite: TestSuite):
             ),
             tags=TagsFactory(
                 db=db, models=models
+            ),
+            background_jobs=BackgroundJobsFactory(
+                db=db, models=models
             )
         )
 
@@ -106,14 +109,14 @@ def setup_integration_tests(suite: TestSuite):
                             "name": "Trailer",
                             "thumbnail_url": "https://example.com",
                             "formats": {
-                                    "webm": {
-                                        "480": "https://example.com",
-                                        "max": "https://example.com"
-                                    },
+                                "webm": {
+                                    "480": "https://example.com",
+                                    "max": "https://example.com"
+                                },
                                 "mp4": {
-                                        "480": "https://example.com",
-                                        "max": "https://example.com"
-                                    }
+                                    "480": "https://example.com",
+                                    "max": "https://example.com"
+                                }
                             }
                         }
                     ],
@@ -143,6 +146,15 @@ def setup_integration_tests(suite: TestSuite):
         ))
         cleanups.append(cleanup)
 
+        background_job, cleanup = factory.background_jobs.create(
+            BackgroundJobCreate(
+                type="test",
+                metadata={
+                    "test": "test"
+                },
+                created_by="test@clients"
+            )
+        )
         cleanups.append(cleanup)
 
         fixtures = Fixtures(
@@ -150,6 +162,7 @@ def setup_integration_tests(suite: TestSuite):
             admin_user=admin_user,
             product=product,
             tag=tag,
+            background_job=background_job
         )
 
         # Inject dependencies

@@ -4,6 +4,7 @@ from app.services import Database
 from bson import ObjectId
 from typing import Union
 
+
 class ProductsFactory:
     db: Database
     model: ProductsModel
@@ -14,7 +15,7 @@ class ProductsFactory:
 
     def cleanup(self, product_id: ObjectId):
         self.db.connection[self.models.products.collection].delete_one({
-                                                                       "_id": product_id})
+            "_id": product_id})
 
     def create(self, input_data: Union[Product, ProductCreate]):
         if isinstance(input_data, Product):

@@ -112,6 +112,22 @@ class BackgroundJobsModel:
         if updated is not None:
             return BackgroundJob(**updated)
 
+    def put(self, input_data: BackgroundJob):
+        """
+        Create a new background job in the database with a new ID.
+        :param input_data: The background job data to be created.
+        :type input_data: BackgroundJob
+        :return: The created background job data with a new ID.
+        :rtype: BackgroundJob
+        """
+        background_job_data = input_data.to_json()
+        del background_job_data["_id"]
+
+        inserted_id = self.db.connection[self.collection].insert_one(background_job_data).inserted_id
+        background_job_data["_id"] = inserted_id
+
+        return BackgroundJob(**background_job_data)
+
     def delete(self, background_job_id: str):
         background_job = self.db.connection[self.collection].find_one_and_delete(
             {"_id": background_job_id}

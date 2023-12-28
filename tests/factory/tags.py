@@ -15,7 +15,7 @@ class TagsFactory:
 
     def cleanup(self, tag_id: ObjectId):
         self.db.connection[self.models.tags.collection].delete_one({
-                                                                       "_id": tag_id})
+            "_id": tag_id})
 
     def create(self, input_data: Union[Tag, TagCreate]):
         if isinstance(input_data, Tag):
