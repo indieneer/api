@@ -65,6 +65,7 @@ def create_background_job():
     Create a new background job.
 
     :return: The created background job in JSON format.
+    :raises BadRequestException: If the request body is not valid.
     :rtype: dict
     :status 201: Background job created successfully.
     """
@@ -77,10 +78,10 @@ def create_background_job():
     try:
         background_job = background_job_model.create(
             BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
+
+        return respond_success(background_job.to_json(), status_code=201)
     except ValueError as e:
         raise exceptions.BadRequestException(str(e))
-
-    return respond_success(background_job.to_json(), status_code=201)
 
 
 @background_jobs_controller.route('/<string:job_id>', methods=["PATCH"])
@@ -92,6 +93,7 @@ def update_background_job(job_id: str):
 
     :param str job_id: The ID of the background job to update.
     :return: The updated background job in JSON format.
+    :raises BadRequestException: If the request body is not valid.
     :raises NotFoundException: If the background job with the given ID does not exist.
     :raises ForbiddenException: If the background job was not created by the user.
     :rtype: dict
@@ -102,20 +104,22 @@ def update_background_job(job_id: str):
 
     background_job_model = get_models(current_app).background_jobs
 
-    try:
-        background_job = get_models(current_app).background_jobs.get(job_id)
-        if background_job is None:
-            raise models_exceptions.NotFoundException(BackgroundJob.__name__)
-        if background_job.created_by != g.get("payload").get("sub"):
-            raise models_exceptions.ForbiddenException()
+    background_job = get_models(current_app).background_jobs.get(job_id)
+    if background_job is None:
+        raise models_exceptions.NotFoundException(BackgroundJob.__name__)
+    if background_job.created_by != g.get("payload").get("sub"):
+        raise models_exceptions.ForbiddenException()
 
+    try:
         background_job = background_job_model.patch(job_id, BackgroundJobPatch(**data))
         if background_job is None:
             raise models_exceptions.NotFoundException(BackgroundJob.__name__)
 
         return respond_success(background_job.to_json())
-    except ValueError or TypeError as e:
+    except ValueError as e:
         raise exceptions.BadRequestException(str(e))
+    except TypeError:
+        raise exceptions.BadRequestException("Bad request.")
 
 
 @background_jobs_controller.route('/<string:job_id>/events', methods=["POST"])
@@ -127,18 +131,23 @@ def create_background_job_event(job_id: str):
 
     :param str job_id: The ID of the background job to update.
     :return: The updated background job in JSON format.
+    :raises BadRequestException: If the request body is not valid.
     :raises NotFoundException: If the background job with the given ID does not exist.
     :raises ForbiddenException: If the background job was not created by the user.
     :rtype: dict
     """
     data = request.get_json()
-    try:
-        background_job = get_models(current_app).background_jobs.get(job_id)
-        if background_job is None:
-            raise models_exceptions.NotFoundException(BackgroundJob.__name__)
-        if background_job.created_by != g.get("payload").get("sub"):
-            raise models_exceptions.ForbiddenException()
 
+    if data is None or not all(key in data for key in ('type', 'message')):
+        raise exceptions.BadRequestException("Not all required fields are present")
+
+    background_job = get_models(current_app).background_jobs.get(job_id)
+    if background_job is None:
+        raise models_exceptions.NotFoundException(BackgroundJob.__name__)
+    if background_job.created_by != g.get("payload").get("sub"):
+        raise models_exceptions.ForbiddenException()
+
+    try:
         background_job = get_models(current_app).background_jobs.add_event(job_id, EventCreate(**data))
         if background_job is None:
             raise models_exceptions.NotFoundException(BackgroundJob.__name__)
