@@ -129,12 +129,11 @@ class BackgroundJobsModel:
         return BackgroundJob(**background_job_data)
 
     def delete(self, background_job_id: str):
-        background_job = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": background_job_id}
+        background_job = self.db.connection[self.collection].delete_one(
+            {"_id": ObjectId(background_job_id)}
         )
 
-        if background_job is not None:
-            return BackgroundJob(**background_job)
+        return background_job.deleted_count
 
     def add_event(self, background_job_id: str, event: EventCreate):
         validate_event_type(event.type)
