@@ -1,7 +1,5 @@
-from app.main import app
-from app.models.products import ProductsModel, ProductPatch, ProductCreate, Product
+from app.models.products import ProductsModel, ProductPatch
 from tests.integration_test import IntegrationTest
-from copy import deepcopy
 
 
 class ProductsModelTestCase(IntegrationTest):
@@ -16,26 +14,38 @@ class ProductsModelTestCase(IntegrationTest):
         retrieved_product = products_model.get(str(product._id))
 
         # then
-        if retrieved_product is None:
-            self.assertIsNotNone(retrieved_product)
-        else:
-            self.assertEqual(product._id, retrieved_product._id)
+        self.assertIsNotNone(retrieved_product)
+        self.assertEqual(product.name, retrieved_product.name)
+
+    def test_create_product(self):
+        # given
+        product = self.fixtures.product.clone()
+
+        # when
+        created_product = self.models.products.create(product)
+        self.addCleanup(lambda: self.factory.products.cleanup(product._id))
+
+        # then
+        self.assertIsNotNone(created_product)
+        self.assertEqual(created_product.name, product.name)
+        self.assertEqual(created_product.detailed_description, product.detailed_description)
 
     def test_patch_product(self):
         products_model = ProductsModel(self.services.db)
 
         # given
-        product = self.fixtures.product
+        product = self.fixtures.product.clone()
         patch_data = ProductPatch(name="Updated Name")
 
+        created_product, cleanup = self.factory.products.create(product)
+        self.addCleanup(cleanup)
+
         # when
-        updated_product = products_model.patch(str(product._id), patch_data)
+        updated_product = products_model.patch(str(created_product._id), patch_data)
 
         # then
-        if updated_product is None:
-            self.assertIsNotNone(updated_product)
-        else:
-            self.assertEqual(updated_product.name, "Updated Name")
+        self.assertIsNotNone(updated_product)
+        self.assertEqual(updated_product.name, "Updated Name")
 
     def test_delete_product(self):
         products_model = ProductsModel(self.services.db)
