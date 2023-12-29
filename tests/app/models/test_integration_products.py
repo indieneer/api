@@ -1,7 +1,5 @@
-from app.main import app
-from app.models.products import ProductsModel, ProductPatch, ProductCreate, Product
+from app.models.products import ProductsModel, ProductPatch
 from tests.integration_test import IntegrationTest
-from copy import deepcopy
 
 
 class ProductsModelTestCase(IntegrationTest):
@@ -12,14 +10,32 @@ class ProductsModelTestCase(IntegrationTest):
         # given
         product = self.fixtures.product
 
+        created_product, cleanup = self.factory.products.create(product)
+        self.addCleanup(cleanup)
+
         # when
-        retrieved_product = products_model.get(str(product._id))
+        retrieved_product = products_model.get(str(created_product._id))
 
         # then
         if retrieved_product is None:
             self.assertIsNotNone(retrieved_product)
         else:
-            self.assertEqual(product._id, retrieved_product._id)
+            self.assertEqual(product.name, retrieved_product.name)
+
+    def test_create_product(self):
+        # given
+        product = self.fixtures.product
+
+        # when
+        created_product, cleanup = self.factory.products.create(product)
+        self.addCleanup(cleanup)
+
+        # then
+        if created_product is None:
+            self.assertIsNotNone(created_product)
+        else:
+            self.assertEqual(created_product.name, product.name)
+            self.assertEqual(created_product.detailed_description, product.detailed_description)
 
     def test_patch_product(self):
         products_model = ProductsModel(self.services.db)
@@ -28,8 +44,11 @@ class ProductsModelTestCase(IntegrationTest):
         product = self.fixtures.product
         patch_data = ProductPatch(name="Updated Name")
 
+        created_product, cleanup = self.factory.products.create(product)
+        self.addCleanup(cleanup)
+
         # when
-        updated_product = products_model.patch(str(product._id), patch_data)
+        updated_product = products_model.patch(str(created_product._id), patch_data)
 
         # then
         if updated_product is None:

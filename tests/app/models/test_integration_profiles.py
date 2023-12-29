@@ -1,3 +1,5 @@
+import random
+
 from app.main import app
 from app.models.profiles import ProfilesModel, ProfilePatch, ProfileCreate
 from tests.integration_test import IntegrationTest
@@ -21,7 +23,18 @@ class ProfilesModelTestCase(IntegrationTest):
         self.assertEqual(test_profile._id, retrieved_profile._id)
         self.assertEqual(test_profile.email, retrieved_profile.email)
 
+    def test_create_profile(self):
+        # given
+        factory = self.factory.profiles
+        salt = ''.join(random.choices('0123456789', k=10))
+        test_profile, cleanup = factory.create(ProfileCreate(email=f'{salt}test.pork@pork.com', password=f'JohnPork2003{salt}'))
+        self.addCleanup(cleanup)
+
+        self.assertEqual(test_profile.email, f'{salt}test.pork@pork.com')
+        self.assertIn("auth0|", test_profile.idp_id)
+
     def test_patch_profile(self):
+        # FIXME: Change this test after merging PR #42
         profiles_model = ProfilesModel(self.services.db, self.services.auth0)
 
         # given
