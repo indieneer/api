@@ -42,7 +42,6 @@ class BackgroundJob(BaseDocument):
         self.events = events if events is not None else []
         self.message = message
         self.started_at = started_at
-            
 
 
 @dataclass
@@ -66,6 +65,11 @@ class BackgroundJobsModel:
         self.db = db
 
     def get_all(self):
+        """
+        Get all background jobs from the database.
+        :return: The background jobs data.
+        :rtype: List[BackgroundJob]
+        """
         background_jobs = []
 
         for background_job in self.db.connection[self.collection].find():
@@ -74,6 +78,13 @@ class BackgroundJobsModel:
         return background_jobs
 
     def get(self, background_job_id: str):
+        """
+        Get a background job from the database.
+        :param background_job_id: The ID of the background job to be retrieved.
+        :type background_job_id: str
+        :return: The background job data.
+        :rtype: BackgroundJob
+        """
         background_job = self.db.connection[self.collection].find_one(
             {"_id": ObjectId(background_job_id)}
         )
@@ -82,6 +93,13 @@ class BackgroundJobsModel:
             return BackgroundJob(**background_job)
 
     def create(self, input_data: BackgroundJobCreate):
+        """
+        Create a new background job in the database with a new ID.
+        :param input_data: The background job data to be created.
+        :type input_data: BackgroundJobCreate
+        :return: The created background job data with a new ID.
+        :rtype: BackgroundJob
+        """
         validate_job_type(input_data.type)
 
         background_job = BackgroundJob(**input_data.to_bson())
@@ -91,6 +109,15 @@ class BackgroundJobsModel:
         return background_job
 
     def patch(self, background_job_id: str, input_data: BackgroundJobPatch):
+        """
+        Update a background job in the database.
+        :param background_job_id: The ID of the background job to be updated.
+        :type background_job_id: str
+        :param input_data: The background job data to be updated.
+        :type input_data: BackgroundJobPatch
+        :return: The updated background job data.
+        :rtype: BackgroundJob
+        """
         background_job = self.db.connection[self.collection].find_one({"_id": ObjectId(background_job_id)})
         if background_job is None:
             return None
@@ -121,6 +148,10 @@ class BackgroundJobsModel:
         :rtype: BackgroundJob
         """
         background_job_data = input_data.to_json()
+        validate_job_type(background_job_data["type"])
+        validate_status(background_job_data["status"])
+        for event in background_job_data["events"]:
+            validate_event_type(event["type"])
         del background_job_data["_id"]
 
         inserted_id = self.db.connection[self.collection].insert_one(background_job_data).inserted_id
@@ -129,6 +160,13 @@ class BackgroundJobsModel:
         return BackgroundJob(**background_job_data)
 
     def delete(self, background_job_id: str):
+        """
+        Delete a background job from the database.
+        :param background_job_id: The ID of the background job to be deleted.
+        :type background_job_id: str
+        :return: The number of deleted background jobs.
+        :rtype: int
+        """
         background_job = self.db.connection[self.collection].delete_one(
             {"_id": ObjectId(background_job_id)}
         )
@@ -136,6 +174,15 @@ class BackgroundJobsModel:
         return background_job.deleted_count
 
     def add_event(self, background_job_id: str, event: EventCreate):
+        """
+        Add a new event to the background job.
+        :param background_job_id: The ID of the background job to be updated.
+        :type background_job_id: str
+        :param event: The event to be added.
+        :type event: EventCreate
+        :return: The updated background job data.
+        :rtype: BackgroundJob
+        """
         validate_event_type(event.type)
 
         updated = self.db.connection[self.collection].find_one_and_update(
