@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from app.services import Database, ManagementAPI
 from config.constants import AUTH0_ROLES, Auth0Role
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 
 
 class Profile(BaseDocument):

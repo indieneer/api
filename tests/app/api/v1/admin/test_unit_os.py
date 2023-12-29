@@ -28,7 +28,7 @@ class OperatingSystemsTestCase(UnitTest):
             expected_input = OperatingSystemCreate(name=mock_os.name)
             expected_response = {
                 "status": "ok",
-                "data": mock_os.as_json()
+                "data": mock_os.to_json()
             }
 
             # when
@@ -45,7 +45,7 @@ class OperatingSystemsTestCase(UnitTest):
 
             expected_response = {
                 "status": "error",
-                "error": "Exception: Error creating OS"
+                "error": "Error creating OS"
             }
 
             # when
@@ -100,7 +100,7 @@ class OperatingSystemsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_os.as_json()
+                "data": mock_os.to_json()
             }
 
             # when
@@ -152,7 +152,7 @@ class OperatingSystemsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": {"deleted_os": mock_os.as_json(), "message": f'Operating system id {mock_os._id} successfully deleted'}
+                "data": {"deleted_os": mock_os.to_json(), "message": f'Operating system id {mock_os._id} successfully deleted'}
             }
 
             # when

@@ -10,38 +10,31 @@ class ProductsModelTestCase(IntegrationTest):
         # given
         product = self.fixtures.product
 
-        created_product, cleanup = self.factory.products.create(product)
-        self.addCleanup(cleanup)
-
         # when
-        retrieved_product = products_model.get(str(created_product._id))
+        retrieved_product = products_model.get(str(product._id))
 
         # then
-        if retrieved_product is None:
-            self.assertIsNotNone(retrieved_product)
-        else:
-            self.assertEqual(product.name, retrieved_product.name)
+        self.assertIsNotNone(retrieved_product)
+        self.assertEqual(product.name, retrieved_product.name)
 
     def test_create_product(self):
         # given
-        product = self.fixtures.product
+        product = self.fixtures.product.clone()
 
         # when
-        created_product, cleanup = self.factory.products.create(product)
-        self.addCleanup(cleanup)
+        created_product = self.models.products.create(product)
+        self.addCleanup(lambda: self.factory.products.cleanup(product._id))
 
         # then
-        if created_product is None:
-            self.assertIsNotNone(created_product)
-        else:
-            self.assertEqual(created_product.name, product.name)
-            self.assertEqual(created_product.detailed_description, product.detailed_description)
+        self.assertIsNotNone(created_product)
+        self.assertEqual(created_product.name, product.name)
+        self.assertEqual(created_product.detailed_description, product.detailed_description)
 
     def test_patch_product(self):
         products_model = ProductsModel(self.services.db)
 
         # given
-        product = self.fixtures.product
+        product = self.fixtures.product.clone()
         patch_data = ProductPatch(name="Updated Name")
 
         created_product, cleanup = self.factory.products.create(product)
@@ -51,10 +44,8 @@ class ProductsModelTestCase(IntegrationTest):
         updated_product = products_model.patch(str(created_product._id), patch_data)
 
         # then
-        if updated_product is None:
-            self.assertIsNotNone(updated_product)
-        else:
-            self.assertEqual(updated_product.name, "Updated Name")
+        self.assertIsNotNone(updated_product)
+        self.assertEqual(updated_product.name, "Updated Name")
 
     def test_delete_product(self):
         products_model = ProductsModel(self.services.db)

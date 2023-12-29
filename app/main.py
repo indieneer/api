@@ -21,13 +21,11 @@ def main():
     from app.models import (
         ModelsExtension,
         ProfilesModel,
-        PlatformsModel,
         OperatingSystemsModel,
         ProductsModel,
         LoginsModel,
         TagsModel,
         PlatformsModel,
-        PlatformsOSModel,
         BackgroundJobsModel
     )
 

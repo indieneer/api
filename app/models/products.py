@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from .utils import slugify
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 
 
 class Product(BaseDocument):
@@ -164,13 +164,13 @@ class ProductsModel:
         """
         Update a product in the database.
 
-        :param input_data: The product data to be updated.
-        :type input_data: Product
+        :param product: The product data to be updated.
+        :type product: Product
         :return: The updated product data.
         :rtype: Product
         """
-        self.db.connection[self.collection].insert_one(product.to_bson())
 
+        self.db.connection[self.collection].insert_one(product.to_bson())
         return product
 
     def patch(self, product_id: str, input_data: ProductPatch) -> Optional[Product]:

@@ -34,7 +34,7 @@ class PlatformsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_platform.as_json()
+                "data": mock_platform.to_json()
             }
 
             # when
@@ -63,7 +63,7 @@ class PlatformsTestCase(UnitTest):
             )
             expected_response = {
                 "status": "error",
-                "error": "Exception: BANG!"
+                "error": "BANG!"
             }
 
             # when
@@ -125,7 +125,7 @@ class PlatformsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_platform.as_json()
+                "data": mock_platform.to_json()
             }
 
             # when
@@ -189,7 +189,7 @@ class PlatformsTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_platform.as_json()
+                "data": mock_platform.to_json()
             }
 
             # when
@@ -235,7 +235,7 @@ class PlatformsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": {"deleted_platform": mock_platform.as_json(), "message": f'Platform id {mock_platform._id} successfully deleted'}
+                "data": {"deleted_platform": mock_platform.to_json(), "message": f'Platform id {mock_platform._id} successfully deleted'}
             }
 
             # when

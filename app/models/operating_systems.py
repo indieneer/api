@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pymongo import ReturnDocument
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 
 from .exceptions import NotFoundException
 
@@ -16,10 +16,9 @@ class OperatingSystem(BaseDocument):
     def __init__(
         self,
         name: str,
-        _id: Optional[ObjectId] = None,
         **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
 
         self.name = name
 
@@ -83,7 +82,7 @@ class OperatingSystemsModel:
         :rtype: OperatingSystem
         """
         # Prepare operating_system data for database insertion
-        operating_system_data = OperatingSystem(**input_data.to_json()).to_json()
+        operating_system_data = OperatingSystem(**input_data.to_json()).to_bson()
 
         # Insert the new operating_system into the database
         self.db.connection[self.collection].insert_one(operating_system_data)
@@ -101,9 +100,7 @@ class OperatingSystemsModel:
         :return: The newly created or replaced OperatingSystem object.
         :rtype: OperatingSystem
         """
-        operating_system_data = input_data.to_json()
-        # Remove the existing ID (if any) to ensure the creation of a new operating system
-        operating_system_data.pop("_id", None)
+        operating_system_data = input_data.to_bson()
 
         # Insert the new operating system into the database
         inserted_id = self.db.connection[self.collection].insert_one(operating_system_data).inserted_id

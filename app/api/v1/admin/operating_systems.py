@@ -5,6 +5,7 @@ from app.models.operating_systems import OperatingSystemCreate, OperatingSystemP
 from app.models import get_models
 from app.api import exceptions as handlers_exceptions
 from lib.http_utils import respond_success, respond_error
+from lib import db_utils
 
 operating_systems_controller = Blueprint(
     'operating-systems', __name__, url_prefix='/operating-systems')
@@ -29,9 +30,8 @@ def get_operating_systems():
     """
 
     operating_systems_model = get_models(current_app).operating_systems
-    operating_systems = [os.as_json() for os in operating_systems_model.get_all()]
 
-    return respond_success(operating_systems)
+    return respond_success(db_utils.to_json(operating_systems_model.get_all()))
 
 
 @operating_systems_controller.route('/<string:operating_system_id>', methods=["GET"])
@@ -55,7 +55,7 @@ def get_operating_system_by_id(operating_system_id: str):
     if not operating_system:
         return respond_error(f'The operating system with ID {operating_system_id} was not found.', 404)
 
-    return respond_success(operating_system.as_json())
+    return respond_success(operating_system.to_json())
 
 
 @operating_systems_controller.route('/', methods=["POST"])
@@ -84,7 +84,7 @@ def create_operating_system():
     operating_systems_model = get_models(current_app).operating_systems
     created_operating_system = operating_systems_model.create(OperatingSystemCreate(**new_os))
 
-    return respond_success(created_operating_system.as_json(), None, 201)
+    return respond_success(created_operating_system.to_json(), None, 201)
 
 
 @operating_systems_controller.route('/<string:operating_system_id>', methods=["PATCH"])
@@ -116,7 +116,7 @@ def update_operating_system(operating_system_id: str):
     operating_systems_model = get_models(current_app).operating_systems
     result = operating_systems_model.patch(operating_system_id, OperatingSystemPatch(**data))
 
-    return respond_success(result.as_json())
+    return respond_success(result.to_json())
 
 
 @operating_systems_controller.route('/<string:operating_system_id>', methods=["DELETE"])
@@ -141,4 +141,4 @@ def delete_operating_system(operating_system_id: str):
     if deleted_operating_system is None:
         return respond_error(f'The operating system with ID {operating_system_id} was not found.', 404)
 
-    return respond_success({"message": f"Operating system id {operating_system_id} successfully deleted", "deleted_os": deleted_operating_system.as_json()})
+    return respond_success({"message": f"Operating system id {operating_system_id} successfully deleted", "deleted_os": deleted_operating_system.to_json()})

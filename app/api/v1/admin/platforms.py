@@ -4,6 +4,7 @@ from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.api import exceptions as handlers_exceptions
 from app.models.platforms import PlatformCreate, PlatformPatch
+from lib import db_utils
 from lib.http_utils import respond_success, respond_error
 
 platforms_controller = Blueprint(
@@ -32,9 +33,8 @@ def get_platforms():
     """
 
     platforms_model = get_models(current_app).platforms
-    platforms = [platform.as_json() for platform in platforms_model.get_all()]
 
-    return respond_success(platforms)
+    return respond_success(db_utils.to_json(platforms_model.get_all()))
 
 
 @platforms_controller.route('/<string:platform_id>', methods=["GET"])
@@ -59,8 +59,7 @@ def get_platform_by_id(platform_id: str):
     if not platform:
         return respond_error(f'The platform with ID {platform_id} was not found.', 404)
 
-    return respond_success(platform.as_json())
-
+    return respond_success(platform.to_json())
 
 
 @platforms_controller.route('/', methods=["POST"])
@@ -88,7 +87,7 @@ def create_platform():
     platforms_model = get_models(current_app).platforms
     created_platform = platforms_model.create(PlatformCreate(**new_platform))
 
-    return respond_success(created_platform.as_json(), None, 201)
+    return respond_success(created_platform.to_json(), None, 201)
 
 
 @platforms_controller.route('/<string:platform_id>', methods=["PATCH"])
@@ -119,7 +118,7 @@ def update_platform(platform_id: str):
     platforms_model = get_models(current_app).platforms
     result = platforms_model.patch(platform_id, PlatformPatch(**data))
 
-    return respond_success(result.as_json())
+    return respond_success(result.to_json())
 
 
 @platforms_controller.route('/<string:platform_id>', methods=["DELETE"])
@@ -142,4 +141,4 @@ def delete_platform(platform_id: str):
     if deleted_platform is None:
         return respond_error(f'The platform with ID {platform_id} was not found.', 404)
 
-    return respond_success({"message": f"Platform id {platform_id} successfully deleted", "deleted_platform": deleted_platform.as_json()})
+    return respond_success({"message": f"Platform id {platform_id} successfully deleted", "deleted_platform": deleted_platform.to_json()})

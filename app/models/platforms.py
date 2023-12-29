@@ -6,7 +6,7 @@ from slugify import slugify
 from pymongo import ReturnDocument
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 
 from .exceptions import NotFoundException
 
@@ -25,10 +25,9 @@ class Platform(BaseDocument):
         enabled: bool,
         icon_url: str,
         base_url: str,
-        _id: Optional[ObjectId] = None,
         **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
 
         self.name = name
         self.slug = slug
@@ -108,7 +107,7 @@ class PlatformsModel:
         input_data.slug = slugify(input_data.name)
 
         # Prepare platform data for database insertion
-        platform_data = Platform(**input_data.to_json()).to_json()
+        platform_data = Platform(**input_data.to_json()).to_bson()
 
         # Insert the new platform into the database
         self.db.connection[self.collection].insert_one(platform_data)
@@ -129,9 +128,7 @@ class PlatformsModel:
         :return: The created platform data with a new ID.
         :rtype: Platform
         """
-        platform_data = input_data.to_json()
-        # Remove the existing ID (if any) to ensure the creation of a new platform
-        platform_data.pop("_id", None)
+        platform_data = input_data.to_bson()
 
         # Generate a slug for the new platform
         platform_data['slug'] = slugify(platform_data['name'])

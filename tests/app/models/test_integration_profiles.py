@@ -11,24 +11,21 @@ class ProfilesModelTestCase(IntegrationTest):
         profiles_model = ProfilesModel(self.services.db, self.services.auth0)
 
         # given
-        factory = self.factory.profiles
-        test_profile, cleanup = factory.create(ProfileCreate(email="test.pork@pork.com", password="JohnPork2003"))
-        self.addCleanup(cleanup)
+        fixture = self.fixtures.regular_user
 
         # when
-        retrieved_profile = profiles_model.get(str(test_profile._id))
+        retrieved_profile = profiles_model.get(str(fixture._id))
 
         # then
-        self.assertIsNotNone(test_profile._id)
-        self.assertEqual(test_profile._id, retrieved_profile._id)
-        self.assertEqual(test_profile.email, retrieved_profile.email)
+        self.assertIsNotNone(fixture._id)
+        self.assertEqual(fixture._id, retrieved_profile._id)
+        self.assertEqual(fixture.email, retrieved_profile.email)
 
     def test_create_profile(self):
         # given
-        factory = self.factory.profiles
         salt = ''.join(random.choices('0123456789', k=10))
-        test_profile, cleanup = factory.create(ProfileCreate(email=f'{salt}test.pork@pork.com', password=f'JohnPork2003{salt}'))
-        self.addCleanup(cleanup)
+        test_profile = self.models.profiles.create(ProfileCreate(email=f'{salt}test.pork@pork.com', password=f'JohnPork2003{salt}'))
+        self.addCleanup(lambda: self.factory.profiles.cleanup(test_profile._id))
 
         self.assertEqual(test_profile.email, f'{salt}test.pork@pork.com')
         self.assertIn("auth0|", test_profile.idp_id)
