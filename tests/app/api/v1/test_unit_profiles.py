@@ -7,7 +7,6 @@ from app.middlewares.requires_auth import create_test_token
 
 
 class ProfilesTestCase(UnitTest):
-
     @patch("app.api.v1.profiles.get_models")
     def test_create_profile(self, get_models: MagicMock):
         create_profile_mock = get_models.return_value.profiles.create
@@ -156,10 +155,8 @@ class ProfilesTestCase(UnitTest):
                 test()
                 get_profile_mock.reset_mock()
 
-    # TODO: rework
     @patch("app.api.v1.profiles.get_models")
     def test_patch_profile(self, get_models: MagicMock):
-        self.skipTest("Needs reworking")
         patch_profile_mock = get_models.return_value.profiles.patch
 
         def call_api(profile_id, body):
@@ -205,8 +202,155 @@ class ProfilesTestCase(UnitTest):
                 test()
                 patch_profile_mock.reset_mock()
 
-    def test_delete_profile(self):
-        pass
+    @patch("app.api.v1.profiles.get_models")
+    def test_delete_profile(self, get_models: MagicMock):
+        delete_profile_mock = get_models.return_value.profiles.delete
 
-    def test_get_authenticated_profile(self):
-        pass
+        def call_api(profile_id):
+            token = create_test_token(profile_id)
+
+            return self.app.delete(
+                f"/v1/profiles/{profile_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+        def deletes_and_returns_the_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test"
+            )
+            mock_id = str(mock_profile._id)
+            delete_profile_mock.return_value = mock_profile
+
+            expected_response = {
+                "status": "ok",
+                "data": {"acknowledged": True}
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            delete_profile_mock.assert_called_once_with(mock_id)
+
+        def deletes_not_found_profile_and_returns_an_error():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test"
+            )
+            mock_id = str(mock_profile._id)
+
+            delete_profile_mock.return_value = None
+
+            expected_response = {
+                "status": "error",
+                "error": "\"Profile\" not found."
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 404)
+            delete_profile_mock.assert_called_once_with(mock_id)
+
+        tests = [
+            deletes_and_returns_the_profile,
+            deletes_not_found_profile_and_returns_an_error
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+                delete_profile_mock.reset_mock()
+
+    @patch("app.api.v1.profiles.get_models")
+    def test_get_authenticated_profile(self, get_models: MagicMock):
+        get_profile_mock = get_models.return_value.profiles.get
+
+        def call_api(profile_id):
+            token = create_test_token(profile_id)
+
+            return self.app.get(
+                "/v1/profiles/me",
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+        def finds_and_returns_a_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test"
+            )
+            mock_id = str(mock_profile._id)
+            get_profile_mock.return_value = mock_profile
+
+            expected_response = {
+                "status": "ok",
+                "data": mock_profile.to_json()
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_profile_mock.assert_called_once_with(mock_id)
+
+        def no_profile_id_in_token_and_returns_an_error():
+            # given
+            expected_response = {
+                "status": "error",
+                "error": {
+                    "code": "authorization_header_missing",
+                    "description": "Authorization header is expected"
+                }
+            }
+
+            # when
+            response = self.app.get(
+                "/v1/profiles/me",
+                content_type='application/json'
+            )
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 401)
+            get_profile_mock.assert_not_called()
+
+        def wrong_profile_id_in_token_and_returns_an_error():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="auth0|test"
+            )
+            mock_id = str(mock_profile._id)
+            get_profile_mock.return_value = None
+
+            expected_response = {
+                "status": "error",
+                "error": "\"Profile\" not found."
+            }
+
+            # when
+            response = call_api(mock_id)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 404)
+            get_profile_mock.assert_called_once_with(mock_id)
+
+        tests = [
+            finds_and_returns_a_profile,
+            no_profile_id_in_token_and_returns_an_error,
+            wrong_profile_id_in_token_and_returns_an_error
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+                get_profile_mock.reset_mock()
