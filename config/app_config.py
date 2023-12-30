@@ -1,4 +1,7 @@
+from .environment import setup_environment
 from os import environ as env
+
+setup_environment()
 
 app_config = {
     "VERSION": env.get("VERSION", "0.0.1"),
