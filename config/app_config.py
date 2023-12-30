@@ -1,4 +1,3 @@
-from . import environment
 from os import environ as env
 
 app_config = {
