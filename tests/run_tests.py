@@ -39,6 +39,7 @@ from tests.test_setup import setup_integration_tests
 # 8. Find a specific test in a specific file
 #   $ python -m tests.run_tests --file ./tests/app/api/v1/test_unit_health.py --run ^test_get_health_exception$
 
+os.environ["PYTHON_ENV"] = "test"
 
 cli_parser = argparse.ArgumentParser(description='CLI for test runs')
 
