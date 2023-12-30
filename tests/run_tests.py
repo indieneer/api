@@ -7,7 +7,7 @@ import re
 import sys
 from typing import Callable, Any, Pattern
 
-from . import UnitTest, IntegrationTest, CustomTextTestResult
+from . import UnitTest, IntegrationTest, CustomTextTestResult, TestFailException
 from tests.test_setup import setup_integration_tests
 
 # Usage
@@ -153,6 +153,8 @@ try:
         stream=stream,
         resultclass=CustomTextTestResult,
     ).run(suite)
+except TestFailException:
+    sys.exit(1)
 except Exception as e:
     print(traceback.format_exc())
     print(e.__class__, str(e))

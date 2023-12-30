@@ -3,26 +3,19 @@ import unittest
 import time
 import unittest.case
 from colorama import Fore
-from pprint import pprint
 
+class TestFailException(Exception):
+    pass
 
 class CustomTextTestResult(unittest.runner.TextTestResult):
     start_time = 0.0
     results = {}
-    failed_count = 0
-    total_count = 0
-    subtests_failed_count = 0
-    subtests_count = 0
 
     def addSubTest(self, test: unittest.TestCase, subtest: unittest.TestCase, err: Any | None) -> None:
         super().addSubTest(test, subtest, err)
 
         test_title = self.getDescription(test)
         subtest_title = self.getDescription(subtest)
-
-        self.subtests_count += 1
-        if err is not None:
-            self.subtests_failed_count += 1
 
         if self.results.get(test_title) is None:
             print(test_title, "...", "RUNNING")
@@ -36,8 +29,10 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
         if failure is not None:
             status = "FAIL"
+            self.results[test_title]["status"] = "FAIL"
         elif error is not None:
             status = "ERROR"
+            self.results[test_title]["status"] = "FAIL"
         else:
             status = "PASS"
 
@@ -53,7 +48,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         })
 
     def addSuccess(self, test: unittest.TestCase) -> None:
-        self.total_count += 1
         title = self.getDescription(test)
         result = {} if self.results.get(title) is None else self.results[title]
 
@@ -65,9 +59,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
     def addFailure(self, test: unittest.TestCase, err: Any) -> None:
         super().addFailure(test, err)
-
-        self.total_count += 1
-        self.failed_count += 1
 
         title = self.getDescription(test)
         result = {} if self.results.get(title) is None else self.results[title]
@@ -83,9 +74,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
     def addError(self, test: unittest.TestCase, err: Any) -> None:
         super().addError(test, err)
-
-        self.total_count += 1
-        self.failed_count += 1
 
         title = self.getDescription(test)
         result = {} if self.results.get(title) is None else self.results[title]
@@ -132,7 +120,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         for test_name, result in self.results.items():
             if result.get("status", "PASS") != "PASS":
                 print("\n")
-                pprint(result)
                 title = f'{Fore.RED + result["status"] + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
                 print("=" * len(title))
                 print(title)
@@ -153,14 +140,6 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
                 failed_subtests = [
                     x for x in result["subtests"] if x["status"] != "PASS"]
 
-                if len(failed_subtests) == 0:
-                    continue
-
-                print("\n")
-                title = f'{Fore.RED + "FAIL" + Fore.RESET}: {Fore.YELLOW + test_name + Fore.RESET}'
-                print("=" * len(title))
-                print(title)
-                print("=" * len(title))
                 for subtest in failed_subtests:
                     tab = " " * 4
 
@@ -178,13 +157,27 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
                             [f'{tab * 2}{line}' for line in lines])
                         print(lines)
 
-        succeded_tests_count = self.total_count - self.failed_count
-        succeded_subtests_count = self.subtests_count - self.subtests_failed_count
-        print("\nSucceded %d of %d tests, %d of %d subtests. Skipped %d. Finished test run in %.3fs" %
-              (succeded_tests_count, self.total_count, succeded_subtests_count, self.subtests_count, len(self.skipped), total_time))
+        total_count = 0
+        failed_count = 0
+        total_subtests_count = 0
+        subtests_failed_count = 0
+        for result in self.results.values():
+            total_count += 1
+            if result["status"] != "PASS":
+                failed_count += 1
+            
+            for subtest in result.get("subtests", []):
+                total_subtests_count += 1
+                if subtest["status"] != "PASS":
+                    subtests_failed_count += 1
 
-        if self.failed_count != 0:
-            raise Exception("Test run failed")
+        succeded_tests_count = total_count - failed_count
+        succeded_subtests_count = total_subtests_count - subtests_failed_count
+        print("\nSucceded %d of %d tests, %d of %d subtests. Skipped %d. Finished test run in %.3fs" %
+              (succeded_tests_count, total_count, succeded_subtests_count, total_subtests_count, len(self.skipped), total_time))
+
+        if failed_count != 0:
+            raise TestFailException
 
     def colorize_status(self, status: str):
         if status == "PASS":
