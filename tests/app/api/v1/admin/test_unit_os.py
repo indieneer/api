@@ -80,7 +80,7 @@ class OperatingSystemsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_os_mock.reset_mock()
+            create_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_get_operating_system(self, get_models: MagicMock):
@@ -132,7 +132,7 @@ class OperatingSystemsTestCase(UnitTest):
         for test in [finds_and_returns_an_operating_system, does_not_find_an_operating_system_and_returns_an_error]:
             with self.subTest(test.__name__):
                 test()
-                get_os_mock.reset_mock()
+            get_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_delete_operating_system(self, get_models: MagicMock):
@@ -184,4 +184,4 @@ class OperatingSystemsTestCase(UnitTest):
         for test in [deletes_the_operating_system, fails_to_delete_a_nonexistent_operating_system]:
             with self.subTest(test.__name__):
                 test()
-                delete_os_mock.reset_mock()
+            delete_os_mock.reset_mock()

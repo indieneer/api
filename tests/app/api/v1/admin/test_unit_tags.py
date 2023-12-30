@@ -93,7 +93,7 @@ class TagsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_tag_mock.reset_mock()
+            create_tag_mock.reset_mock()
 
     @patch("app.api.v1.admin.tags.get_models")
     def test_get_tag(self, get_models: MagicMock):
@@ -150,7 +150,7 @@ class TagsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                get_tag_mock.reset_mock()
+            get_tag_mock.reset_mock()
 
     @patch("app.api.v1.admin.tags.get_models")
     def test_patch_tag(self, get_models: MagicMock):
@@ -195,7 +195,7 @@ class TagsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                patch_tag_mock.reset_mock()
+            patch_tag_mock.reset_mock()
 
     @patch("app.api.v1.admin.tags.get_models")
     def test_delete_tag(self, get_models: MagicMock):
@@ -252,4 +252,4 @@ class TagsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                delete_tag_mock.reset_mock()
+            delete_tag_mock.reset_mock()

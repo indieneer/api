@@ -97,7 +97,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_profile_mock.reset_mock()
+            create_profile_mock.reset_mock()
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_profile(self, get_models: MagicMock):
@@ -154,7 +154,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                get_profile_mock.reset_mock()
+            get_profile_mock.reset_mock()
 
     # TODO: rework
     @patch("app.api.v1.profiles.get_models")
@@ -203,7 +203,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                patch_profile_mock.reset_mock()
+            patch_profile_mock.reset_mock()
 
     def test_delete_profile(self):
         pass

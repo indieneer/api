@@ -105,7 +105,7 @@ class PlatformsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_platform_mock.reset_mock()
+            create_platform_mock.reset_mock()
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_get_platform(self, get_models: MagicMock):
@@ -162,7 +162,7 @@ class PlatformsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                get_platform_mock.reset_mock()
+            get_platform_mock.reset_mock()
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_patch_platform(self, get_models: MagicMock):
@@ -213,7 +213,7 @@ class PlatformsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                patch_platform_mock.reset_mock()
+            patch_platform_mock.reset_mock()
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_delete_platform(self, get_models: MagicMock):
@@ -272,4 +272,4 @@ class PlatformsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                delete_platform_mock.reset_mock()
+            delete_platform_mock.reset_mock()
