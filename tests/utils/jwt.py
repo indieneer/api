@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+from typing import Dict
 from jose import jwt
 
 from app.middlewares.requires_auth import RequiresAuthExtension
+from app.middlewares.requires_role import RequiresRoleExtension
 
 TEST_SECRET_KEY = "testsecretkey"
 TEST_AUTH0_DOMAIN = "indieneer.eu.auth0.com"
@@ -39,3 +41,9 @@ class MockRequiresAuthExtension(RequiresAuthExtension):
             audience=TEST_AUTH0_AUDIENCE,
             issuer=f"https://{TEST_AUTH0_DOMAIN}/"
         )
+        
+class MockRequiresRoleExtension(RequiresRoleExtension):
+    def verify_role(self, payload: Dict, role: str):
+        roles = payload.get(TEST_AUTH0_NAMESPACE + "/roles", [])
+
+        return role.capitalize() in roles

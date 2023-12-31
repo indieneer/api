@@ -1,4 +1,5 @@
 from flask import Flask
+from app.middlewares.requires_role import RequiresRoleExtension
 
 from config import app_config
 
@@ -60,6 +61,9 @@ def main(app: Flask):
     
     auth_extension = RequiresAuthExtension()
     auth_extension.init_app(app)
+    
+    role_extension = RequiresRoleExtension()
+    role_extension.init_app(app)
 
     # run initializers
     if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:

@@ -1,7 +1,7 @@
 from flask import Flask
+from app.configure_app import configure_app
 import testicles
-from tests.utils.jwt import MockRequiresAuthExtension
-
+from tests.utils.jwt import MockRequiresAuthExtension, MockRequiresRoleExtension
 
 class UnitTest(testicles.UnitTest):
     def setUp(self) -> None:
@@ -12,3 +12,8 @@ class UnitTest(testicles.UnitTest):
 
         auth_extension = MockRequiresAuthExtension()
         auth_extension.init_app(self.app)
+
+        role_extension = MockRequiresRoleExtension()
+        role_extension.init_app(self.app)
+
+        configure_app(self.app)

@@ -1,3 +1,4 @@
+from app.middlewares.requires_role import RequiresRoleExtension
 import testicles
 import typing
 from bson import ObjectId
@@ -110,6 +111,9 @@ class IntegrationTest(testicles.IntegrationTest):
             
             auth_extension = RequiresAuthExtension()
             auth_extension.init_app(app)
+            
+            role_extension = RequiresRoleExtension()
+            role_extension.init_app(app)
 
             factory = Factory(
                 profiles=ProfilesFactory(
