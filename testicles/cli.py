@@ -11,6 +11,7 @@ from typing import Callable, Any, Pattern
 from .unit_test import UnitTest
 from .integration_test import IntegrationTest
 from .text_test_result import CustomTextTestResult, TestFailException
+from .environment import setup_environment
 
 # Usage
 #
@@ -62,6 +63,9 @@ args = cli_parser.parse_args()
 start_dir = args.start_dir
 top_level_dir = args.top_level_dir
 discovery_pattern = "test_*.py"
+
+# Setup env
+setup_environment(args.type)
 
 # Adjust discovery pattern based on specified test type
 if args.type is not None:

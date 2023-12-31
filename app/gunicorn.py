@@ -1,3 +1,3 @@
 from .main import main, app
 
-main()
+main(app)
