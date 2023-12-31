@@ -173,7 +173,7 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
 
         succeded_tests_count = total_count - failed_count
         succeded_subtests_count = total_subtests_count - subtests_failed_count
-        print("\nSucceded %d of %d tests, %d of %d subtests. Skipped %d. Finished test run in %.3fs" %
+        print("\nSucceded %d of %d tests, %d of %d subtests. Skipped %d. Finished test run in %.3fs\n" %
               (succeded_tests_count, total_count, succeded_subtests_count, total_subtests_count, len(self.skipped), total_time))
 
         if failed_count != 0:

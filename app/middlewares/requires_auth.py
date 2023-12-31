@@ -12,15 +12,16 @@ from config import app_config
 cache = {"data_json": None, "timestamp": float()}
 
 TEST_SECRET_KEY = "testsecretkey"
+TEST_AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
+TEST_AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
+TEST_AUTH0_NAMESPACE = app_config["AUTH0_NAMESPACE"]
 
+def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None=None):
+    """Used for unit testing
+    """
 
-def create_test_token(profile_id, idp_id='auth0|1', roles=None):
     if roles is None:
         roles = []
-
-    AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
-    AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
-    AUTH0_NAMESPACE = app_config["AUTH0_NAMESPACE"]
 
     return jwt.encode(
         {
@@ -28,10 +29,10 @@ def create_test_token(profile_id, idp_id='auth0|1', roles=None):
             "iat": int(datetime.utcnow().timestamp()),
             "exp": int((datetime.utcnow() + timedelta(days=1)).timestamp()),
             "scope": [],
-            f"{AUTH0_NAMESPACE}/profile_id": profile_id,
-            f"{AUTH0_NAMESPACE}/roles": [role.capitalize() for role in roles],
-            "aud": AUTH0_AUDIENCE,
-            "iss": "https://" + AUTH0_DOMAIN + "/"
+            f"{TEST_AUTH0_NAMESPACE}/profile_id": profile_id,
+            f"{TEST_AUTH0_NAMESPACE}/roles": [role.capitalize() for role in roles],
+            "aud": TEST_AUTH0_AUDIENCE,
+            "iss": "https://" + TEST_AUTH0_DOMAIN + "/"
         },
         TEST_SECRET_KEY,
         algorithm="HS256"
@@ -44,17 +45,14 @@ def mocked_requires_auth(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
-        AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
-
         token = get_token_auth_header()
 
         payload = jwt.decode(
             token,
             TEST_SECRET_KEY,
             algorithms=["HS256"],
-            audience=AUTH0_AUDIENCE,
-            issuer=f"https://{AUTH0_DOMAIN}/"
+            audience=TEST_AUTH0_AUDIENCE,
+            issuer=f"https://{TEST_AUTH0_DOMAIN}/"
         )
 
         g.payload = payload

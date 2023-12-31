@@ -1,5 +1,3 @@
-from typing import Dict
-
 from tests import IntegrationTest
 
 from flask import Flask
