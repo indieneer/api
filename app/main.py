@@ -30,7 +30,6 @@ def main():
     )
 
     # create dependencies
-    # TODO: add dependency injection for test runs
     db = Database(app_config["MONGO_URI"], timeoutMS=3000)
     auth0 = ManagementAPI(
         app_config["AUTH0_DOMAIN"],
@@ -57,7 +56,6 @@ def main():
     models.init_app(app)
 
     # run initializers
-
     if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
         initializers.run(services)
 
