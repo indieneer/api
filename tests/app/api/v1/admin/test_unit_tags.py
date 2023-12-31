@@ -3,7 +3,7 @@ import json
 
 from tests import UnitTest
 from app.models.tags import TagCreate, Tag, TagPatch
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 
 
 class TagsTestCase(UnitTest):

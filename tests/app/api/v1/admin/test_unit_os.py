@@ -3,7 +3,7 @@ import json
 
 from tests import UnitTest
 from app.models.operating_systems import OperatingSystemCreate, OperatingSystem, OperatingSystemPatch
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 
 
 class OperatingSystemsTestCase(UnitTest):

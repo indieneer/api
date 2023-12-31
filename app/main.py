@@ -1,4 +1,6 @@
 from flask import Flask
+
+from app.middlewares.requires_auth import RequiresAuthExtension
 from .configure_app import configure_app
 from .register_routes import register_routes
 from .register_middlewares import register_middlewares
@@ -54,6 +56,9 @@ def main():
         background_jobs=BackgroundJobsModel(db=db)
     )
     models.init_app(app)
+    
+    auth_extension = RequiresAuthExtension()
+    auth_extension.init_app(app)
 
     # run initializers
     if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:

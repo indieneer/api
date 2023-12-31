@@ -1,9 +1,9 @@
 import time
-from datetime import datetime, timedelta
 from functools import wraps
+from typing import cast
 
 import requests
-from flask import g, current_app
+from flask import Flask, g, current_app
 from jose import jwt, exceptions
 
 from . import AuthError, get_token_auth_header
@@ -11,67 +11,16 @@ from config import app_config
 
 cache = {"data_json": None, "timestamp": float()}
 
-TEST_SECRET_KEY = "testsecretkey"
-TEST_AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
-TEST_AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
-TEST_AUTH0_NAMESPACE = app_config["AUTH0_NAMESPACE"]
-
-def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None=None):
-    """Used for unit testing
+class RequiresAuthExtension:
+    """Workaround to inject custom JWT validator for unit testing
     """
+    
+    KEY = "requires_auth"
 
-    if roles is None:
-        roles = []
+    def init_app(self, app: Flask):
+        app.extensions[self.KEY] = self
 
-    return jwt.encode(
-        {
-            "sub": idp_id,
-            "iat": int(datetime.utcnow().timestamp()),
-            "exp": int((datetime.utcnow() + timedelta(days=1)).timestamp()),
-            "scope": [],
-            f"{TEST_AUTH0_NAMESPACE}/profile_id": profile_id,
-            f"{TEST_AUTH0_NAMESPACE}/roles": [role.capitalize() for role in roles],
-            "aud": TEST_AUTH0_AUDIENCE,
-            "iss": "https://" + TEST_AUTH0_DOMAIN + "/"
-        },
-        TEST_SECRET_KEY,
-        algorithm="HS256"
-    )
-
-
-def mocked_requires_auth(f):
-    """Used for unit testing
-    """
-
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = get_token_auth_header()
-
-        payload = jwt.decode(
-            token,
-            TEST_SECRET_KEY,
-            algorithms=["HS256"],
-            audience=TEST_AUTH0_AUDIENCE,
-            issuer=f"https://{TEST_AUTH0_DOMAIN}/"
-        )
-
-        g.payload = payload
-
-        return f(*args, **kwargs)
-
-    return decorated
-
-
-def requires_auth(f):
-    """Determines if the Access Token is valid
-    """
-
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        # Use mocked wrapper for test purposes
-        if current_app.testing:
-            return mocked_requires_auth(f)(*args, **kwargs)
-
+    def verify_token(self, token: str):
         AUTH0_DOMAIN = app_config["AUTH0_DOMAIN"]
         AUTH0_AUDIENCE = app_config["AUTH0_AUDIENCE"]
 
@@ -85,7 +34,6 @@ def requires_auth(f):
         else:
             data_json = cache["data_json"]
 
-        token = get_token_auth_header()
         jwks = data_json
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
@@ -121,11 +69,34 @@ def requires_auth(f):
                                     "Unable to parse authentication"
                                     " token."}, 401)
 
-            # g stands for global and tears down as soon as the request is processed
-            g.payload = payload
-
-            return f(*args, **kwargs)
+            return payload
         raise AuthError({"code": "invalid_header",
                         "description": "Unable to find appropriate key"}, 401)
+    
+def get_requires_auth(app: Flask):
+    """Retrieves the Models extension from a Flask app
+
+    Args:
+        app (Flask): flask application
+
+    Returns:
+        ModelsExtension: services
+    """
+
+    return cast(RequiresAuthExtension, app.extensions[RequiresAuthExtension.KEY])
+
+def requires_auth(f):
+    """Determines if the Access Token is valid
+    """
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = get_token_auth_header()
+        # Depending on environment (test/prod), the output of the get_requires_auth will be either mocked or real functionality
+        payload = get_requires_auth(current_app).verify_token(token)
+        # g stands for global and tears down as soon as the request is processed
+        g.payload = payload
+        
+        return f(*args, **kwargs)
 
     return decorated

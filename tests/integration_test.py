@@ -1,3 +1,4 @@
+from app.middlewares.requires_auth import RequiresAuthExtension
 import testicles
 import typing
 from bson import ObjectId
@@ -98,8 +99,10 @@ class IntegrationTest(testicles.IntegrationTest):
                 tags=TagsModel(db=db),
                 background_jobs=BackgroundJobsModel(db=db)
             )
-
             models.init_app(app)
+            
+            auth_extension = RequiresAuthExtension()
+            auth_extension.init_app(app)
 
             factory = Factory(
                 profiles=ProfilesFactory(

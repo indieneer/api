@@ -3,7 +3,7 @@ import json
 
 from tests import UnitTest
 from app.models.profiles import ProfileCreate, Profile, ProfilePatch
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 
 
 class ProfilesTestCase(UnitTest):
