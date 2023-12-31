@@ -1,19 +1,11 @@
 from flask import Flask
 
-from app.middlewares.requires_auth import RequiresAuthExtension
-from .configure_app import configure_app
-from .register_routes import register_routes
-from .register_middlewares import register_middlewares
 from config import app_config
 
 app = Flask(__name__)
 
-configure_app(app)
-register_routes(app)
-register_middlewares(app)
 
-
-def main():
+def main(app: Flask):
     import initializers
     from app.services import (
         Database,
@@ -30,6 +22,15 @@ def main():
         PlatformsModel,
         BackgroundJobsModel
     )
+    from app.middlewares.requires_auth import RequiresAuthExtension
+    from .configure_app import configure_app
+    from .register_routes import register_routes
+    from .register_middlewares import register_middlewares
+
+    # load config
+    configure_app(app)
+    register_routes(app)
+    register_middlewares(app)
 
     # create dependencies
     db = Database(app_config["MONGO_URI"], timeoutMS=3000)
@@ -66,7 +67,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(app)
 
     # start the server
     app.run(debug=True, port=app_config["PORT"])

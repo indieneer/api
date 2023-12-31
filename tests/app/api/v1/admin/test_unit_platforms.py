@@ -1,5 +1,6 @@
 from unittest.mock import patch, MagicMock
 import json
+from app.api.v1.admin.platforms import create_platform, delete_platform, get_platform_by_id, update_platform
 
 from tests import UnitTest
 from app.models.platforms import PlatformCreate, Platform, PlatformPatch
@@ -10,11 +11,14 @@ class PlatformsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_create_platform(self, get_models: MagicMock):
+        endpoint = "/platforms"
+        self.app.route(endpoint, methods=["POST"])(create_platform)
+        
         create_platform_mock = get_models.return_value.platforms.create
 
         def call_api(body):
-            return self.app.post(
-                "/v1/admin/platforms",
+            return self.test_client.post(
+                endpoint,
                 data=json.dumps(body),
                 content_type='application/json',
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
@@ -61,39 +65,27 @@ class PlatformsTestCase(UnitTest):
                 enabled=mock_platform.enabled,
                 icon_url=mock_platform.icon_url
             )
-            expected_response = {
-                "status": "error",
-                "error": "BANG!"
-            }
 
             # when
-            response = call_api({
-                "name": expected_input.name,
-                "base_url": expected_input.base_url,
-                "enabled": expected_input.enabled,
-                "icon_url": expected_input.icon_url
-            })
+            with self.assertRaises(Exception) as context:
+                call_api({
+                    "name": expected_input.name,
+                    "base_url": expected_input.base_url,
+                    "enabled": expected_input.enabled,
+                    "icon_url": expected_input.icon_url
+                })
 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 500)
+            self.assertEqual(str(context.exception), str(create_platform_mock.side_effect))
             create_platform_mock.assert_called_once_with(expected_input)
 
         def fails_to_create_a_platform_when_body_is_invalid():
-            # given
-            expected_response = {
-                "status": "error",
-                "error": "Invalid data provided."
-            }
-
             # when
-            response = call_api({
-                "email": "test@mail.com",
-            })
+            with self.assertRaises(Exception) as context:
+                call_api({ "email": "test@mail.com" })
 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(str(context.exception), "Invalid data provided.")
             create_platform_mock.assert_not_called()
 
         tests = [
@@ -109,11 +101,14 @@ class PlatformsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_get_platform(self, get_models: MagicMock):
+        endpoint = "/platforms/<string:platform_id>"
+        self.app.route(endpoint, methods=["GET"])(get_platform_by_id)
+
         get_platform_mock = get_models.return_value.platforms.get
 
         def call_api(platform_id):
-            return self.app.get(
-                f"/v1/admin/platforms/{platform_id}",
+            return self.test_client.get(
+                endpoint.replace("<string:platform_id>", platform_id),
                 content_type='application/json',
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
             )
@@ -166,11 +161,14 @@ class PlatformsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.platforms.get_models")
     def test_patch_platform(self, get_models: MagicMock):
+        endpoint = "/platforms/<string:platform_id>"
+        self.app.route(endpoint, methods=["PATCH"])(update_platform)
+
         patch_platform_mock = get_models.return_value.platforms.patch
 
         def call_api(platform_id, body):
-            return self.app.patch(
-                f"/v1/admin/platforms/{platform_id}",
+            return self.test_client.patch(
+                endpoint.replace("<string:platform_id>", platform_id),
                 data=json.dumps(body),
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
                 content_type='application/json'
@@ -218,11 +216,15 @@ class PlatformsTestCase(UnitTest):
     @patch("app.api.v1.admin.platforms.get_models")
     def test_delete_platform(self, get_models: MagicMock):
         self.maxDiff = None
+        
+        endpoint = "/platforms/<string:platform_id>"
+        self.app.route(endpoint, methods=["DELETE"])(delete_platform)
+        
         delete_platform_mock = get_models.return_value.platforms.delete
 
         def call_api(platform_id):
-            return self.app.delete(
-                f"/v1/admin/platforms/{platform_id}",
+            return self.test_client.delete(
+                endpoint.replace("<string:platform_id>", platform_id),
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
                 content_type='application/json'
             )

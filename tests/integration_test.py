@@ -1,4 +1,3 @@
-from app.middlewares.requires_auth import RequiresAuthExtension
 import testicles
 import typing
 from bson import ObjectId
@@ -22,14 +21,18 @@ from app.models import (
     ProductsModel,
     TagsModel
 )
-
-from config import app_config
-from app.main import app
 from app.services import (
     Database,
     ManagementAPI,
     ServicesExtension
 )
+
+from app.main import app
+from config import app_config
+from app.middlewares.requires_auth import RequiresAuthExtension
+from app.configure_app import configure_app
+from app.register_middlewares import register_middlewares
+from app.register_routes import register_routes
 
 
 class IntegrationTest(testicles.IntegrationTest):
@@ -72,6 +75,10 @@ class IntegrationTest(testicles.IntegrationTest):
         cleanups = []
 
         try:
+            configure_app(app)
+            register_routes(app)
+            register_middlewares(app)
+
             db = Database(app_config["MONGO_URI"], timeoutMS=3000)
             auth0 = ManagementAPI(
                 app_config["AUTH0_DOMAIN"],
