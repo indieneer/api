@@ -177,7 +177,6 @@ except Exception as e:
     sys.exit(1)
 finally:
     # Dispose resources
-    importlib.import_module(f"{args.start_dir}.teardown")
     teardown_module = None
 
     try:
