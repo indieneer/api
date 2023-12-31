@@ -26,7 +26,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m tests.run_tests -t unit
+          python -m testicles.cli -t unit
 
   integration:
     needs: unit
@@ -59,4 +59,4 @@ jobs:
           AUTH0_NAMESPACE: ${{ secrets.AUTH0_NAMESPACE }}
           AUTH0_ROLES: ${{ secrets.AUTH0_ROLES }}
         run: |
-          python -m tests.run_tests -t integration
+          python -m testicles.cli -t integration
