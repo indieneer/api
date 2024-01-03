@@ -74,7 +74,7 @@ def update_profile(profile_id: str):
     profile is allowed to make updates.
 
     :param str profile_id: The ID of the profile to be updated.
-    :raises NotFoundException: If the platform was not found.
+    :raises NotFoundException: If the profile was not found.
     :return: The updated profile or an error message.
     :rtype: dict
     """
@@ -94,8 +94,8 @@ def update_profile(profile_id: str):
         if key not in PROFILE_FIELDS:
             return respond_error(f'The key "{key}" is not allowed.', 422)
 
-    profiles = get_models(current_app).profiles
-    updated = profiles.patch(profile_id, ProfilePatch(**data))
+    profiles_model = get_models(current_app).profiles
+    updated = profiles_model.patch(profile_id, ProfilePatch(**data))
 
     if updated is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
