@@ -108,7 +108,7 @@ class ProfilesModel:
         self.db.connection[self.collection].insert_one(profile.to_bson())
 
         # Store internal user ID in Auth0 user's metadata
-        self.auth0.client.users.update(idp_id, {"user_metadata": {"profile_id": str(profile["_id"])}})
+        self.auth0.client.users.update(idp_id, {"user_metadata": {"profile_id": str(profile._id)}})
 
         return profile
 
