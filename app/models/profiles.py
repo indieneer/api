@@ -130,7 +130,7 @@ class ProfilesModel:
             return None  # Might be changed to an exception raise
 
         # Prepare the update data
-        update_data = input_data.to_json()
+        update_data = input_data.to_bson()
 
         # Update the profile in the database
         self.db.connection[self.collection].update_one(
@@ -140,7 +140,9 @@ class ProfilesModel:
 
         # Fetch the updated profile
         updated_profile = self.db.connection[self.collection].find_one({"_id": ObjectId(user_id)})
-        return Profile(**updated_profile)
+        
+        if updated_profile is not None:
+            return Profile(**updated_profile)
 
     def delete(self, user_id: str):
         """
