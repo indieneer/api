@@ -31,7 +31,7 @@ class ProfilesTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             # when
@@ -57,7 +57,7 @@ class ProfilesTestCase(UnitTest):
             )
             expected_response = {
                 "status": "error",
-                "error": "Exception: BANG!"
+                "error": "BANG!"
             }
 
             # when
@@ -117,7 +117,7 @@ class ProfilesTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             # when
@@ -183,7 +183,7 @@ class ProfilesTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             response = call_api(mock_profile._id, {

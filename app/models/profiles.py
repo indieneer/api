@@ -4,9 +4,7 @@ from dataclasses import dataclass
 
 from app.services import Database, ManagementAPI
 from config.constants import AUTH0_ROLES, Auth0Role
-from . import BaseDocument, Serializable
-from .exceptions import NotFoundException
-
+from app.models.base import BaseDocument, Serializable
 
 class Profile(BaseDocument):
     email: str
@@ -16,10 +14,9 @@ class Profile(BaseDocument):
         self,
         email: str,
         idp_id: str,
-        _id: Optional[ObjectId] = None,
         **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
 
         self.email = email
         self.idp_id = idp_id
@@ -107,13 +104,13 @@ class ProfilesModel:
         # Create a user profile in the database
         profile_data = input_data.to_json()
         profile_data['idp_id'] = idp_id
-        profile = Profile(**profile_data).to_json()
+        profile = Profile(**profile_data).to_bson()
         self.db.connection[self.collection].insert_one(profile)
 
         # Store internal user ID in Auth0 user's metadata
         self.auth0.client.users.update(idp_id, {"user_metadata": {"profile_id": str(profile["_id"])}})
 
-        return Profile(**profile)
+        return profile
 
     def patch(self, user_id: str, input_data: ProfilePatch):
         """

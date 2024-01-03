@@ -3,10 +3,8 @@ from flask import Blueprint, request, g, current_app
 from app.middlewares import requires_auth
 from lib.http_utils import respond_error, respond_success
 
-from app.services import get_services
 from app.models import get_models, exceptions as models_exceptions
 from app.models.profiles import Profile, ProfileCreate, ProfilePatch
-from lib import db_utils
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
@@ -37,7 +35,7 @@ def get_profile(profile_id: str):
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(profile.as_json())
+    return respond_success(profile.to_json())
 
 
 @profiles_controller.route('/', methods=["POST"])
@@ -63,7 +61,7 @@ def create_profile():
 
     profile = profile_model.create(profile_data)
 
-    return respond_success(profile.as_json(), None, 201)
+    return respond_success(profile.to_json(), None, 201)
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
@@ -102,7 +100,7 @@ def update_profile(profile_id: str):
     if updated is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(updated.as_json())
+    return respond_success(updated.to_json())
 
 
 @profiles_controller.route('/<string:user_id>', methods=["DELETE"])
@@ -166,4 +164,4 @@ def get_authenticated_profile():
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
 
-    return respond_success(profile.as_json())
+    return respond_success(profile.to_json())
