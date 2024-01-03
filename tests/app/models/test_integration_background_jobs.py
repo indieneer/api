@@ -66,8 +66,6 @@ class BackgroundJobsModelTestCase(IntegrationTest):
         updated_background_job = background_jobs_model.add_event(str(background_job._id), event)
 
         # then
-        if updated_background_job is None:
-            self.assertIsNotNone(updated_background_job)
-        else:
-            self.assertEqual(updated_background_job.events[0]['type'], background_job.to_dict()["events"][0]["type"])
-            self.assertEqual(updated_background_job.events[0]['message'], background_job.to_dict()["events"][0]["message"])
+        self.assertIsNotNone(updated_background_job)
+        self.assertEqual(updated_background_job.events[0]['type'], background_job.to_dict()["events"][0]["type"])
+        self.assertEqual(updated_background_job.events[0]['message'], background_job.to_dict()["events"][0]["message"])

@@ -6,6 +6,10 @@ class BackgroundJobsTestCase(IntegrationTest):
     token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
     def test_get_all_background_jobs(self):
+        # given
+        self.factory.background_jobs.create(self.fixtures.background_job.clone())
+        self.factory.background_jobs.create(self.fixtures.background_job.clone())
+
         # when
         response = self.app.get(
             '/v1/background_jobs',
@@ -41,6 +45,7 @@ class BackgroundJobsTestCase(IntegrationTest):
         background_job = self.fixtures.background_job.clone()
         background_job_id = background_job._id
         _, cleanup = self.factory.background_jobs.create(background_job)
+        self.addCleanup(cleanup)
         cleanup()
 
         # when
@@ -48,7 +53,6 @@ class BackgroundJobsTestCase(IntegrationTest):
             f'/v1/background_jobs/{background_job_id}',
             headers={
                 "Authorization": f"Bearer {self.token}"
-
             }
         )
         response_json = response.get_json()
@@ -62,6 +66,7 @@ class BackgroundJobsTestCase(IntegrationTest):
         background_job = self.fixtures.background_job.clone()
         background_job_id = background_job._id
         _, cleanup = self.factory.background_jobs.create(background_job)
+        self.addCleanup(cleanup)
         cleanup()
 
         # when
