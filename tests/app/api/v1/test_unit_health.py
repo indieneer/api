@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from pymongo.errors import ServerSelectionTimeoutError
+from app.api.v1.health import health
 
 from tests import UnitTest
 from tests.mocks.services import mock_database_connection
@@ -12,6 +13,9 @@ class HealthTestCase(UnitTest):
     @patch("app.api.v1.health.get_services")
     def test_get_health(self, get_services, app_config):
         # given
+        endpoint = "/health"
+        self.app.route(endpoint)(health)
+
         connection = mock_database_connection(get_services)
 
         mock_config = {"ENVIRONMENT": "production", "VERSION": "4.3.1"}
@@ -19,7 +23,7 @@ class HealthTestCase(UnitTest):
         app_config.get.side_effect = lambda key: mock_config[key]
 
         # when
-        response = self.app.get("/v1/health")
+        response = self.test_client.get(endpoint)
 
         # then
         expected = {
@@ -38,6 +42,9 @@ class HealthTestCase(UnitTest):
     @patch("app.api.v1.health.get_services")
     def test_get_health_db_timeout(self, get_services, app_config):
         # given
+        endpoint = "/health"
+        self.app.route(endpoint)(health)
+
         connection = mock_database_connection(get_services)
 
         mock_config = {"ENVIRONMENT": "production", "VERSION": "4.3.1"}
@@ -46,7 +53,7 @@ class HealthTestCase(UnitTest):
         app_config.get.side_effect = lambda key: mock_config[key]
 
         # when
-        response = self.app.get("/v1/health")
+        response = self.test_client.get(endpoint)
 
         # then
         expected = {
@@ -64,14 +71,15 @@ class HealthTestCase(UnitTest):
     @patch("app.api.v1.health.get_services")
     def test_get_health_exception(self, get_services):
         # given
+        endpoint = "/health"
+        self.app.route(endpoint)(health)
+        
         connection = mock_database_connection(get_services)
-
         connection.command.side_effect = Exception("zero division")
 
         # when
-        response = self.app.get("/v1/health")
+        with self.assertRaises(Exception) as context:
+            self.test_client.get(endpoint)
 
         # then
-        self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.get_json()[
-                         'error'], 'zero division')
+        self.assertEqual(str(context.exception), str(connection.command.side_effect))

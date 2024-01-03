@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from bson import ObjectId
+from app.api.v1.search import search
 from tests.mocks.services import mock_database_connection
 from tests import UnitTest
 
@@ -9,6 +10,10 @@ class SearchTestCase(UnitTest):
 
     @patch('app.api.v1.search.get_services')
     def test_search(self, mock_client):
+        # given
+        endpoint = "/search"
+        self.app.route(endpoint)(search)
+
         mock_client = mock_database_connection(mock_client)
 
         params1 = {"page": "1", "name": "Counter"}
@@ -39,7 +44,9 @@ class SearchTestCase(UnitTest):
 
         mock_client.__getitem__.return_value.aggregate.side_effect = aggregate_side_effect()
 
-        response = self.app.get('/v1/search', query_string=params1)
+        # when
+        response = self.test_client.get(endpoint, query_string=params1)
 
+        # then
         self.assertEqual(response.get_json()["data"], data1)
         self.assertEqual(response.get_json()["meta"], meta1)
