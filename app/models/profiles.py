@@ -104,8 +104,8 @@ class ProfilesModel:
         # Create a user profile in the database
         profile_data = input_data.to_json()
         profile_data['idp_id'] = idp_id
-        profile = Profile(**profile_data).to_bson()
-        self.db.connection[self.collection].insert_one(profile)
+        profile = Profile(**profile_data)
+        self.db.connection[self.collection].insert_one(profile.to_bson())
 
         # Store internal user ID in Auth0 user's metadata
         self.auth0.client.users.update(idp_id, {"user_metadata": {"profile_id": str(profile["_id"])}})
