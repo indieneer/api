@@ -35,17 +35,17 @@ class ProfilesModelTestCase(IntegrationTest):
         profiles_model = ProfilesModel(self.services.db, self.services.auth0)
 
         # given
-        factory = self.factory.profiles
-        test_profile, cleanup = factory.create(ProfileCreate(email="test.pork@pork.com", password="JohnPork2003"))
+        test_profile, cleanup = self.factory.profiles.create(
+            ProfileCreate(email="test.pork@pork.com", password="JohnPork2003"))
         self.addCleanup(cleanup)
         patch_data = ProfilePatch(email="updated@example.com")
 
         # when
-        with self.assertRaises(Exception) as context:
-            profiles_model.patch(str(test_profile._id), patch_data)
+        updated_profile = profiles_model.patch(str(test_profile._id), patch_data)
 
         # then
-        self.assertIn("Not implemented.", str(context.exception))
+        self.assertIsNotNone(updated_profile)
+        self.assertEqual(updated_profile.email, "updated@example.com")
 
     def test_delete_profile(self):
         profiles_model = ProfilesModel(self.services.db, self.services.auth0)
