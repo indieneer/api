@@ -1,6 +1,8 @@
 from unittest.mock import patch, MagicMock
 import json
 
+from bson import ObjectId
+
 from tests import UnitTest
 from app.models.profiles import ProfileCreate, Profile, ProfilePatch
 from app.middlewares.requires_auth import create_test_token
@@ -156,7 +158,7 @@ class ProfilesTestCase(UnitTest):
                 get_profile_mock.reset_mock()
 
     @patch("app.api.v1.profiles.get_models")
-    def test_patch_profile(self, get_models: MagicMock):
+    def test_update_profile(self, get_models: MagicMock):
         patch_profile_mock = get_models.return_value.profiles.patch
 
         def call_api(profile_id, body):
@@ -259,9 +261,30 @@ class ProfilesTestCase(UnitTest):
             self.assertEqual(response.status_code, 404)
             delete_profile_mock.assert_called_once_with(mock_id)
 
+        def fails_to_delete_profile_which_is_owned_by_another_user_and_returns_error():
+            # given
+            expected_response = {
+                "status": "error",
+                "error": "Forbidden."
+            }
+
+            # when
+            token = create_test_token(str(ObjectId()))
+            response = self.app.delete(
+                "/v1/profiles/1",
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 403)
+            delete_profile_mock.assert_not_called()
+
         tests = [
             deletes_and_returns_the_profile,
-            deletes_not_found_profile_and_returns_an_error
+            deletes_not_found_profile_and_returns_an_error,
+            fails_to_delete_profile_which_is_owned_by_another_user_and_returns_error
         ]
 
         for test in tests:
@@ -303,7 +326,7 @@ class ProfilesTestCase(UnitTest):
             self.assertEqual(response.status_code, 200)
             get_profile_mock.assert_called_once_with(mock_id)
 
-        def fails_to_find_a_profile_with_missing_token():
+        def fails_due_to_missing_token_and_returns_an_error():
             # given
             expected_response = {
                 "status": "error",
@@ -324,7 +347,7 @@ class ProfilesTestCase(UnitTest):
             self.assertEqual(response.status_code, 401)
             get_profile_mock.assert_not_called()
 
-        def fails_to_find_a_profile():
+        def fails_to_find_a_profile_and_returns_an_error():
             # given
             mock_profile = Profile(
                 email="john.pork@test.com", idp_id="auth0|test"
@@ -347,8 +370,8 @@ class ProfilesTestCase(UnitTest):
 
         tests = [
             finds_and_returns_a_profile,
-            fails_to_find_a_profile_with_missing_token,
-            fails_to_find_a_profile
+            fails_due_to_missing_token_and_returns_an_error,
+            fails_to_find_a_profile_and_returns_an_error
         ]
 
         for test in tests:
