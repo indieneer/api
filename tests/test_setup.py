@@ -140,6 +140,7 @@ def setup_integration_tests(suite: TestSuite):
                 )
             )
         )
+        cleanups.append(cleanup)
 
         tag, cleanup = factory.tags.create(TagCreate(
             "Test tag",
