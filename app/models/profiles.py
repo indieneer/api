@@ -6,6 +6,7 @@ from app.services import Database, ManagementAPI
 from config.constants import AUTH0_ROLES, Auth0Role
 from app.models.base import BaseDocument, Serializable
 
+
 class Profile(BaseDocument):
     email: str
     idp_id: str

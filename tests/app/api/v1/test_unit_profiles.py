@@ -154,10 +154,8 @@ class ProfilesTestCase(UnitTest):
                 test()
             get_profile_mock.reset_mock()
 
-    # TODO: rework
     @patch("app.api.v1.profiles.get_models")
     def test_patch_profile(self, get_models: MagicMock):
-        self.skipTest("Needs reworking")
         endpoint = "/profiles/<string:profile_id>"
         self.app.route(endpoint, methods=["PATCH"])(update_profile)
 

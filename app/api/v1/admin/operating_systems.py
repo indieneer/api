@@ -116,6 +116,9 @@ def update_operating_system(operating_system_id: str):
     operating_systems_model = get_models(current_app).operating_systems
     result = operating_systems_model.patch(operating_system_id, OperatingSystemPatch(**data))
 
+    if result is None:
+        return respond_error(f'The operating system with ID {operating_system_id} was not found.', 404)
+
     return respond_success(result.to_json())
 
 

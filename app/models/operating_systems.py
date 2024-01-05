@@ -155,3 +155,5 @@ class OperatingSystemsModel:
 
         if operating_system is not None:
             return OperatingSystem(**operating_system)
+        else:
+            raise NotFoundException(OperatingSystem.__name__)

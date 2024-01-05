@@ -125,7 +125,7 @@ class TagsModel:
         if updated_tag is not None:
             return Tag(**updated_tag)
         else:
-            raise NotFoundException
+            raise NotFoundException(Tag.__name__)
 
     def delete(self, tag_id: str):
         """
@@ -144,5 +144,5 @@ class TagsModel:
         if tag is not None:
             return Tag(**tag)
         else:
-            return None
+            raise NotFoundException(Tag.__name__)
 
