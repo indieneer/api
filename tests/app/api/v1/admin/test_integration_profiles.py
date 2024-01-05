@@ -3,7 +3,6 @@ from app.models.profiles import ProfileCreate
 
 
 class ProfilesTestCase(IntegrationTest):
-
     def test_get_profiles(self):
         # given
         profile, cleanup_profile = self.factory.profiles.create_admin(
@@ -32,3 +31,6 @@ class ProfilesTestCase(IntegrationTest):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), expected)
+
+    def test_change_profile(self):
+        self.skipTest("Not implemented yet.")

@@ -3,7 +3,9 @@ from flask import Blueprint, request, current_app
 from pymongo import ReturnDocument
 
 from app.middlewares import requires_auth, requires_role
-from app.services import get_services
+from app.models import get_models
+from app.models.profiles import ProfilePatch
+from lib import db_utils
 from lib.http_utils import respond_success, respond_error
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
@@ -28,16 +30,12 @@ def get_profiles():
     This function requires admin privileges. It retrieves all the profiles stored in the database.
 
     :return: A JSON response containing either all profiles or an error message.
-    :rtype: Response
+    :rtype: dict
     """
-    db = get_services(current_app).db.connection
 
-    profiles = []
-    for profile in db["profiles"].find():
-        profile["_id"] = str(profile["_id"])
-        profiles.append(profile)
+    profiles = get_models(current_app).profiles.get_all()
 
-    return respond_success(profiles)
+    return respond_success(db_utils.to_json(profiles))
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
@@ -63,15 +61,12 @@ def change_profile(profile_id):
         if key not in PROFILE_FIELDS:
             return respond_error(f'The key "{key}" is not allowed.', 422)
 
-    filter_criteria = {"_id": ObjectId(profile_id)}
+    profile_model = get_models(current_app).profiles
 
-    profiles = get_services(current_app).db.connection["profiles"]
-
-    result = profiles.find_one_and_update(
-        filter_criteria, {"$set": data}, return_document=ReturnDocument.AFTER)
-    if result is None:
+    profile = profile_model.get(profile_id)
+    if profile is None:
         return respond_error(f'The profile with id {profile_id} was not found.', 404)
 
-    result["_id"] = str(result["_id"])
+    profile = profile_model.patch(profile_id, ProfilePatch(**data))
 
-    return respond_success(result)
+    return respond_success(profile.to_json())

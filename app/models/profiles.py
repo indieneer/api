@@ -44,6 +44,14 @@ class ProfilesModel:
         self.db = db
         self.auth0 = auth0
 
+    def get_all(self):
+        profiles = []
+
+        for profile in self.db.connection[self.collection].find():
+            profiles.append(Profile(**profile))
+
+        return profiles
+
     def get(self, user_id: str):
         """
         Retrieve a user profile based on the user ID.
