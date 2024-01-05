@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import json
-from app.api.v1.admin.operating_systems import create_operating_system, delete_operating_system, get_operating_system_by_id
+from app.api.v1.admin.operating_systems import create_operating_system, delete_operating_system, update_operating_system, get_operating_system_by_id
 
 from tests import UnitTest
 from app.models.operating_systems import OperatingSystemCreate, OperatingSystem, OperatingSystemPatch
@@ -132,11 +132,14 @@ class OperatingSystemsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_patch_operating_system(self, get_models: MagicMock):
+        endpoint = "/operating-systems/<string:operating_system_id>"
+        self.app.route(endpoint, methods=["PATCH"])(update_operating_system)
+
         patch_os_mock = get_models.return_value.operating_systems.patch
 
         def call_api(os_id, body):
-            return self.app.patch(
-                f"/v1/admin/operating-systems/{os_id}",
+            return self.test_client.patch(
+                endpoint.replace("<string:operating_system_id>", os_id),
                 data=json.dumps(body),
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
                 content_type='application/json'
