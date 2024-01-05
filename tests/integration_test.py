@@ -38,7 +38,7 @@ from app.register_routes import register_routes
 
 class IntegrationTest(testicles.IntegrationTest):
     _test_cases: list[testicles.IntegrationTest] = []
-    _cleanup: typing.Callable | None = None
+    _cleanup: typing.Union[typing.Callable, None] = None
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
