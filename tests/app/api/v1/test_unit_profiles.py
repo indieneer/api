@@ -239,7 +239,7 @@ class ProfilesTestCase(UnitTest):
             self.assertEqual(response.status_code, 200)
             delete_profile_mock.assert_called_once_with(mock_id)
 
-        def deletes_not_found_profile_and_returns_an_error():
+        def fails_to_delete_not_found_profile_and_returns_an_error():
             # given
             mock_profile = Profile(
                 email="john.pork@test.com", idp_id="auth0|test"
@@ -283,7 +283,7 @@ class ProfilesTestCase(UnitTest):
 
         tests = [
             deletes_and_returns_the_profile,
-            deletes_not_found_profile_and_returns_an_error,
+            fails_to_delete_not_found_profile_and_returns_an_error,
             fails_to_delete_profile_which_is_owned_by_another_user_and_returns_error
         ]
 
