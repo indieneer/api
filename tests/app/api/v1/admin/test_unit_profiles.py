@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 from app.models.profiles import Profile
 from tests import UnitTest
 
