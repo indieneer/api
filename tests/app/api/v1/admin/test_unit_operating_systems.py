@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 import json
-from app.api.v1.admin.operating_systems import create_operating_system, delete_operating_system, get_operating_system_by_id
+from app.api.v1.admin.operating_systems import create_operating_system, delete_operating_system, update_operating_system, get_operating_system_by_id
 
 from tests import UnitTest
 from app.models.operating_systems import OperatingSystemCreate, OperatingSystem, OperatingSystemPatch
@@ -129,6 +129,63 @@ class OperatingSystemsTestCase(UnitTest):
             with self.subTest(test.__name__):
                 test()
             get_os_mock.reset_mock()
+
+    @patch("app.api.v1.admin.operating_systems.get_models")
+    def test_patch_operating_system(self, get_models: MagicMock):
+        endpoint = "/operating-systems/<string:operating_system_id>"
+        self.app.route(endpoint, methods=["PATCH"])(update_operating_system)
+
+        patch_os_mock = get_models.return_value.operating_systems.patch
+
+        def call_api(os_id, body):
+            return self.test_client.patch(
+                endpoint.replace("<string:operating_system_id>", os_id),
+                data=json.dumps(body),
+                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                content_type='application/json'
+            )
+
+        def patches_and_returns_the_operating_system():
+            # given
+            mock_os = OperatingSystem(name="Windows")
+            patch_os_mock.return_value = mock_os
+
+            expected_input = OperatingSystemPatch(name="Updated Windows")
+            expected_response = {
+                "status": "ok",
+                "data": mock_os.to_json()
+            }
+
+            # when
+            response = call_api(mock_os._id, {"name": expected_input.name})
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            patch_os_mock.assert_called_once_with(mock_os._id, expected_input)
+
+        def fails_to_patch_a_nonexistent_operating_system():
+            # given
+            mock_id = "123"
+            patch_os_mock.return_value = None
+
+            expected_response = {
+                "status": "error",
+                "error": f"The operating system with ID {mock_id} was not found."
+            }
+
+            # when
+            response = call_api(mock_id, {"name": "Nonexistent OS"})
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 404)
+            patch_os_mock.assert_called_once_with(mock_id, OperatingSystemPatch(name='Nonexistent OS'))
+
+        for test in [patches_and_returns_the_operating_system, fails_to_patch_a_nonexistent_operating_system]:
+            with self.subTest(test.__name__):
+                test()
+                patch_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_delete_operating_system(self, get_models: MagicMock):
