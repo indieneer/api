@@ -1,8 +1,8 @@
 from bson import ObjectId
 
-from app.middlewares.requires_auth import create_test_token
 from app.models.background_jobs import BackgroundJobCreate
 from tests import IntegrationTest
+from tests.utils.jwt import create_test_token
 
 
 class BackgroundJobsTestCase(IntegrationTest):

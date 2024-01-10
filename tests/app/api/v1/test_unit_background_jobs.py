@@ -1,9 +1,9 @@
 import json
 from unittest.mock import MagicMock, patch
 
-from app.middlewares.requires_auth import create_test_token
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate, Event
 from tests import UnitTest
+from tests.utils.jwt import create_test_token
 
 
 class BackgroundJobsTestCase(UnitTest):
@@ -14,7 +14,7 @@ class BackgroundJobsTestCase(UnitTest):
         def call_api(background_job_id):
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
-            return self.app.get(f"/v1/background_jobs/{background_job_id}",
+            return self.test_client.get(f"/v1/background_jobs/{background_job_id}",
                                 headers={"Authorization": f"Bearer {token}"},
                                 content_type='application/json')
 
@@ -94,7 +94,7 @@ class BackgroundJobsTestCase(UnitTest):
         def call_api():
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
-            return self.app.get(f"/v1/background_jobs",
+            return self.test_client.get(f"/v1/background_jobs",
                                 headers={"Authorization": f"Bearer {token}"},
                                 content_type='application/json')
 
@@ -140,7 +140,7 @@ class BackgroundJobsTestCase(UnitTest):
         def call_api(body):
             token = create_test_token(profile_id="1", idp_id=service_account_id)
 
-            return self.app.post(
+            return self.test_client.post(
                 "/v1/background_jobs",
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
@@ -232,7 +232,7 @@ class BackgroundJobsTestCase(UnitTest):
         def call_api(background_job_id, body):
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
-            return self.app.patch(
+            return self.test_client.patch(
                 f"/v1/background_jobs/{background_job_id}",
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
@@ -342,7 +342,7 @@ class BackgroundJobsTestCase(UnitTest):
         def call_api(background_job_id, body):
             token = create_test_token(profile_id="1", idp_id=service_account_id)
 
-            return self.app.post(
+            return self.test_client.post(
                 f"/v1/background_jobs/{background_job_id}/events",
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
