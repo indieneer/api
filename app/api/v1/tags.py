@@ -1,5 +1,8 @@
 from flask import Blueprint, request, current_app
+
+from app.models import get_models
 from app.services import get_services
+from lib import db_utils
 from lib.http_utils import respond_success, respond_error
 
 tags_controller = Blueprint(
@@ -16,15 +19,6 @@ def get_tags():
     :return: A list of tags or an error message.
     :rtype: Response
     """
+    tags = get_models(current_app).tags.get_all()
 
-    db = get_services(current_app).db.connection
-
-    tags = []
-    for tag in db["tags"].find({}):
-        tag["_id"] = str(tag["_id"])
-        tags.append(tag)
-
-    if tags:
-        return respond_success(tags, status_code=200)
-
-    return respond_error("not found", 404)
+    return respond_success(db_utils.to_json(tags))
