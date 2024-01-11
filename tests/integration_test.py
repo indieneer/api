@@ -223,7 +223,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     metadata={
                         "match_query": "test"
                     },
-                    created_by="service_test@clients"
+                    created_by="bUhOAswerBbA3lamY0saxLuJezB7sjOs@clients"
                 )
             )
             cleanups.append(cleanup)

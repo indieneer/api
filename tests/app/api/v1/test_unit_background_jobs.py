@@ -1,7 +1,11 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from app.api.exceptions import BadRequestException
+from app.api.v1.background_jobs import get_background_job, get_all_background_jobs, create_background_job, \
+    create_background_job_event, update_background_job
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate, Event
+from app.models.exceptions import ForbiddenException, NotFoundException
 from tests import UnitTest
 from tests.utils.jwt import create_test_token
 
@@ -9,14 +13,19 @@ from tests.utils.jwt import create_test_token
 class BackgroundJobsTestCase(UnitTest):
     @patch("app.api.v1.background_jobs.get_models")
     def test_get_background_job(self, get_models: MagicMock):
+        endpoint = "/background_jobs/<string:background_job_id>"
+        self.app.route(endpoint, methods=["GET"])(get_background_job)
+
         get_background_job_mock = get_models.return_value.background_jobs.get
 
-        def call_api(background_job_id):
+        def call_api(background_job_id: str):
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
-            return self.test_client.get(f"/v1/background_jobs/{background_job_id}",
-                                headers={"Authorization": f"Bearer {token}"},
-                                content_type='application/json')
+            return self.test_client.get(
+                endpoint.replace("<string:background_job_id>", str(background_job_id)),
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
 
         def finds_and_returns_a_background_job():
             # given
@@ -31,7 +40,7 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id)
+            response = call_api(str(mock_background_job._id))
 
             # then
             self.assertEqual(response.get_json(), expected_response)
@@ -49,12 +58,13 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_id)
+            with self.assertRaises(NotFoundException):
+                response = call_api(mock_id)
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
-            get_background_job_mock.assert_called_once_with(mock_id)
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 404)
+                get_background_job_mock.assert_called_once_with(mock_id)
 
         def finds_a_background_job_with_another_creator_and_returns_an_error():
             # given
@@ -69,12 +79,13 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id)
+            with self.assertRaises(ForbiddenException):
+                response = call_api(str(mock_background_job._id))
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 403)
-            get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 403)
+                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
 
         tests = [
             finds_and_returns_a_background_job,
@@ -89,14 +100,19 @@ class BackgroundJobsTestCase(UnitTest):
 
     @patch("app.api.v1.background_jobs.get_models")
     def test_get_all_background_jobs(self, get_models: MagicMock):
+        endpoint = "/background_jobs"
+        self.app.route(endpoint, methods=["GET"])(get_all_background_jobs)
+
         get_all_background_jobs_mock = get_models.return_value.background_jobs.get_all
 
         def call_api():
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
-            return self.test_client.get(f"/v1/background_jobs",
-                                headers={"Authorization": f"Bearer {token}"},
-                                content_type='application/json')
+            return self.test_client.get(
+                endpoint,
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
 
         def finds_and_returns_all_background_jobs():
             # given
@@ -134,6 +150,9 @@ class BackgroundJobsTestCase(UnitTest):
 
     @patch("app.api.v1.background_jobs.get_models")
     def test_create_background_job(self, get_models: MagicMock):
+        endpoint = "/background_jobs"
+        self.app.route(endpoint, methods=["POST"])(create_background_job)
+
         create_background_job_mock = get_models.return_value.background_jobs.create
         service_account_id = "service_test@clients"
 
@@ -141,7 +160,7 @@ class BackgroundJobsTestCase(UnitTest):
             token = create_test_token(profile_id="1", idp_id=service_account_id)
 
             return self.test_client.post(
-                "/v1/background_jobs",
+                endpoint,
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
@@ -184,14 +203,15 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api({
-                "type": "es_seeder"
-            })
+            with self.assertRaises(BadRequestException):
+                response = call_api({
+                    "type": "es_seeder"
+                })
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
-            create_background_job_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 400)
+                create_background_job_mock.assert_not_called()
 
         def fails_to_create_a_background_job_when_type_is_not_supported():
             # given
@@ -200,18 +220,19 @@ class BackgroundJobsTestCase(UnitTest):
                 "status": "error"
             }
             expected_input = BackgroundJobCreate(type="unsupported_type", metadata={}, created_by=service_account_id)
-            create_background_job_mock.side_effect = ValueError(expected_response["error"])
+            create_background_job_mock.side_effect = BadRequestException(expected_response["error"])
 
             # when
-            response = call_api({
-                "type": expected_input.type,
-                "metadata": expected_input.metadata
-            })
+            with self.assertRaises(BadRequestException):
+                response = call_api({
+                    "type": expected_input.type,
+                    "metadata": expected_input.metadata
+                })
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
-            create_background_job_mock.assert_called_once_with(expected_input)
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 400)
+                create_background_job_mock.assert_called_once_with(expected_input)
 
         tests = [
             creates_and_returns_a_background_job,
@@ -226,14 +247,17 @@ class BackgroundJobsTestCase(UnitTest):
 
     @patch("app.api.v1.background_jobs.get_models")
     def test_update_background_job(self, get_models: MagicMock):
+        endpoint = "/background_jobs/<string:background_job_id>"
+        self.app.route(endpoint, methods=["PATCH"])(update_background_job)
+
         get_background_job_mock = get_models.return_value.background_jobs.get
         patch_background_job_mock = get_models.return_value.background_jobs.patch
 
-        def call_api(background_job_id, body):
+        def call_api(background_job_id: str, body: dict):
             token = create_test_token(profile_id="1", idp_id="service_test@clients")
 
             return self.test_client.patch(
-                f"/v1/background_jobs/{background_job_id}",
+                endpoint.replace("<string:background_job_id>", background_job_id),
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
@@ -256,7 +280,7 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id, {
+            response = call_api(str(mock_background_job._id), {
                 "status": mock_background_job.status
             })
 
@@ -274,12 +298,13 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api("1", {})
+            with self.assertRaises(BadRequestException):
+                response = call_api("1", {})
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
-            patch_background_job_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 400)
+                patch_background_job_mock.assert_not_called()
 
         def fails_to_update_a_background_job_when_background_job_does_not_exist():
             # given
@@ -292,12 +317,13 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_id, {"status": "running"})
+            with self.assertRaises(NotFoundException):
+                response = call_api(mock_id, {"status": "running"})
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
-            get_background_job_mock.assert_called_once_with(mock_id)
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 404)
+                get_background_job_mock.assert_called_once_with(mock_id)
 
         def fails_to_update_a_background_job_when_was_created_by_another_user():
             # given
@@ -312,13 +338,14 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id, {"status": "running"})
+            with self.assertRaises(ForbiddenException):
+                response = call_api(str(mock_background_job._id), {"status": "running"})
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 403)
-            get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
-            patch_background_job_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 403)
+                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                patch_background_job_mock.assert_not_called()
 
         tests = [
             patches_and_returns_a_background_job,
@@ -335,15 +362,18 @@ class BackgroundJobsTestCase(UnitTest):
 
     @patch("app.api.v1.background_jobs.get_models")
     def test_create_background_job_event(self, get_models: MagicMock):
+        endpoint = "/background_jobs/<string:background_job_id>/events"
+        self.app.route(endpoint, methods=["POST"])(create_background_job_event)
+
         get_background_job_mock = get_models.return_value.background_jobs.get
         add_background_job_event_mock = get_models.return_value.background_jobs.add_event
         service_account_id = "service_test@clients"
 
-        def call_api(background_job_id, body):
+        def call_api(background_job_id: str, body: dict):
             token = create_test_token(profile_id="1", idp_id=service_account_id)
 
             return self.test_client.post(
-                f"/v1/background_jobs/{background_job_id}/events",
+                endpoint.replace("<string:background_job_id>", background_job_id),
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
@@ -366,7 +396,7 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id, {
+            response = call_api(str(mock_background_job._id), {
                 "type": mock_event.type,
                 "message": mock_event.message
             })
@@ -384,14 +414,15 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api("1", {
-                "type": "info"
-            })
+            with self.assertRaises(BadRequestException):
+                response = call_api("1", {
+                    "type": "info"
+                })
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
-            add_background_job_event_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 400)
+                add_background_job_event_mock.assert_not_called()
 
         def fails_to_create_a_background_job_event_when_job_was_created_by_another_user():
             # given
@@ -409,16 +440,17 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_background_job._id, {
-                "type": mock_event.type,
-                "message": mock_event.message
-            })
+            with self.assertRaises(ForbiddenException):
+                response = call_api(str(mock_background_job._id), {
+                    "type": mock_event.type,
+                    "message": mock_event.message
+                })
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 403)
-            get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
-            add_background_job_event_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 403)
+                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                add_background_job_event_mock.assert_not_called()
 
         def fails_to_create_a_background_job_event_when_background_job_does_not_exist():
             # given
@@ -431,16 +463,17 @@ class BackgroundJobsTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_id, {
-                "type": "info",
-                "message": "test"
-            })
+            with self.assertRaises(NotFoundException):
+                response = call_api(mock_id, {
+                    "type": "info",
+                    "message": "test"
+                })
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
-            get_background_job_mock.assert_called_once_with(mock_id)
-            add_background_job_event_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 404)
+                get_background_job_mock.assert_called_once_with(mock_id)
+                add_background_job_event_mock.assert_not_called()
 
         def fails_to_create_a_background_job_event_when_event_type_is_not_supported():
             # given
@@ -455,19 +488,19 @@ class BackgroundJobsTestCase(UnitTest):
                 "error": "Unsupported event type",
                 "status": "error"
             }
-            add_background_job_event_mock.side_effect = ValueError(expected_response["error"])
+            add_background_job_event_mock.side_effect = BadRequestException(expected_response["error"])
 
             # when
-            response = call_api(mock_background_job._id, {
-                "type": mock_event_create.type,
-                "message": mock_event_create.message
-            })
-
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
-            get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
-            add_background_job_event_mock.assert_called_once_with(str(mock_background_job._id), mock_event_create)
+            with self.assertRaises(BadRequestException):
+                response = call_api(str(mock_background_job._id), {
+                    "type": mock_event_create.type,
+                    "message": mock_event_create.message
+                })
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 400)
+                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                add_background_job_event_mock.assert_called_once_with(str(mock_background_job._id), mock_event_create)
 
         tests = [
             creates_and_returns_a_background_job_event,

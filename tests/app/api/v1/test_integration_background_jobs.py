@@ -1,12 +1,15 @@
 from bson import ObjectId
 
 from app.models.background_jobs import BackgroundJobCreate
+from config import app_config
 from tests import IntegrationTest
-from tests.utils.jwt import create_test_token
 
 
 class BackgroundJobsTestCase(IntegrationTest):
-    token = create_test_token(profile_id="1", idp_id="service_test@clients")
+    @property
+    def token(self):
+        return self.models.logins.login_m2m("bUhOAswerBbA3lamY0saxLuJezB7sjOs",
+                                            app_config["AUTH0_CLIENT_SECRET"])["access_token"]
 
     def test_get_all_background_jobs(self):
         # given
@@ -49,9 +52,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         # when
         response = self.app.get(
             f'/v1/background_jobs/{ObjectId()}',
-            headers={
-                "Authorization": f"Bearer {self.token}"
-            }
+            headers={"Authorization": f"Bearer {self.token}"
+                     }
         )
         response_json = response.get_json()
 
@@ -78,7 +80,8 @@ class BackgroundJobsTestCase(IntegrationTest):
 
     def test_get_background_job_by_id_without_permission(self):
         # given
-        token = create_test_token(profile_id="1")
+        user = self.fixtures.regular_user.clone()
+        token = self.models.logins.login(user.email, "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
 
         # when
         response = self.app.get(
