@@ -38,3 +38,12 @@ class TagsTestCase(UnitTest):
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.content_type, "application/json")
             get_all_tags_mock.assert_called_once()
+
+        tests = [
+            finds_and_returns_all_tags
+        ]
+
+        for test in tests:
+            with self.subTest(test=test.__name__):
+                test()
+            get_all_tags_mock.reset_mock()
