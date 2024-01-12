@@ -1,3 +1,4 @@
+import bson
 from bson import ObjectId
 from app.models.operating_systems import OperatingSystemCreate, OperatingSystemPatch
 from tests import IntegrationTest
@@ -6,6 +7,7 @@ import lib.constants as constants
 
 class OperatingSystemsTestCase(IntegrationTest):
 
+    # Tests for creation
     def test_create_operating_system(self):
         # given
         operating_system = self.fixtures.operating_system.clone()
@@ -30,6 +32,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(expected.name, actual.get("name"))
 
+    # Tests for getting
     def test_get_operating_system_by_id(self):
         # given
         operating_system = self.fixtures.operating_system
@@ -51,6 +54,42 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(expected.name, actual.get("name"))
 
+    def test_fails_to_get_a_nonexistent_operating_system(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.get(
+            f'/v1/admin/operating-systems/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), f'The operating system with ID {nonexistent_id} was not found.')
+
+    def test_fails_to_get_an_operating_system_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.get(
+            f'/v1/admin/operating-systems/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
+        # The error string comes from the bson library and might change when the library updates
+        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
     def test_get_operating_systems(self):
         # given
         admin_user = self.fixtures.admin_user
@@ -70,6 +109,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(type(actual), list)
         self.assertGreater(len(actual), 0)
 
+    # Tests for patching
     def test_update_operating_system(self):
         # given
         os_data = {"name": "Temple OS"}
@@ -95,6 +135,45 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertNotEqual(actual.get("name"), os_data["name"])
         self.assertEqual(actual.get("name"), update_data.name)
 
+    def test_fails_to_patch_a_nonexistent_operating_system(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.patch(
+            f'/v1/admin/operating-systems/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"name": "Test Name"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), "\"OperatingSystem\" not found.")
+
+    def test_fails_to_patch_an_operating_system_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.patch(
+            f'/v1/admin/operating-systems/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"name": "Test Name"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
+        # The error string comes from the bson library and might change when the library updates
+        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
+    # Tests for deletion
     def test_delete_operating_system(self):
         # given
         os_data = {"name": "Temple OS"}
@@ -124,3 +203,39 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response_delete.status_code, 200)
         self.assertEqual(deleted_info.get("name"), created_os.name)
         self.assertIsNone(retrieved_info)
+
+    def test_fails_to_delete_a_nonexistent_operating_system(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.delete(
+            f'/v1/admin/operating-systems/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), "\"OperatingSystem\" not found.")
+
+    def test_fails_to_delete_an_operating_system_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.delete(
+            f'/v1/admin/operating-systems/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
+        # The error string comes from the bson library and might change when the library updates
+        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
