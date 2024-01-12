@@ -8,6 +8,7 @@ from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory
 from tests.fixtures import Fixtures
 
 from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
+
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
 from app.models.products import ProductCreate
@@ -43,7 +44,7 @@ class IntegrationTest(testicles.IntegrationTest):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-
+        
         self.injected = False
         IntegrationTest._test_cases.append(self)
 
@@ -112,7 +113,7 @@ class IntegrationTest(testicles.IntegrationTest):
 
             auth_extension = RequiresAuthExtension()
             auth_extension.init_app(app)
-
+            
             role_extension = RequiresRoleExtension()
             role_extension.init_app(app)
 
@@ -227,7 +228,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 )
             )
             cleanups.append(cleanup)
-
+    
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
