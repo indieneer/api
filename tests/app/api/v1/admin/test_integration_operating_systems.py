@@ -104,7 +104,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 500)
         # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
         # The error string comes from the bson library and might change when the library updates
-        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+        self.assertEqual(actual.get("error"), "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")
 
     def test_get_operating_systems(self):
         # given
@@ -187,7 +187,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 500)
         # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
         # The error string comes from the bson library and might change when the library updates
-        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+        self.assertEqual(actual.get("error"), "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")
 
     def test_fails_to_patch_an_operating_system_with_invalid_data(self):
         # given
@@ -278,4 +278,4 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 500)
         # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
         # The error string comes from the bson library and might change when the library updates
-        self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+        self.assertEqual(actual.get("error"), "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")

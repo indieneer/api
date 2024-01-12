@@ -9,8 +9,6 @@ from app.services import get_services
 search_controller = Blueprint('search', __name__, url_prefix='/search')
 
 
-
-
 @search_controller.route('/', methods=["GET"])
 def search():
     """

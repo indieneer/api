@@ -106,7 +106,7 @@ class PlatformsTestCase(IntegrationTest):
         # then
         self.assertEqual(response.status_code, 500)
         self.assertEqual(actual.get("error"),
-                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+                         "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")
 
     def test_get_platforms(self):
         # given
@@ -193,7 +193,7 @@ class PlatformsTestCase(IntegrationTest):
         # then
         self.assertEqual(response.status_code, 500)
         self.assertEqual(actual.get("error"),
-                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+                         "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")
 
     def test_fails_to_patch_a_platform_with_invalid_data(self):
         # given
@@ -293,4 +293,4 @@ class PlatformsTestCase(IntegrationTest):
         # then
         self.assertEqual(response.status_code, 500)
         self.assertEqual(actual.get("error"),
-                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+                         "'123' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string")
