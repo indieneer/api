@@ -6,6 +6,7 @@ import lib.constants as constants
 
 class PlatformsTestCase(IntegrationTest):
 
+    # Tests for creation
     def test_create_platform(self):
         # given
         platform_data = {
@@ -34,6 +35,7 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(platform.name, actual.get("name"))
 
+    # Tests for getting
     def test_get_platform_by_id(self):
         # given
         platform = self.fixtures.platform
@@ -55,6 +57,41 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(expected.name, actual.get("name"))
 
+    def test_fails_to_get_a_nonexistent_platform(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.get(
+            f'/v1/admin/platforms/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), f'The platform with ID {nonexistent_id} was not found.')
+
+    def test_fails_to_get_a_platform_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.get(
+            f'/v1/admin/platforms/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(actual.get("error"),
+                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
     def test_get_platforms(self):
         # given
         admin_user = self.fixtures.admin_user
@@ -74,6 +111,7 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(type(actual), list)
         self.assertGreater(len(actual), 0)
 
+    # Tests for updating
     def test_update_platform(self):
         # given
         platform_data = {
@@ -104,6 +142,44 @@ class PlatformsTestCase(IntegrationTest):
         self.assertNotEqual(actual.get("name"), platform_data["name"])
         self.assertEqual(actual.get("name"), update_data.name)
 
+    def test_fails_to_patch_a_nonexistent_platform(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.patch(
+            f'/v1/admin/platforms/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"name": "Test Name"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), "\"Platform\" not found.")
+
+    def test_fails_to_patch_a_platform_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.patch(
+            f'/v1/admin/platforms/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"name": "Test Name"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(actual.get("error"),
+                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
+    # Tests for deletion
     def test_delete_platform(self):
         # given
         platform_data = {
@@ -138,3 +214,38 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(response_delete.status_code, 200)
         self.assertEqual(deleted_info.get("name"), created_platform.name)
         self.assertIsNone(retrieved_info)
+
+    def test_fails_to_delete_a_nonexistent_platform(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        nonexistent_id = ObjectId()
+
+        # when
+        response = self.app.delete(
+            f'/v1/admin/platforms/{nonexistent_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(actual.get("error"), "\"Platform\" not found.")
+
+    def test_fails_to_delete_a_platform_by_an_invalid_id(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        invalid_id = "123"
+
+        # when
+        response = self.app.delete(
+            f'/v1/admin/platforms/{invalid_id}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(actual.get("error"),
+                         f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
