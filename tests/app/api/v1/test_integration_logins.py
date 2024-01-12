@@ -40,3 +40,4 @@ class LoginsTestCase(IntegrationTest):
         self.assertEqual(
             response_json, {'status': 'error', 'error': 'Wrong email or password.'})
         self.assertEqual(response.status_code, 403)
+
