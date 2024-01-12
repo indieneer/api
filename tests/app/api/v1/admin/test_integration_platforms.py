@@ -35,6 +35,22 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(platform.name, actual.get("name"))
 
+    def test_fails_to_create_a_platform_with_invalid_data(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        # when
+        response = self.app.post(
+            f'/v1/admin/platforms',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"data": "Invalid Data"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(actual.get("error"), "Invalid data provided.")
+
     # Tests for getting
     def test_get_platform_by_id(self):
         # given
@@ -178,6 +194,35 @@ class PlatformsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(actual.get("error"),
                          f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
+    def test_fails_to_patch_a_platform_with_invalid_data(self):
+        # given
+        platform_data = {
+            "name": "Test Platform",
+            "base_url": "www.test-platform.com/",
+            "icon_url": "www.test-platform.com/icon",
+            "enabled": True
+        }
+        update_data = {"John Pork": "Loves Pork"}
+        admin_user = self.fixtures.admin_user
+
+        created_platform, cleanup = self.factory.platforms.create(PlatformCreate(**platform_data))
+
+        self.addCleanup(cleanup)
+        id_to_update = created_platform._id
+
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        # when
+        response = self.app.patch(
+            f'/v1/admin/platforms/{str(id_to_update)}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json=update_data
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(actual.get("error"), "The key \"John Pork\" is not allowed.")
 
     # Tests for deletion
     def test_delete_platform(self):

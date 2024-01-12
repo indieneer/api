@@ -32,6 +32,22 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(expected.name, actual.get("name"))
 
+    def test_fails_to_create_an_operating_system_with_invalid_data(self):
+        admin_user = self.fixtures.admin_user
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+
+        # when
+        response = self.app.post(
+            f'/v1/admin/operating-systems',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json={"data": "Invalid Data"}
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(actual.get("error"), "Invalid data provided.")
+
     # Tests for getting
     def test_get_operating_system_by_id(self):
         # given
@@ -172,6 +188,30 @@ class OperatingSystemsTestCase(IntegrationTest):
         # Due to handler exceptions being caught automatically, we cannot use self.assertRaises
         # The error string comes from the bson library and might change when the library updates
         self.assertEqual(actual.get("error"), f'\'123\' is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string')
+
+    def test_fails_to_patch_an_operating_system_with_invalid_data(self):
+        # given
+        os_data = {"name": "Temple OS"}
+        update_data = {"John Pork": "Loves Pork"}
+        admin_user = self.fixtures.admin_user
+
+        created_os, cleanup = self.factory.operating_systems.create(OperatingSystemCreate(**os_data))
+
+        self.addCleanup(cleanup)
+        id_to_update = created_os._id
+
+        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        # when
+        response = self.app.patch(
+            f'/v1/admin/operating-systems/{str(id_to_update)}',
+            headers={"Authorization": f'Bearer {tokens["access_token"]}'},
+            json=update_data
+        )
+        actual = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(actual.get("error"), "The key \"John Pork\" is not allowed.")
 
     # Tests for deletion
     def test_delete_operating_system(self):
