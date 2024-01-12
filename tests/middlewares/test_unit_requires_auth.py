@@ -1,50 +1,30 @@
-from flask import Flask
-import unittest
+from flask import Flask, g
 from unittest.mock import patch, Mock, MagicMock
 
 from app.middlewares import requires_auth, AuthError
+from tests.unit_test import UnitTest
+from tests.utils.jwt import MockRequiresAuthExtension
 
 
-class RequiresAuthTestCase(unittest.TestCase):
+class RequiresAuthTestCase(UnitTest):
 
     def setUp(self) -> None:
         self.app = Flask(__name__)
+        auth_extension = MockRequiresAuthExtension()
+        auth_extension.init_app(self.app)
 
-    @patch('app.middlewares.requires_auth.app_config', MagicMock())
     @patch('app.middlewares.requires_auth.get_token_auth_header', Mock(return_value="Bearer test"))
-    @patch('app.middlewares.requires_auth.jwt.get_unverified_header')
-    @patch('app.middlewares.requires_auth.jwt.decode')
-    @patch('app.middlewares.requires_auth.requests.get')
-    def test_correct_token(
-        self,
-        requests_get: MagicMock,
-        jwt_decode: MagicMock,
-        get_unverified_header: MagicMock
-    ):
+    @patch('app.middlewares.requires_auth.get_requires_auth')
+    def test_correct_token(self, get_requires_auth: MagicMock):
         # given
-        mock_jwks_response = {
-            "keys": [
-                {
-                    "kid": "test1",
-                    "kty": "test",
-                    "use": "test",
-                    "n": "test",
-                    "e": "test"
-                }
-            ]
-        }
-        mock_unverified_header = {
-            "kid": "test1"
-        }
         mock_decoded_payload = {
             "sub": "auth0|abcdedfghijklmnop"
         }
         mock_handler = Mock()
         mock_handler.return_value = "Simple handler response"
-
-        requests_get.return_value.json.return_value = mock_jwks_response
-        get_unverified_header.return_value = mock_unverified_header
-        jwt_decode.return_value = mock_decoded_payload
+        
+        verify_token_mock = get_requires_auth.return_value.verify_token
+        verify_token_mock.return_value = mock_decoded_payload
 
         # when
         with self.app.test_request_context(
@@ -53,16 +33,16 @@ class RequiresAuthTestCase(unittest.TestCase):
             result = requires_auth(mock_handler)()
 
             # then
-            get_unverified_header.assert_called_once_with("Bearer test")
+            verify_token_mock.assert_called_once_with("Bearer test")
+            self.assertEqual(g.payload, mock_decoded_payload)
             mock_handler.assert_called_once()
             self.assertEqual(result, "Simple handler response")
 
-    @patch('app.middlewares.requires_auth.requests.get', Mock(return_value=Mock()))
-    @patch('app.middlewares.requires_auth.app_config', MagicMock())
-    @patch('app.middlewares.requires_auth.get_token_auth_header')
-    def test_incorrect_token(self, get_token_auth_header):
+    @patch('app.middlewares.requires_auth.get_token_auth_header', Mock(return_value="Bearer invalid"))
+    @patch('app.middlewares.requires_auth.get_requires_auth')
+    def test_incorrect_token(self, get_requires_auth: MagicMock):
         # given
-        get_token_auth_header.side_effect = AuthError(
+        get_requires_auth.return_value.verify_token.side_effect = AuthError(
             {"description": "test error", "code": "invalid_header"}, 401)
 
         # when

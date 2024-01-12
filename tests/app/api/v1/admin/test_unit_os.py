@@ -1,20 +1,24 @@
 from unittest.mock import patch, MagicMock
 import json
+from app.api.v1.admin.operating_systems import create_operating_system, delete_operating_system, get_operating_system_by_id
 
 from tests import UnitTest
 from app.models.operating_systems import OperatingSystemCreate, OperatingSystem, OperatingSystemPatch
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 
 
 class OperatingSystemsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_create_operating_system(self, get_models: MagicMock):
+        endpoint = "/operating-systems"
+        self.app.route(endpoint, methods=["POST"])(create_operating_system)
+
         create_os_mock = get_models.return_value.operating_systems.create
 
         def call_api(body):
-            return self.app.post(
-                "/v1/admin/operating-systems",
+            return self.test_client.post(
+                endpoint,
                 data=json.dumps(body),
                 content_type='application/json',
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
@@ -43,32 +47,21 @@ class OperatingSystemsTestCase(UnitTest):
             # given
             create_os_mock.side_effect = Exception("Error creating OS")
 
-            expected_response = {
-                "status": "error",
-                "error": "Error creating OS"
-            }
-
             # when
-            response = call_api({"name": "Invalid OS"})
+            with self.assertRaises(Exception) as context:
+                call_api({"name": "Invalid OS"})
 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 500)
+            self.assertEqual(str(context.exception), str(create_os_mock.side_effect))
             create_os_mock.assert_called_once()
 
         def fails_to_create_an_operating_system_when_body_is_invalid():
-            # given
-            expected_response = {
-                "status": "error",
-                "error": "Invalid data provided."
-            }
-
             # when
-            response = call_api({"invalid_field": "value"})
+            with self.assertRaises(Exception) as context:
+                call_api({"invalid_field": "value"})
 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 400)
+            self.assertEqual(str(context.exception), "Invalid data provided.")
             create_os_mock.assert_not_called()
 
         tests = [
@@ -80,15 +73,18 @@ class OperatingSystemsTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_os_mock.reset_mock()
+            create_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_get_operating_system(self, get_models: MagicMock):
+        endpoint = "/operating-systems/<string:operating_system_id>"
+        self.app.route(endpoint)(get_operating_system_by_id)
+
         get_os_mock = get_models.return_value.operating_systems.get
 
         def call_api(os_id):
-            return self.app.get(
-                f"/v1/admin/operating-systems/{os_id}",
+            return self.test_client.get(
+                endpoint.replace("<string:operating_system_id>", os_id),
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
                 content_type='application/json'
             )
@@ -132,15 +128,18 @@ class OperatingSystemsTestCase(UnitTest):
         for test in [finds_and_returns_an_operating_system, does_not_find_an_operating_system_and_returns_an_error]:
             with self.subTest(test.__name__):
                 test()
-                get_os_mock.reset_mock()
+            get_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_delete_operating_system(self, get_models: MagicMock):
+        endpoint = "/operating-systems/<string:operating_system_id>"
+        self.app.route(endpoint, methods=["DELETE"])(delete_operating_system)
+
         delete_os_mock = get_models.return_value.operating_systems.delete
 
         def call_api(os_id):
-            return self.app.delete(
-                f"/v1/admin/operating-systems/{os_id}",
+            return self.test_client.delete(
+                endpoint.replace("<string:operating_system_id>", os_id),
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
                 content_type='application/json'
             )
@@ -184,4 +183,4 @@ class OperatingSystemsTestCase(UnitTest):
         for test in [deletes_the_operating_system, fails_to_delete_a_nonexistent_operating_system]:
             with self.subTest(test.__name__):
                 test()
-                delete_os_mock.reset_mock()
+            delete_os_mock.reset_mock()
