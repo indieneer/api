@@ -13,8 +13,7 @@ def requires_service_account(f):
         sub = g.get("payload").get("sub")
         if not sub:
             return respond_error("missing decoded user", 500)
-        print(sub, "sub")
-        # try:
+
         if "@" in sub and sub.split("@")[1] == "clients":
             return f(*args, **kwargs)
         else:

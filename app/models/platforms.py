@@ -1,9 +1,14 @@
 from typing import Optional
 from bson import ObjectId
 from dataclasses import dataclass
+from slugify import slugify
+
+from pymongo import ReturnDocument
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
+
+from .exceptions import NotFoundException
 
 
 class Platform(BaseDocument):
@@ -34,7 +39,6 @@ class Platform(BaseDocument):
 @dataclass
 class PlatformCreate(Serializable):
     name: str
-    slug: str
     enabled: bool
     icon_url: str
     base_url: str
@@ -57,28 +61,131 @@ class PlatformsModel:
         self.db = db
 
     def get(self, platform_id: str):
-        platform = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(platform_id)}
-        )
+        """
+        Retrieve a platform's details based on its ID.
+
+        This method searches for a platform in the database using the provided platform_id.
+        If found, it returns a Platform object initialized with the platform's details.
+
+        :param str platform_id: The unique identifier of the platform.
+        :return: An instance of Platform initialized with the found platform's details,
+                 or None if the platform is not found.
+        :rtype: Platform | None
+        """
+        platform = self.db.connection[self.collection].find_one({"_id": ObjectId(platform_id)})
 
         if platform is not None:
             return Platform(**platform)
 
+    def get_all(self):
+        """
+        Retrieve all platforms from the database.
+
+        This method fetches all platforms from the database and returns them as a list of Platform objects.
+        If there are no platforms found, it returns an empty list.
+
+        :return: A list of Platform objects representing all the platforms in the database.
+        :rtype: list[Platform]
+        """
+        platforms = [Platform(**item) for item in self.db.connection[self.collection].find()]
+
+        return platforms if platforms else []
+
     def create(self, input_data: PlatformCreate):
-        platform = Platform(**input_data.to_json())
+        """
+        Create a new platform in the database.
 
-        self.db.connection[self.collection].insert_one(platform.to_bson())
+        This method takes the input data for a new platform, generates a slug from the platform's name,
+        and inserts the new platform into the database. It then returns a Platform object initialized
+        with the newly created platform's details.
 
-        return platform
+        :param PlatformCreate input_data: An object containing the data for the new platform.
+        :return: An instance of Platform initialized with the newly created platform's details.
+        :rtype: Platform
+        """
+        # Generate a slug from the platform's name
+        input_data.slug = slugify(input_data.name)
 
-    def patch(self, user_id: str, input_data: PlatformCreate):
-        raise Exception("not implemented")
+        # Prepare platform data for database insertion
+        platform_data = Platform(**input_data.to_json()).to_bson()
+
+        # Insert the new platform into the database
+        self.db.connection[self.collection].insert_one(platform_data)
+
+        return Platform(**platform_data)
+
+    def put(self, input_data: Platform):
+        """
+        Create a new platform in the database with a new ID.
+
+        This method creates a new platform based on the provided input data.
+        It first converts the input data into JSON, then creates a Platform object,
+        which is subsequently inserted into the database. The method generates
+        a new ID for the platform.
+
+        :param input_data: The platform data to be created.
+        :type input_data: Platform
+        :return: The created platform data with a new ID.
+        :rtype: Platform
+        """
+        platform_data = input_data.to_bson()
+
+        # Generate a slug for the new platform
+        platform_data['slug'] = slugify(platform_data['name'])
+
+        # Insert the new platform into the database
+        inserted_id = self.db.connection[self.collection].insert_one(platform_data).inserted_id
+        platform_data["_id"] = inserted_id
+
+        return Platform(**platform_data)
+
+    def patch(self, platform_id: str, input_data: PlatformPatch):
+        """
+        Update a platform in the database based on its ID.
+
+        This method updates the platform specified by the platform ID using the provided input data.
+        Only the fields provided in the input_data are updated; others are left untouched.
+
+        :param str platform_id: The unique identifier of the platform to be updated.
+        :param PlatformPatch input_data: The data to update the platform with.
+        :return: The updated Platform object.
+        :rtype: Platform
+        :raises: NotFoundException if the platform is not found.
+        """
+        update_data = {k: v for k, v in input_data.to_json().items() if v is not None}
+
+        if not update_data:
+            raise ValueError("No valid fields provided for update.")
+
+        update_data["slug"] = slugify(update_data["name"])
+
+        updated_platform = self.db.connection[self.collection].find_one_and_update(
+            {"_id": ObjectId(platform_id)},
+            {"$set": update_data},
+            return_document=ReturnDocument.AFTER
+        )
+
+        if updated_platform is not None:
+            return Platform(**updated_platform)
+        else:
+            raise NotFoundException(Platform.__name__)
 
     def delete(self, platform_id: str):
+        """
+        Delete a platform from the database based on its ID.
+
+        This method locates a platform in the database using the provided platform_id and deletes it.
+        If the platform is found and deleted, it returns a Platform object initialized with the
+        deleted platform's details. If no platform is found, it returns None.
+
+        :param str platform_id: The unique identifier of the platform to be deleted.
+        :return: An instance of Platform initialized with the deleted platform's details,
+                 or None if no platform is found.
+        :rtype: Platform | None
+        """
         platform = self.db.connection[self.collection].find_one_and_delete(
             {"_id": ObjectId(platform_id)}
         )
 
         if platform is not None:
-            platform = Platform(**platform)
-            return platform
+            return Platform(**platform)

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pymongo import ReturnDocument
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 from .exceptions import NotFoundException
 
 
@@ -90,22 +90,18 @@ class TagsModel:
 
         return tag
 
-    def put(self, input_data: Tag):
+    def put(self, tag: Tag):
         """
         Create a new tag in the database with a new ID.
 
-        :param input_data: The tag data to be created.
-        :type input_data: Tag
+        :param tag: The tag data to be created.
+        :type tag: Tag
         :return: The created tag data with a new ID.
         :rtype: Tag
         """
-        tag_data = input_data.to_json()
-        del tag_data["_id"]
 
-        inserted_id = self.db.connection[self.collection].insert_one(tag_data).inserted_id
-        tag_data["_id"] = inserted_id
-
-        return Tag(**tag_data)
+        self.db.connection[self.collection].insert_one(tag.to_bson())
+        return tag
 
     def patch(self, tag_id: str, input_data: TagPatch):
         """
@@ -129,7 +125,7 @@ class TagsModel:
         if updated_tag is not None:
             return Tag(**updated_tag)
         else:
-            raise NotFoundException
+            raise NotFoundException(Tag.__name__)
 
     def delete(self, tag_id: str):
         """
@@ -148,5 +144,5 @@ class TagsModel:
         if tag is not None:
             return Tag(**tag)
         else:
-            return None
+            raise NotFoundException(Tag.__name__)
 
