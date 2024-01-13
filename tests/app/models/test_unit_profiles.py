@@ -1,10 +1,9 @@
-from datetime import datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from bson import ObjectId
 
 from app.models import ProfilesModel
-from app.models.profiles import ProfileCreate
+from app.models.profiles import ProfileCreate, Profile
 from tests import UnitTest
 
 
@@ -15,13 +14,10 @@ class ProfilesModelTestCase(UnitTest):
     mock_collection = mock_db.connection.__getitem__.return_value
 
     def get_new_mock_profile(self):
-        return {
-            "_id": ObjectId(),
-            "email": "mock@pork.com",
-            "idp_id": "auth0|mock_pork",
-            "created_at": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f'),
-            "updated_at": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-        }
+        return Profile(
+            email="mock@pork.com",
+            idp_id="auth0|mock_pork",
+        ).to_bson()
 
     def test_get_profile(self):
         def finds_and_return_profile():
@@ -92,6 +88,7 @@ class ProfilesModelTestCase(UnitTest):
             self.mock_collection.find_one.reset_mock()
 
     def test_create_profile(self):
+        @patch.dict("config.constants.AUTH0_ROLES", {"User": "test_role"})
         def creates_and_returns_profile():
             # given
             mock_profile = self.get_new_mock_profile()
@@ -105,6 +102,7 @@ class ProfilesModelTestCase(UnitTest):
             self.mock_auth0.client.users.create.return_value = {
                 "user_id": "auth0|mock_pork"
             }
+            self.mock_auth0.client.users.update = MagicMock()
 
             # when
             profile = self.model.create(mock_profile_create)
@@ -119,6 +117,11 @@ class ProfilesModelTestCase(UnitTest):
                 "connection": "Username-Password-Authentication",
             })
             self.mock_collection.insert_one.assert_called_once()
+            self.mock_auth0.client.users.update.assert_called_once_with(
+                mock_profile["idp_id"], {
+                    "user_metadata": {"profile_id": str(profile._id)}
+                }
+            )
 
         tests = [
             creates_and_returns_profile
@@ -147,7 +150,7 @@ class ProfilesModelTestCase(UnitTest):
             self.mock_collection.find_one_and_delete.assert_called_once_with({"_id": mock_profile["_id"]})
             self.mock_auth0.client.users.delete.assert_called_once_with(mock_profile["idp_id"])
 
-        def does_not_fund_profile_and_returns_none():
+        def does_not_find_profile_and_returns_none():
             # given
             mock_id = ObjectId()
             self.mock_collection.find_one_and_delete.return_value = None
@@ -162,7 +165,7 @@ class ProfilesModelTestCase(UnitTest):
 
         tests = [
             deletes_and_returns_profile,
-            does_not_fund_profile_and_returns_none
+            does_not_find_profile_and_returns_none
         ]
 
         for test in tests:

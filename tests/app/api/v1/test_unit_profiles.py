@@ -1,7 +1,8 @@
 from unittest.mock import patch, MagicMock
 import json
-from app.api.v1.profiles import create_profile, get_profile, update_profile
-from app.models.exceptions import NotFoundException
+from app.api.v1.profiles import create_profile, get_profile, update_profile, get_authenticated_profile, delete_profile
+from app.middlewares import AuthError
+from app.models.exceptions import NotFoundException, ForbiddenException
 
 from bson import ObjectId
 
@@ -25,6 +26,7 @@ class ProfilesTestCase(UnitTest):
                 content_type='application/json'
             )
 
+        @patch.dict("config.constants.AUTH0_ROLES", {"User": "test_role"})
         def creates_and_returns_a_profile():
             # given
             mock_profile = Profile(
@@ -214,13 +216,16 @@ class ProfilesTestCase(UnitTest):
 
     @patch("app.api.v1.profiles.get_models")
     def test_delete_profile(self, get_models: MagicMock):
+        endpoint = "/profiles/<string:user_id>"
+        self.app.route(endpoint, methods=["DELETE"])(delete_profile)
+
         delete_profile_mock = get_models.return_value.profiles.delete
 
-        def call_api(profile_id):
+        def call_api(profile_id: str):
             token = create_test_token(profile_id)
 
-            return self.app.delete(
-                f"/v1/profiles/{profile_id}",
+            return self.test_client.delete(
+                endpoint.replace("<string:user_id>", profile_id),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
             )
@@ -261,12 +266,13 @@ class ProfilesTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_id)
+            with self.assertRaises(NotFoundException):
+                response = call_api(mock_id)
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
-            delete_profile_mock.assert_called_once_with(mock_id)
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 404)
+                delete_profile_mock.assert_called_once_with(mock_id)
 
         def fails_to_delete_profile_which_is_owned_by_another_user_and_returns_error():
             # given
@@ -277,16 +283,17 @@ class ProfilesTestCase(UnitTest):
 
             # when
             token = create_test_token(str(ObjectId()))
-            response = self.app.delete(
-                "/v1/profiles/1",
-                headers={"Authorization": f"Bearer {token}"},
-                content_type='application/json'
-            )
+            with self.assertRaises(ForbiddenException):
+                response = self.test_client.delete(
+                    endpoint.replace("<string:profile_id>", "1"),
+                    headers={"Authorization": f"Bearer {token}"},
+                    content_type='application/json'
+                )
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 403)
-            delete_profile_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 403)
+                delete_profile_mock.assert_not_called()
 
         tests = [
             deletes_and_returns_the_profile,
@@ -297,17 +304,20 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                delete_profile_mock.reset_mock()
+            delete_profile_mock.reset_mock()
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_authenticated_profile(self, get_models: MagicMock):
+        endpoint = "/profiles/me"
+        self.app.route(endpoint)(get_authenticated_profile)
+
         get_profile_mock = get_models.return_value.profiles.get
 
         def call_api(profile_id):
             token = create_test_token(profile_id)
 
-            return self.app.get(
-                "/v1/profiles/me",
+            return self.test_client.get(
+                endpoint,
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
             )
@@ -344,15 +354,16 @@ class ProfilesTestCase(UnitTest):
             }
 
             # when
-            response = self.app.get(
-                "/v1/profiles/me",
-                content_type='application/json'
-            )
+            with self.assertRaises(AuthError):
+                response = self.test_client.get(
+                    "/profiles/me",
+                    content_type='application/json'
+                )
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 401)
-            get_profile_mock.assert_not_called()
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 401)
+                get_profile_mock.assert_not_called()
 
         def fails_to_find_a_profile_and_returns_an_error():
             # given
@@ -368,12 +379,13 @@ class ProfilesTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_id)
+            with self.assertRaises(NotFoundException):
+                response = call_api(mock_id)
 
-            # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
-            get_profile_mock.assert_called_once_with(mock_id)
+                # then
+                self.assertEqual(response.get_json(), expected_response)
+                self.assertEqual(response.status_code, 404)
+                get_profile_mock.assert_called_once_with(mock_id)
 
         tests = [
             finds_and_returns_a_profile,
@@ -384,4 +396,4 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                get_profile_mock.reset_mock()
+            get_profile_mock.reset_mock()

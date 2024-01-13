@@ -2,13 +2,15 @@ import time
 
 from bson import ObjectId
 
-from app.middlewares.requires_auth import create_test_token
 from app.models.profiles import ProfileCreate
 from tests import IntegrationTest
 
 
 class ProfilesTestCase(IntegrationTest):
-    token = create_test_token(profile_id="1", idp_id="1")
+    @property
+    def token(self):
+        return self.models.logins.login("test_integration+regular@pork.com",
+                                        "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
 
     def test_get_profile(self):
         # given
@@ -83,6 +85,7 @@ class ProfilesTestCase(IntegrationTest):
             email="test_user_to_be_deleted@pork.com",
             password="test_pork_john"))
         self.addCleanup(cleanup)
+        token = self.models.logins.login("test_user_to_be_deleted@pork.com", "test_pork_john")["access_token"]
         expected_output = {
             "status": "ok",
             "data": {
@@ -94,7 +97,7 @@ class ProfilesTestCase(IntegrationTest):
         time.sleep(0.5)  # Temporary fix for free plan
         response = self.app.delete(
             f"/v1/profiles/{str(profile._id)}",
-            headers={"Authorization": f"Bearer {create_test_token(profile_id=str(profile._id))}"}
+            headers={"Authorization": f"Bearer {token}"}
         )
 
         # then
@@ -102,12 +105,20 @@ class ProfilesTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 200)
 
     def test_delete_profile_not_found(self):
+        # given
+        profile, cleanup = self.factory.profiles.create(ProfileCreate(
+            email="to_be_deleted@pork.com",
+            password="pork_pass"
+        ))
+        profile_id = str(profile._id)
+        token = self.models.logins.login("to_be_deleted@pork.com", "pork_pass")["access_token"]
+        cleanup()
+
         # when
         time.sleep(0.5)  # Temporary fix for free plan
-        profile_id = ObjectId()
         response = self.app.delete(
             f"/v1/profiles/{profile_id}",
-            headers={"Authorization": f"Bearer {create_test_token(profile_id=str(profile_id))}"}
+            headers={"Authorization": f"Bearer {token}"}
         )
 
         # then
@@ -134,16 +145,16 @@ class ProfilesTestCase(IntegrationTest):
 
     def test_get_authenticated_profile(self):
         # given
-        profile, cleanup = self.factory.profiles.create(input=ProfileCreate(
-            email="me_john_pork@pork.com",
-            password="pork_password"))
+        profile, cleanup = self.factory.profiles.create(ProfileCreate("test_pork_john@pork.com", "pork_pass"))
         self.addCleanup(cleanup)
+        token = self.models.logins.login("test_pork_john@pork.com",
+                                         "pork_pass")["access_token"]
 
         # when
         time.sleep(0.5)  # Temporary fix for free plan
         response = self.app.get(
             "/v1/profiles/me",
-            headers={"Authorization": f"Bearer {create_test_token(profile_id=str(profile._id))}"}
+            headers={"Authorization": f"Bearer {token}"}
         )
 
         # then
@@ -151,11 +162,19 @@ class ProfilesTestCase(IntegrationTest):
         self.assertEqual(response.get_json()["data"], profile.to_json())
 
     def test_get_authenticated_profile_not_found(self):
+        # given
+        _, cleanup = self.factory.profiles.create(ProfileCreate(
+            email="to_be_deleted@pork.com",
+            password="pork_pass"
+        ))
+        token = self.models.logins.login("to_be_deleted@pork.com", "pork_pass")["access_token"]
+        cleanup()
+
         # when
         time.sleep(0.5)
         response = self.app.get(
             "/v1/profiles/me",
-            headers={"Authorization": f"Bearer {create_test_token(profile_id=str(ObjectId()))}"}
+            headers={"Authorization": f"Bearer {token}"}
         )
 
         # then

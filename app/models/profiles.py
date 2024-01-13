@@ -153,7 +153,6 @@ class ProfilesModel:
         It also deletes the user from the authentication system (Auth0).
 
         :param str user_id: The ID of the user whose profile is to be deleted.
-        :raises: NotFoundException if the profile is not found.
         :return: The deleted Profile object, if found and deleted successfully.
         :rtype: Profile
         """
@@ -161,9 +160,9 @@ class ProfilesModel:
             {"_id": ObjectId(user_id)}
         )
 
-        profile = Profile(**profile)
-        # Delete the user from Auth0
-        self.auth0.client.users.delete(profile.idp_id)
+        if profile is not None:
+            profile = Profile(**profile)
+            # Delete the user from Auth0
+            self.auth0.client.users.delete(profile.idp_id)
 
-        return profile
-
+            return profile
