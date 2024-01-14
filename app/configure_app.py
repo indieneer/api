@@ -12,4 +12,12 @@ def configure_app(app: Flask):
     app.secret_key = env.get("APP_SECRET_KEY")
     app.url_map.strict_slashes = False
 
-    CORS(app, resources={r"/v1/*": {"origins": "*"}})
+    python_env = env.get("PYTHON_ENV")
+
+    origin = "http://localhost:3000"
+    if python_env == "staging":
+        origin = "http://staging.indieneer.com"
+    elif python_env == "production":
+        origin = "http://indieneer.com"
+
+    CORS(app, resources={r"/v1/*": {"origins": origin}})
