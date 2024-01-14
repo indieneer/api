@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from app.api.v1.admin.profiles import get_profiles
 from tests.utils.jwt import create_test_token
 from app.models.profiles import Profile
 from tests import UnitTest
@@ -8,11 +9,14 @@ from tests import UnitTest
 class ProfilesTestCase(UnitTest):
     @patch("app.api.v1.admin.profiles.get_models")
     def test_get_profiles(self, get_models):
+        endpoint = "/admin/profiles"
+        self.app.route(endpoint, methods=["GET"])(get_profiles)
+
         get_all_profiles_mock = get_models.return_value.profiles.get_all
 
         def call_api():
-            return self.app.get(
-                f"/v1/admin/profiles/",
+            return self.test_client.get(
+                endpoint,
                 headers={"Authorization": "Bearer " + create_test_token("", roles=["Admin", "User"])}
             )
 
