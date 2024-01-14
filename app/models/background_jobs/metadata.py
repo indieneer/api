@@ -32,6 +32,7 @@ class JobMetadata:
         :param job_type: The job type.
         :param kwargs: The metadata.
         :return: The metadata object.
+        :raises ValueError: If the job type is not supported.
         """
         metadata = JOB_METADATA.get(job_type)
 
