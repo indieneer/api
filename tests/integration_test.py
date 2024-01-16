@@ -194,6 +194,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     )
                 )
             )
+            cleanups.append(cleanup)
 
             tag, cleanup = factory.tags.create(TagCreate(
                 "Test tag",
