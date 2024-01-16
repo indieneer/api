@@ -15,11 +15,11 @@ class ProductsTestCase(IntegrationTest):
         # when
         response = self.app.get(
             # TODO: Replace with a proper fixture later
-            f'/v1/products/geometry-dash',
+            f'/v1/products/test-geometry-dash',
             headers={"Authorization": f'Bearer {tokens["access_token"]}'}
         )
 
-        actual = response.get_json().get("data")
+        actual = response.get_json()
         print(actual)
 
         # then
