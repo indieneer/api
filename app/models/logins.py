@@ -2,6 +2,7 @@ from app.services import Database, ManagementAPI
 from config import app_config
 from auth0.authentication import GetToken
 
+
 class LoginsModel:
     auth0: ManagementAPI
     collection: str = "profiles"

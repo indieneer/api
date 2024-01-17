@@ -1,20 +1,25 @@
 from unittest.mock import patch, MagicMock
 import json
+from app.api.v1.profiles import create_profile, get_profile, update_profile
+from app.models.exceptions import NotFoundException
 
 from tests import UnitTest
 from app.models.profiles import ProfileCreate, Profile, ProfilePatch
-from app.middlewares.requires_auth import create_test_token
+from tests.utils.jwt import create_test_token
 
 
 class ProfilesTestCase(UnitTest):
 
     @patch("app.api.v1.profiles.get_models")
     def test_create_profile(self, get_models: MagicMock):
+        endpoint = "/profiles"
+        self.app.route(endpoint, methods=["POST"])(create_profile)
+
         create_profile_mock = get_models.return_value.profiles.create
 
         def call_api(body):
-            return self.app.post(
-                "/v1/profiles",
+            return self.test_client.post(
+                endpoint,
                 data=json.dumps(body),
                 content_type='application/json'
             )
@@ -31,7 +36,7 @@ class ProfilesTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             # when
@@ -55,20 +60,16 @@ class ProfilesTestCase(UnitTest):
                 email=mock_profile.email,
                 password="123456789"
             )
-            expected_response = {
-                "status": "error",
-                "error": "Exception: BANG!"
-            }
 
             # when
-            response = call_api({
-                "email": expected_input.email,
-                "password": expected_input.password
-            })
+            with self.assertRaises(Exception) as context:
+                call_api({
+                    "email": expected_input.email,
+                    "password": expected_input.password
+                })
 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 500)
+            self.assertEqual(str(context.exception), str(create_profile_mock.side_effect))
             create_profile_mock.assert_called_once_with(expected_input)
 
         def fails_to_create_a_profile_when_body_is_invalid():
@@ -97,15 +98,18 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                create_profile_mock.reset_mock()
+            create_profile_mock.reset_mock()
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_profile(self, get_models: MagicMock):
+        endpoint = "/profiles/<string:profile_id>"
+        self.app.route(endpoint)(get_profile)
+
         get_profile_mock = get_models.return_value.profiles.get
 
         def call_api(profile_id):
-            return self.app.get(
-                f"/v1/profiles/{profile_id}",
+            return self.test_client.get(
+                endpoint.replace("<string:profile_id>", profile_id),
                 content_type='application/json'
             )
 
@@ -117,7 +121,7 @@ class ProfilesTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             # when
@@ -133,17 +137,11 @@ class ProfilesTestCase(UnitTest):
             mock_id = "1"
             get_profile_mock.return_value = None
 
-            expected_response = {
-                "status": "error",
-                "error": "\"Profile\" not found."
-            }
-
             # when
-            response = call_api(mock_id)
-
+            with self.assertRaises(NotFoundException):
+                 call_api(mock_id)
+                 
             # then
-            self.assertEqual(response.get_json(), expected_response)
-            self.assertEqual(response.status_code, 404)
             get_profile_mock.assert_called_once_with(mock_id)
 
         tests = [
@@ -154,19 +152,20 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                get_profile_mock.reset_mock()
+            get_profile_mock.reset_mock()
 
-    # TODO: rework
     @patch("app.api.v1.profiles.get_models")
     def test_patch_profile(self, get_models: MagicMock):
-        self.skipTest("Needs reworking")
+        endpoint = "/profiles/<string:profile_id>"
+        self.app.route(endpoint, methods=["PATCH"])(update_profile)
+
         patch_profile_mock = get_models.return_value.profiles.patch
 
         def call_api(profile_id, body):
             token = create_test_token(profile_id)
 
-            return self.app.patch(
-                f"/v1/profiles/{profile_id}",
+            return self.test_client.patch(
+                endpoint.replace("<string:profile_id>", profile_id),
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
@@ -183,7 +182,7 @@ class ProfilesTestCase(UnitTest):
             )
             expected_response = {
                 "status": "ok",
-                "data": mock_profile.as_json()
+                "data": mock_profile.to_json()
             }
 
             response = call_api(mock_profile._id, {
@@ -203,7 +202,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-                patch_profile_mock.reset_mock()
+            patch_profile_mock.reset_mock()
 
     def test_delete_profile(self):
         pass

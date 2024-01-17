@@ -1,6 +1,7 @@
 from flask import Blueprint
 
 from .admin.router import admin_controller
+from .background_jobs import background_jobs_controller
 from .platforms import platforms_controller
 from .profiles import profiles_controller
 from .products import products_controller
@@ -18,5 +19,6 @@ v1_router.register_blueprint(platforms_controller)
 v1_router.register_blueprint(products_controller)
 v1_router.register_blueprint(search_controller)
 v1_router.register_blueprint(tags_controller)
+v1_router.register_blueprint(background_jobs_controller)
 
 v1_router.register_blueprint(admin_controller)

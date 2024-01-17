@@ -36,10 +36,18 @@ def logins():
 
     return respond_success(tokens)
 
+
 @logins_controller.route('/m2m', methods=["POST"])
 def logins_m2m():
     """
-    TBD
+    Perform a machine-to-machine (M2M) login.
+
+    This endpoint handles POST requests to facilitate M2M login using client credentials.
+    It requires a client ID and client secret, validates them, and returns appropriate tokens.
+
+    :raises: Auth0Error if authentication fails.
+    :return: A dictionary containing the authentication tokens.
+    :rtype: dict
     """
     logins_model = get_models(current_app).logins
 
@@ -48,7 +56,6 @@ def logins_m2m():
     client_id = data.get("client_id")
     client_secret = data.get("client_secret")
 
-    # Input validation
     if not client_id or not client_secret:
         return respond_error("Client ID and client secret are required.", 400)
 

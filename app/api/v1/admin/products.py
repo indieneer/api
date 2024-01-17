@@ -132,7 +132,7 @@ def create_product():
         products_model = get_models(current_app).products
         created_product = products_model.create(ProductCreate(**data))
 
-        return respond_success(created_product.as_json())
+        return respond_success(created_product.to_json())
     except Exception as e:
         return respond_error(f'Internal server error. {e}', 500)
 

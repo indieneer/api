@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from .utils import slugify
 
 from app.services import Database
-from . import BaseDocument, Serializable
+from app.models.base import BaseDocument, Serializable
 
 
 class Product(BaseDocument):
@@ -22,6 +22,7 @@ class Product(BaseDocument):
     platforms: List[str]
     genres: List[ObjectId]
     release_date: str
+    slug: str
 
     def __init__(
             self,
@@ -38,10 +39,11 @@ class Product(BaseDocument):
             platforms: List[str],
             genres: List[ObjectId],
             release_date: str,
-            _id: Optional[ObjectId] = None,
+            slug: Optional[str] = None,
             **kwargs
     ) -> None:
-        super().__init__(_id)
+        super().__init__(**kwargs)
+
         self.type = type
         self.name = name
         self.required_age = required_age
@@ -55,9 +57,7 @@ class Product(BaseDocument):
         self.platforms = platforms
         self.genres = genres
         self.release_date = release_date
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        self.slug = slug if slug is not None else slugify(name)
 
 
 @dataclass
@@ -186,32 +186,24 @@ class ProductsModel:
         :return: The created product data.
         :rtype: Product
         """
-        product_data = input_data.as_json()
-        product_data["slug"] = slugify(product_data["name"])
-        inserted_id = self.db.connection[self.collection].insert_one(
-            product_data).inserted_id
-        product_data["_id"] = inserted_id
+        product = Product(**input_data.to_json())
 
-        return Product(**product_data)
+        self.db.connection[self.collection].insert_one(product.to_bson())
 
-    def put(self, input_data: Product) -> Product:
+        return product
+
+    def put(self, product: Product) -> Product:
         """
-        Update a product in the database, including updating the slug field.
+        Update a product in the database.
 
-        :param input_data: The product data to be updated.
-        :type input_data: Product
+        :param product: The product data to be updated.
+        :type product: Product
         :return: The updated product data.
         :rtype: Product
         """
-        product_data = input_data.to_json()
-        del product_data["_id"]
-        product_data["slug"] = slugify(product_data["name"])
 
-        inserted_id = self.db.connection[self.collection].insert_one(
-            product_data).inserted_id
-        product_data["_id"] = inserted_id
-
-        return Product(**product_data)
+        self.db.connection[self.collection].insert_one(product.to_bson())
+        return product
 
     def patch(self, product_id: str, input_data: ProductPatch) -> Optional[Product]:
         """
@@ -243,5 +235,6 @@ class ProductsModel:
         :rtype: int
         """
         deletion_result = self.db.connection[self.collection].delete_one(
-            {"_id": ObjectId(product_id)})
+            {"_id": ObjectId(product_id)}
+        )
         return deletion_result.deleted_count

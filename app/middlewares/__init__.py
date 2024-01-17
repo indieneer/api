@@ -40,3 +40,4 @@ def get_token_auth_header():
 
 from .requires_auth import requires_auth  # nopep8
 from .requires_role import requires_role  # nopep8
+from .requires_service_account import requires_service_account  # nopep8

@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app
 
 from app.models import get_models
+from lib import db_utils
 from lib.http_utils import respond_success
 
 tags_controller = Blueprint(
@@ -17,7 +18,6 @@ def get_tags():
     :return: A success response with the list of all tags.
     :rtype: dict
     """
-    tags_model = get_models(current_app).tags
-    tags = [tag.as_json() for tag in tags_model.get_all()]
+    tags = get_models(current_app).tags.get_all()
 
-    return respond_success(tags)
+    return respond_success(db_utils.to_json(tags))

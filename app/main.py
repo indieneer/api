@@ -1,19 +1,12 @@
 from flask import Flask
+from app.middlewares.requires_role import RequiresRoleExtension
 
-from .configure_app import configure_app
-from .register_routes import register_routes
-from .register_error_handlers import register_error_handlers
 from config import app_config
-
 
 app = Flask(__name__)
 
-configure_app(app)
-register_routes(app)
-register_error_handlers(app)
 
-
-def main():
+def main(app: Flask):
     import initializers
     from app.services import (
         Database,
@@ -23,13 +16,24 @@ def main():
     from app.models import (
         ModelsExtension,
         ProfilesModel,
+        OperatingSystemsModel,
         ProductsModel,
         LoginsModel,
-        TagsModel
+        TagsModel,
+        PlatformsModel,
+        BackgroundJobsModel
     )
+    from app.middlewares.requires_auth import RequiresAuthExtension
+    from .configure_app import configure_app
+    from .register_routes import register_routes
+    from .register_middlewares import register_middlewares
+
+    # load config
+    configure_app(app)
+    register_routes(app)
+    register_middlewares(app)
 
     # create dependencies
-    # TODO: add dependency injection for test runs
     db = Database(app_config["MONGO_URI"], timeoutMS=3000)
     auth0 = ManagementAPI(
         app_config["AUTH0_DOMAIN"],
@@ -46,20 +50,28 @@ def main():
 
     models = ModelsExtension(
         profiles=ProfilesModel(db=db, auth0=auth0),
-        logins=LoginsModel(auth0=auth0),
         products=ProductsModel(db=db),
+        platforms=PlatformsModel(db=db),
+        operating_systems=OperatingSystemsModel(db=db),
+        logins=LoginsModel(auth0=auth0),
         tags=TagsModel(db=db),
+        background_jobs=BackgroundJobsModel(db=db)
     )
     models.init_app(app)
+    
+    auth_extension = RequiresAuthExtension()
+    auth_extension.init_app(app)
+    
+    role_extension = RequiresRoleExtension()
+    role_extension.init_app(app)
 
     # run initializers
-
     if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
         initializers.run(services)
 
 
 if __name__ == "__main__":
-    main()
+    main(app)
 
     # start the server
     app.run(debug=True, port=app_config["PORT"])
