@@ -16,7 +16,7 @@ def configure_app(app: Flask):
 
     origin = "http://localhost:3000"
     if python_env == "staging":
-        origin = "http://staging.indieneer.com"
+        origin = "http://*.indieneer.com"
     elif python_env == "production":
         origin = "http://indieneer.com"
 
