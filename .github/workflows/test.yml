@@ -58,7 +58,7 @@ jobs:
         env:
           AUTH0_CACHE_DIR: ${{ vars.AUTH0_CACHE_DIR }}
         run: |
-          cat "$AUTH0_CACHE_DIR/tokens" 2> /dev/null
+          if [ -f "$AUTH0_CACHE_DIR/tokens" ]; then cat "$AUTH0_CACHE_DIR/tokens"; fi
 
       - name: Run tests
         env:
