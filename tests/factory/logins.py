@@ -15,7 +15,7 @@ class LoginsFactory:
     def __init__(self, models: ModelsExtension) -> None:
         self.models = models
         self.cache_dir = env.get("AUTH0_CACHE_DIR") or ""
-        self.cache_path = path.join(self.cache_dir, ".tokens")
+        self.cache_path = path.join(self.cache_dir, "tokens")
 
         self.restore_cache()
 
