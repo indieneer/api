@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime, timedelta
 import json
 from typing import Dict
 from app.models import ModelsExtension
@@ -51,7 +51,7 @@ class LoginsFactory:
 
             key = self.create_key(email, password)
             self.tokens[key] = {
-                "expires_at": datetime.now().timestamp() + 23 * 60 * 60 * 1000, "identity": identity}
+                "expires_at": (datetime.now() + timedelta(hours=23)).timestamp(), "identity": identity}
 
             with open(self.cache_path, "w+") as file:
                 json.dump(self.tokens, file)
