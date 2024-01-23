@@ -5,6 +5,7 @@ from tests import IntegrationTest
 class LoginsTestCase(IntegrationTest):
 
     def test_logins(self):
+        self.skipTest("Temporary disabled due to Auth0 quota limits")
         # given
         user = self.fixtures.regular_user
 
@@ -24,6 +25,7 @@ class LoginsTestCase(IntegrationTest):
             len(response_json["data"]["access_token"].split(".")), 3)
 
     def test_wrong_password(self):
+        self.skipTest("Temporary disabled due to Auth0 quota limits")
         # given
         user = self.fixtures.regular_user
 
@@ -40,4 +42,3 @@ class LoginsTestCase(IntegrationTest):
         self.assertEqual(
             response_json, {'status': 'error', 'error': 'Wrong email or password.'})
         self.assertEqual(response.status_code, 403)
-
