@@ -6,6 +6,7 @@ import jwt
 class LoginsModelTestCase(IntegrationTest):
 
     def test_login_user(self):
+        self.skipTest("Temporary disabled due to Auth0 quota limits")
         logins_model = LoginsModel(auth0=self.services.auth0)
 
         email = "pork@gmail.com"
@@ -21,6 +22,7 @@ class LoginsModelTestCase(IntegrationTest):
         self.assertNotIn("Admin", decoded['https://indieneer.com/roles'])
 
     def test_login_admin(self):
+        self.skipTest("Temporary disabled due to Auth0 quota limits")
         logins_model = LoginsModel(auth0=self.services.auth0)
 
         email = "john.pork+admin@john.pork"
