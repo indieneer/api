@@ -28,5 +28,5 @@ def get_product_by_slug(product_slug: str):
     if product is None:
         raise models_exceptions.NotFoundException(Product.__name__)
 
-    return respond_success(product.as_json())
+    return respond_success(product.to_json())
 
