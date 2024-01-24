@@ -18,7 +18,7 @@ class PlatformsTestCase(IntegrationTest):
         platform = PlatformCreate(**platform_data)
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.post(
@@ -37,7 +37,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_create_a_platform_with_invalid_data(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.post(
@@ -57,7 +57,7 @@ class PlatformsTestCase(IntegrationTest):
         platform = self.fixtures.platform
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.get(
@@ -75,7 +75,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_get_a_nonexistent_platform(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -92,7 +92,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_get_a_platform_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 
@@ -112,7 +112,7 @@ class PlatformsTestCase(IntegrationTest):
         # given
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.get(
@@ -144,7 +144,7 @@ class PlatformsTestCase(IntegrationTest):
         self.addCleanup(cleanup)
         id_to_update = created_platform._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response = self.app.patch(
             f'/v1/admin/platforms/{str(id_to_update)}',
@@ -160,7 +160,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_patch_a_nonexistent_platform(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -178,7 +178,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_patch_a_platform_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 
@@ -211,7 +211,7 @@ class PlatformsTestCase(IntegrationTest):
         self.addCleanup(cleanup)
         id_to_update = created_platform._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response = self.app.patch(
             f'/v1/admin/platforms/{str(id_to_update)}',
@@ -240,7 +240,7 @@ class PlatformsTestCase(IntegrationTest):
 
         id_to_delete = created_platform._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response_delete = self.app.delete(
             f'/v1/admin/platforms/{str(id_to_delete)}',
@@ -262,7 +262,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_delete_a_nonexistent_platform(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -279,7 +279,7 @@ class PlatformsTestCase(IntegrationTest):
 
     def test_fails_to_delete_a_platform_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 

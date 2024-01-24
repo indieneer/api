@@ -13,7 +13,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         operating_system = self.fixtures.operating_system.clone()
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.post(
@@ -34,7 +34,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_create_an_operating_system_with_invalid_data(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.post(
@@ -54,7 +54,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         operating_system = self.fixtures.operating_system
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.get(
@@ -72,7 +72,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_get_a_nonexistent_operating_system(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -89,7 +89,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_get_an_operating_system_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 
@@ -110,7 +110,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         # given
         admin_user = self.fixtures.admin_user
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         # when
         response = self.app.get(
@@ -137,7 +137,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.addCleanup(cleanup)
         id_to_update = created_os._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response = self.app.patch(
             f'/v1/admin/operating-systems/{str(id_to_update)}',
@@ -153,7 +153,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_patch_a_nonexistent_operating_system(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -171,7 +171,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_patch_an_operating_system_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 
@@ -200,7 +200,7 @@ class OperatingSystemsTestCase(IntegrationTest):
         self.addCleanup(cleanup)
         id_to_update = created_os._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response = self.app.patch(
             f'/v1/admin/operating-systems/{str(id_to_update)}',
@@ -224,7 +224,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
         id_to_delete = created_os._id
 
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
         # when
         response_delete = self.app.delete(
             f'/v1/admin/operating-systems/{str(id_to_delete)}',
@@ -246,7 +246,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_delete_a_nonexistent_operating_system(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         nonexistent_id = ObjectId()
 
@@ -263,7 +263,7 @@ class OperatingSystemsTestCase(IntegrationTest):
 
     def test_fails_to_delete_an_operating_system_by_an_invalid_id(self):
         admin_user = self.fixtures.admin_user
-        tokens = self.models.logins.login(admin_user.email, constants.strong_password)
+        tokens = self.factory.logins.login(admin_user.email, constants.strong_password)
 
         invalid_id = "123"
 
