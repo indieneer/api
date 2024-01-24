@@ -10,6 +10,7 @@ TEST_AUTH0_DOMAIN = "indieneer.eu.auth0.com"
 TEST_AUTH0_AUDIENCE = "https://api.indieneer.com"
 TEST_AUTH0_NAMESPACE = "https://indieneer.com"
 
+
 def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None=None):
     """Used for unit testing
     """
@@ -32,6 +33,7 @@ def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None
         algorithm="HS256"
     )
 
+
 class MockRequiresAuthExtension(RequiresAuthExtension):
     def verify_token(self, token: str):
         return jwt.decode(
@@ -41,7 +43,8 @@ class MockRequiresAuthExtension(RequiresAuthExtension):
             audience=TEST_AUTH0_AUDIENCE,
             issuer=f"https://{TEST_AUTH0_DOMAIN}/"
         )
-        
+
+
 class MockRequiresRoleExtension(RequiresRoleExtension):
     def verify_role(self, payload: Dict, role: str):
         roles = payload.get(TEST_AUTH0_NAMESPACE + "/roles", [])

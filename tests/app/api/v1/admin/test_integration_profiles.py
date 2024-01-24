@@ -18,7 +18,8 @@ class ProfilesTestCase(IntegrationTest):
 
         # when
         response = self.app.get(
-            "/v1/health", headers={"Authorization": f'Bearer {tokens["access_token"]}'})
+            "/v1/health", headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+        )
 
         # then
         expected = {

@@ -21,19 +21,19 @@ class Platform(BaseDocument):
     def __init__(
         self,
         name: str,
-        slug: str,
         enabled: bool,
         icon_url: str,
         base_url: str,
+        slug: Optional = None,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
         self.name = name
-        self.slug = slug
         self.enabled = enabled
         self.icon_url = icon_url
         self.base_url = base_url
+        self.slug = slug
 
 
 @dataclass
@@ -103,7 +103,7 @@ class PlatformsModel:
         :return: An instance of Platform initialized with the newly created platform's details.
         :rtype: Platform
         """
-        # Generate a slug from the platform's name
+
         input_data.slug = slugify(input_data.name)
 
         # Prepare platform data for database insertion
@@ -130,7 +130,6 @@ class PlatformsModel:
         """
         platform_data = input_data.to_bson()
 
-        # Generate a slug for the new platform
         platform_data['slug'] = slugify(platform_data['name'])
 
         # Insert the new platform into the database
@@ -157,7 +156,8 @@ class PlatformsModel:
         if not update_data:
             raise ValueError("No valid fields provided for update.")
 
-        update_data["slug"] = slugify(update_data["name"])
+        if update_data.get("slug", None) is None:
+            update_data["slug"] = slugify(update_data["name"])
 
         updated_platform = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(platform_id)},
@@ -189,3 +189,5 @@ class PlatformsModel:
 
         if platform is not None:
             return Platform(**platform)
+        else:
+            raise NotFoundException(Platform.__name__)

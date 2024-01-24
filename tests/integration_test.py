@@ -1,5 +1,6 @@
 from app.middlewares.requires_role import RequiresRoleExtension
 import testicles
+import lib.constants as constants
 import typing
 from bson import ObjectId
 
@@ -90,9 +91,8 @@ class IntegrationTest(testicles.IntegrationTest):
                 f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
             )
 
-            # TODO: extract to somewhere to make accessible in tests
-            strong_password = "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:"
-            weak_password = "12345678"
+            strong_password = constants.strong_password
+            weak_password = constants.weak_password
 
             services = ServicesExtension(
                 auth0=auth0,
@@ -202,6 +202,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     )
                 )
             )
+            cleanups.append(cleanup)
 
             tag, cleanup = factory.tags.create(TagCreate(
                 "Test tag",

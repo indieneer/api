@@ -17,6 +17,10 @@ PLATFORM_FIELDS = [
     "base_url"
 ]
 
+IGNORED_FIELDS = [
+    "slug"
+]
+
 
 @platforms_controller.route('/', methods=["GET"])
 @requires_auth
@@ -112,6 +116,8 @@ def update_platform(platform_id: str):
         raise handlers_exceptions.InternalServerErrorException("Internal server error.")
 
     for key in data:
+        if key in IGNORED_FIELDS:
+            continue
         if key not in PLATFORM_FIELDS:
             raise handlers_exceptions.UnprocessableEntityException(f'The key "{key}" is not allowed.')
 
