@@ -14,7 +14,7 @@ class ProfilesTestCase(IntegrationTest):
         )
         self.addCleanup(cleanup_profile)
 
-        tokens = self.models.logins.login(profile.email, "Test@234")
+        tokens = self.factory.logins.login(profile.email, "Test@234")
 
         # when
         response = self.app.get(

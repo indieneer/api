@@ -1,5 +1,3 @@
-import bson
-from bson import ObjectId
 from tests import IntegrationTest
 
 
@@ -14,17 +12,16 @@ class ProductsTestCase(IntegrationTest):
 
         # when
         response = self.app.get(
-            # TODO: Replace with a proper fixture later
-            f'/v1/products/test-geometry-dash',
+            f'/v1/products/geometry-dash',
             headers={"Authorization": f'Bearer {tokens["access_token"]}'}
         )
 
-        actual = response.get_json()
-        print(actual)
+
+        actual = response.get_json().get("data")
 
         # then
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(actual.get("name"), "Updated Name")
+        self.assertEqual(actual.get("name"), "Geometry Dash")
 
     def test_fails_to_get_a_nonexistent_product(self):
         # given
@@ -38,8 +35,9 @@ class ProductsTestCase(IntegrationTest):
             headers={"Authorization": f'Bearer {tokens["access_token"]}'}
         )
 
-        actual = response.get_json().get("data")
+
+        actual = response.get_json()
 
         # then
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(actual.get("error"), "Abc")
+        self.assertEqual(actual.get("error"), "\"Product\" not found.")

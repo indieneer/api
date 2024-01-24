@@ -4,10 +4,12 @@ import lib.constants as constants
 import typing
 from bson import ObjectId
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, OperatingSystemsFactory
+from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, \
+    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory
 from tests.fixtures import Fixtures
 
-from app.models.background_jobs import BackgroundJobsModel
+from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
+
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
 from app.models.products import ProductCreate
@@ -43,7 +45,7 @@ class IntegrationTest(testicles.IntegrationTest):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        
+
         self.injected = False
         IntegrationTest._test_cases.append(self)
 
@@ -54,11 +56,11 @@ class IntegrationTest(testicles.IntegrationTest):
         raise Exception("Dependecies must be injected.")
 
     def inject_dependencies(
-        self,
-        services: ServicesExtension,
-        models: ModelsExtension,
-        factory: Factory,
-        fixtures: Fixtures
+            self,
+            services: ServicesExtension,
+            models: ModelsExtension,
+            factory: Factory,
+            fixtures: Fixtures
     ):
         self.injected = True
         self.services = services
@@ -108,10 +110,10 @@ class IntegrationTest(testicles.IntegrationTest):
                 background_jobs=BackgroundJobsModel(db=db)
             )
             models.init_app(app)
-            
+
             auth_extension = RequiresAuthExtension()
             auth_extension.init_app(app)
-            
+
             role_extension = RequiresRoleExtension()
             role_extension.init_app(app)
 
@@ -131,6 +133,12 @@ class IntegrationTest(testicles.IntegrationTest):
                 operating_systems=OperatingSystemsFactory(
                     db=db, models=models
                 ),
+                background_jobs=BackgroundJobsFactory(
+                    db=db, models=models
+                ),
+                logins=LoginsFactory(
+                    models=models
+                )
             )
 
             regular_user, cleanup = factory.profiles.create(ProfileCreate(
@@ -163,14 +171,14 @@ class IntegrationTest(testicles.IntegrationTest):
                                 "name": "Trailer",
                                 "thumbnail_url": "https://example.com",
                                 "formats": {
-                                        "webm": {
-                                            "480": "https://example.com",
-                                            "max": "https://example.com"
-                                        },
+                                    "webm": {
+                                        "480": "https://example.com",
+                                        "max": "https://example.com"
+                                    },
                                     "mp4": {
-                                            "480": "https://example.com",
-                                            "max": "https://example.com"
-                                        }
+                                        "480": "https://example.com",
+                                        "max": "https://example.com"
+                                    }
                                 }
                             }
                         ],
@@ -214,6 +222,17 @@ class IntegrationTest(testicles.IntegrationTest):
             ))
             cleanups.append(cleanup)
 
+            background_job, cleanup = factory.background_jobs.create(
+                BackgroundJobCreate(
+                    type="es_seeder",
+                    metadata={
+                        "match_query": "test"
+                    },
+                    created_by="bUhOAswerBbA3lamY0saxLuJezB7sjOs@clients"
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
@@ -221,6 +240,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 platform=platform,
                 operating_system=operating_system,
                 tag=tag,
+                background_job=background_job
             )
 
             # Inject dependencies
@@ -234,7 +254,8 @@ class IntegrationTest(testicles.IntegrationTest):
         except Exception as e:
             print(e)
 
-        IntegrationTest._cleanup = lambda: [fixture_cleanup() for fixture_cleanup in cleanups]
+        IntegrationTest._cleanup = lambda: [
+            fixture_cleanup() for fixture_cleanup in cleanups]
 
     @staticmethod
     def tearDownTestRun():
