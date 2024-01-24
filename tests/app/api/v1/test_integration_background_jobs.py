@@ -58,7 +58,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(response_json["error"], "\"BackgroundJob\" not found.")
+        self.assertEqual(response_json["error"],
+                         "\"BackgroundJob\" not found.")
         self.assertEqual(response.status_code, 404)
 
     def test_get_background_job_by_id_without_auth_header(self):
@@ -75,13 +76,15 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(response_json["error"]["code"], "authorization_header_missing")
+        self.assertEqual(response_json["error"]
+                         ["code"], "authorization_header_missing")
         self.assertEqual(response.status_code, 401)
 
     def test_get_background_job_by_id_without_permission(self):
         # given
         user = self.fixtures.regular_user.clone()
-        token = self.models.logins.login(user.email, "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
+        token = self.factory.logins.login(
+            user.email, "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
 
         # when
         response = self.app.get(
@@ -119,7 +122,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response_json["data"]["type"], data["type"])
         self.assertEqual(response_json["data"]["metadata"], data["metadata"])
 
-        self.factory.background_jobs.cleanup(ObjectId(response_json["data"]["_id"]))
+        self.factory.background_jobs.cleanup(
+            ObjectId(response_json["data"]["_id"]))
 
     def test_create_background_job_without_all_required_fields_present(self):
         # given
@@ -138,7 +142,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(response_json["error"], "Not all required fields are present")
+        self.assertEqual(response_json["error"],
+                         "Not all required fields are present")
         self.assertEqual(response.status_code, 400)
 
     def test_create_background_job_with_invalid_type(self):
@@ -253,7 +258,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(response_json["error"], "\"BackgroundJob\" not found.")
+        self.assertEqual(response_json["error"],
+                         "\"BackgroundJob\" not found.")
         self.assertEqual(response.status_code, 404)
 
     def test_update_background_job_with_valid_and_invalid_fields_present(self):
@@ -328,8 +334,10 @@ class BackgroundJobsTestCase(IntegrationTest):
 
         # then
         self.assertEqual(type(response_json["data"]), dict)
-        self.assertEqual(response_json["data"]["events"][0]["type"], data["type"])
-        self.assertEqual(response_json["data"]["events"][0]["message"], data["message"])
+        self.assertEqual(response_json["data"]
+                         ["events"][0]["type"], data["type"])
+        self.assertEqual(response_json["data"]
+                         ["events"][0]["message"], data["message"])
         self.assertEqual(len(response_json["data"]["events"]), 1)
 
     def test_create_background_job_event_with_not_all_required_fields_present(self):
@@ -353,7 +361,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(response_json["error"], "Not all required fields are present")
+        self.assertEqual(response_json["error"],
+                         "Not all required fields are present")
         self.assertEqual(response.status_code, 400)
 
     def test_create_background_job_event_with_invalid_id(self):
@@ -373,7 +382,8 @@ class BackgroundJobsTestCase(IntegrationTest):
         )
 
         # then
-        self.assertEqual(response.get_json()["error"], "\"BackgroundJob\" not found.")
+        self.assertEqual(response.get_json()[
+                         "error"], "\"BackgroundJob\" not found.")
         self.assertEqual(response.status_code, 404)
 
     def test_create_background_job_event_when_was_created_by_another_user(self):
@@ -422,5 +432,6 @@ class BackgroundJobsTestCase(IntegrationTest):
         )
 
         # then
-        self.assertEqual(response.get_json()["error"], "Unsupported event type")
+        self.assertEqual(response.get_json()[
+                         "error"], "Unsupported event type")
         self.assertEqual(response.status_code, 400)

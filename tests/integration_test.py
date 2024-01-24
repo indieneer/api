@@ -4,7 +4,7 @@ import typing
 from bson import ObjectId
 
 from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, \
-    OperatingSystemsFactory, BackgroundJobsFactory
+    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory
 from tests.fixtures import Fixtures
 
 from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
@@ -44,7 +44,7 @@ class IntegrationTest(testicles.IntegrationTest):
 
     def __init__(self, methodName: str = "runTest") -> None:
         super().__init__(methodName)
-        
+
         self.injected = False
         IntegrationTest._test_cases.append(self)
 
@@ -113,7 +113,7 @@ class IntegrationTest(testicles.IntegrationTest):
 
             auth_extension = RequiresAuthExtension()
             auth_extension.init_app(app)
-            
+
             role_extension = RequiresRoleExtension()
             role_extension.init_app(app)
 
@@ -135,6 +135,9 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 background_jobs=BackgroundJobsFactory(
                     db=db, models=models
+                ),
+                logins=LoginsFactory(
+                    models=models
                 )
             )
 
@@ -228,7 +231,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 )
             )
             cleanups.append(cleanup)
-    
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
@@ -250,7 +253,8 @@ class IntegrationTest(testicles.IntegrationTest):
         except Exception as e:
             print(e)
 
-        IntegrationTest._cleanup = lambda: [fixture_cleanup() for fixture_cleanup in cleanups]
+        IntegrationTest._cleanup = lambda: [
+            fixture_cleanup() for fixture_cleanup in cleanups]
 
     @staticmethod
     def tearDownTestRun():

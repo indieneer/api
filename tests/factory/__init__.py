@@ -6,6 +6,7 @@ from .products import ProductsFactory
 from .operating_systems import OperatingSystemsFactory
 from .tags import TagsFactory
 from .platforms import PlatformsFactory
+from .logins import LoginsFactory
 
 
 @dataclass
@@ -16,3 +17,4 @@ class Factory:
     operating_systems: OperatingSystemsFactory
     tags: TagsFactory
     background_jobs: BackgroundJobsFactory
+    logins: LoginsFactory
