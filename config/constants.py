@@ -12,3 +12,8 @@ AUTH0_ROLES: dict[str, str] = {
     key, value in
     [x.split(':') for x in env.get("AUTH0_ROLES", ":").split(',')]
 }
+
+
+class FirebaseRole(Enum):
+    Admin = "Admin"
+    User = "User"

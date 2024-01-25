@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
+from firebase_admin.exceptions import AlreadyExistsError
 
 from app.services import Database, ManagementAPI
-from config.constants import AUTH0_ROLES, Auth0Role
+from app.services.firebase import Firebase
+from config import app_config
+from config.constants import AUTH0_ROLES, Auth0Role, FirebaseRole
 from app.models.base import BaseDocument, Serializable
 
 
@@ -30,6 +33,14 @@ class ProfileCreate(Serializable):
 
 
 @dataclass
+class ProfileCreateV2(Serializable):
+    email: str
+    password: str
+    display_name: str
+    email_verified: Optional[bool] = False
+
+
+@dataclass
 class ProfilePatch(Serializable):
     email: Optional[str] = None
     password: Optional[str] = None
@@ -38,10 +49,12 @@ class ProfilePatch(Serializable):
 class ProfilesModel:
     db: Database
     auth0: ManagementAPI
+    firebase: Firebase
     collection: str = "profiles"
 
-    def __init__(self, db: Database, auth0: ManagementAPI) -> None:
+    def __init__(self, db: Database, firebase: Firebase, auth0: ManagementAPI) -> None:
         self.db = db
+        self.firebase = firebase
         self.auth0 = auth0
 
     def get(self, user_id: str):
@@ -55,7 +68,8 @@ class ProfilesModel:
         :return: A Profile object if the user profile is found, otherwise None.
         :rtype: Profile or None
         """
-        profile = self.db.connection[self.collection].find_one({"_id": ObjectId(user_id)})
+        profile = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(user_id)})
 
         if profile is not None:
             return Profile(**profile)
@@ -71,7 +85,8 @@ class ProfilesModel:
         :return: A Profile object if the user profile is found, otherwise None.
         :rtype: Profile or None
         """
-        profile = self.db.connection[self.collection].find_one({"email": email})
+        profile = self.db.connection[self.collection].find_one(
+            {"email": email})
 
         if profile is not None:
             return Profile(**profile)
@@ -109,7 +124,79 @@ class ProfilesModel:
         self.db.connection[self.collection].insert_one(profile.to_bson())
 
         # Store internal user ID in Auth0 user's metadata
-        self.auth0.client.users.update(idp_id, {"user_metadata": {"profile_id": str(profile._id)}})
+        self.auth0.client.users.update(
+            idp_id, {"user_metadata": {"profile_id": str(profile._id)}})
+
+        return profile
+
+    def create_v2(self, input_data: ProfileCreateV2):
+        """Creates a user using Firebase provider
+
+        Args:
+            input_data (ProfileCreateV2): Attributes that will be used to create a user
+
+        Returns:
+            Profile: Created profile
+        """
+        UserRecord = self.firebase.auth.UserRecord
+
+        # Create the user in Firebase
+        # Use ObjectId as UID
+        user: UserRecord | None = None
+        try:
+            # First try create a user
+            user = self.firebase.auth.create_user(
+                uid=str(ObjectId()),
+                **input_data.to_json()
+            )
+            user = cast(UserRecord, user)
+        except self.firebase.auth.EmailAlreadyExistsError as error:
+            # We expect a user existence in 2 cases:
+            # - user creation failed on one of the below steps and we are re-creating it
+            # - user creation succeeded
+            user = self.firebase.auth.get_user_by_email(input_data.email)
+            user = cast(UserRecord, user)
+
+            # If custom claims are set then the user is fully set up
+            # Don't let it create an account with the same data
+            if user.custom_claims is not None and "profile_id" in user.custom_claims:
+                raise error
+
+        # This should never be possible
+        if user is None:
+            raise Exception("User is none")
+
+        # Create a user profile in the database
+        # Identity provider ID will be the same as Mongo user profile's _id
+        profile = Profile(
+            email=input_data.email,
+            idp_id=cast(str, user.uid),
+            _id=ObjectId(user.uid)
+        )
+        self.db.connection[self.collection].insert_one(profile.to_bson())
+
+        # Set custom claims: role, profile_id
+        # Important: setting custom claims removes previously defined claims
+        custom_claims = dict([
+            (f"{app_config['FB_NAMESPACE']}/profile_id", str(profile._id)),
+            (f"{app_config['FB_NAMESPACE']}/role", FirebaseRole.User.value),
+        ])
+        self.firebase.auth.set_custom_user_claims(user.uid, custom_claims)
+
+        return profile
+
+    def patch_v2(self, input_data: ProfilePatch):
+        pass
+
+    def delete_v2(self, user_id: str):
+        # TODO: add transaction
+        profile = self.db.connection[self.collection].find_one_and_delete(
+            {"_id": ObjectId(user_id)}
+        )
+
+        profile = Profile(**profile)
+        # Delete the user from Firebase
+        self.firebase.auth.delete_user(profile.idp_id)
 
         return profile
 
@@ -126,7 +213,8 @@ class ProfilesModel:
         :rtype: Profile or None
         """
         # Find the existing profile
-        existing_profile = self.db.connection[self.collection].find_one({"_id": ObjectId(user_id)})
+        existing_profile = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(user_id)})
         if not existing_profile:
             return None  # Might be changed to an exception raise
 
@@ -140,8 +228,9 @@ class ProfilesModel:
         )
 
         # Fetch the updated profile
-        updated_profile = self.db.connection[self.collection].find_one({"_id": ObjectId(user_id)})
-        
+        updated_profile = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(user_id)})
+
         if updated_profile is not None:
             return Profile(**updated_profile)
 
@@ -166,4 +255,3 @@ class ProfilesModel:
         self.auth0.client.users.delete(profile.idp_id)
 
         return profile
-

@@ -4,6 +4,7 @@ from flask import Flask
 
 from .auth0 import ManagementAPI
 from .database import Database
+from .firebase import Firebase
 
 
 class ServicesExtension:
@@ -12,14 +13,17 @@ class ServicesExtension:
     KEY = "services"
 
     auth0: ManagementAPI
+    firebase: Firebase
     db: Database
 
     def __init__(
         self,
         auth0: ManagementAPI,
+        firebase: Firebase,
         db: Database
     ) -> None:
         self.auth0 = auth0
+        self.firebase = firebase
         self.db = db
 
     def init_app(self, app: Flask):

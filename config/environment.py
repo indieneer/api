@@ -2,9 +2,12 @@ from os import environ as env
 
 from dotenv import find_dotenv, load_dotenv
 
+
 def setup_environment():
-    if env.get("PYTHON_ENV", "development") == "test":
-        return
+    environment = env.get("PYTHON_ENV", "development")
+
+    if environment == "test":
+        return environment
 
     ENV_FILE = find_dotenv(".env")
 
@@ -13,3 +16,5 @@ def setup_environment():
             print("ERROR: failed to load env!")
     else:
         print("WARNING: env file not found!")
+
+    return environment
