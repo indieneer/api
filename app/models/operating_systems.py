@@ -45,12 +45,13 @@ class OperatingSystemsModel:
         Retrieve an operating system by its ID.
 
         This method searches for an operating system in the database using the provided ID.
-        If found, it returns the operating system object.
+        If found, it constructs and returns an OperatingSystem object based on the retrieved data.
 
         :param str operating_system_id: The unique identifier of the operating system.
         :return: An OperatingSystem object if found, otherwise None.
         :rtype: OperatingSystem or None
         """
+
         operating_system = self.db.connection[self.collection].find_one({"_id": ObjectId(operating_system_id)})
 
         if operating_system is not None:
@@ -74,13 +75,14 @@ class OperatingSystemsModel:
         """
         Create a new operating system entry.
 
-        This method takes the input data, converts it to a JSON format suitable for database insertion,
-        and creates a new operating system in the database.
+        This method constructs an OperatingSystem object from the provided data, formats it for database insertion,
+        and creates a new operating system entry in the database. The method returns the newly created OperatingSystem object.
 
         :param OperatingSystemCreate input_data: The data required to create a new operating system.
         :return: The newly created OperatingSystem object.
         :rtype: OperatingSystem
         """
+
         # Prepare operating_system data for database insertion
         operating_system_data = OperatingSystem(**input_data.to_json()).to_bson()
 
@@ -93,13 +95,15 @@ class OperatingSystemsModel:
         """
         Create a new operating system or replace an existing one.
 
-        This method takes an OperatingSystem object, removes its ID if it exists,
-        and inserts it into the database, effectively creating a new operating system.
+        This method takes an OperatingSystem object, converts it to a BSON format suitable for database insertion,
+        and inserts it into the database. If an ID is present, it is removed before insertion.
+        This results in either the creation of a new operating system or the replacement of an existing one.
 
         :param OperatingSystem input_data: The operating system data for creation or replacement.
-        :return: The newly created or replaced OperatingSystem object.
+        :return: The newly created or replaced OperatingSystem object, with a new ID assigned.
         :rtype: OperatingSystem
         """
+
         operating_system_data = input_data.to_bson()
 
         # Insert the new operating system into the database
@@ -112,16 +116,17 @@ class OperatingSystemsModel:
         """
         Update an existing operating system.
 
-        This method updates fields of an existing operating system based on the provided ID and input data.
-        It raises a ValueError if no valid fields are provided, and a NotFoundException if the operating system is not found.
+        This method updates fields of an existing operating system in the database based on the provided ID and input data.
+        It raises a ValueError if no valid fields are provided for the update, and a NotFoundException if the operating system is not found.
 
         :param str operating_system_id: The ID of the operating system to update.
         :param OperatingSystemPatch input_data: The data containing updates for the operating system.
         :raises ValueError: If no valid fields are provided for update.
         :raises NotFoundException: If no operating system is found with the given ID.
-        :return: The updated OperatingSystem object.
+        :return: The updated OperatingSystem object, if the update is successful.
         :rtype: OperatingSystem
         """
+
         update_data = {k: v for k, v in input_data.to_json().items() if v is not None}
 
         if not update_data:
@@ -143,12 +148,14 @@ class OperatingSystemsModel:
         Delete an operating system by its ID.
 
         This method removes an operating system from the database based on the provided ID.
-        If the operation is successful, it returns the deleted operating system object.
+        If the deletion is successful, it returns the deleted OperatingSystem object.
 
         :param str operating_system_id: The unique identifier of the operating system to delete.
-        :return: The deleted OperatingSystem object if the operation is successful, otherwise None.
+        :raises NotFoundException: If no operating system is found with the given ID.
+        :return: The deleted OperatingSystem object, if the operation is successful.
         :rtype: OperatingSystem or None
         """
+
         operating_system = self.db.connection[self.collection].find_one_and_delete(
             {"_id": ObjectId(operating_system_id)}
         )
