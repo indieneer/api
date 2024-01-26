@@ -29,10 +29,9 @@ def get_platforms():
     """
     Retrieve all game store platforms.
 
-    This endpoint retrieves all records of game stores from the database.
-    It requires authentication and admin role permission to access.
+    This endpoint retrieves all records of game store platforms from the database. It is accessible only to users with authentication and admin role permissions. The function gathers data from the platforms model and returns it in a structured format.
 
-    :return: A list of dictionaries each containing the details of a gaming platform.
+    :return: A list of dictionaries, each containing the details of a gaming platform.
     :rtype: Response
     """
 
@@ -73,10 +72,12 @@ def create_platform():
     """
     Create a new game store platform.
 
-    This endpoint requires admin authorization and is used to add a new game store
-    to the database.
+    This endpoint is used to add a new game store platform to the database.
+    It requires admin authorization and expects a JSON payload with necessary platform details.
+    The endpoint validates the incoming data against predefined platform fields.
 
-    :return: A dictionary containing the data of the newly created platform.
+    :raises BadRequestException: If the provided data is invalid or incomplete.
+    :return: A dictionary containing the details of the newly created game store platform along with the status code.
     :rtype: Response
     """
 
@@ -99,14 +100,15 @@ def create_platform():
 @requires_role("admin")
 def update_platform(platform_id: str):
     """
-    Update a platform by its ID.
+    Update a game store platform by its ID.
 
-    This function requires admin privileges. The provided platform_id is used to update the specific platform's
-    data in the database with the new data provided in the request's JSON body.
+    This endpoint allows admin users to modify an existing game store platform's details in the database.
+    It requires a valid platform_id and a JSON payload containing the updated platform details.
+    The function validates the incoming data, ensuring that only specified fields are updated and ignoring any alien keys.
 
-    :param str platform_id: The ID of the platform to be updated.
-    :raises UnprocessableEntityException: If the request has alien keys.
-    :return: A JSON response containing either the updated platform data or an error message.
+    :param str platform_id: The unique identifier of the game store platform to be updated.
+    :raises UnprocessableEntityException: If the provided data contains keys not allowed in PLATFORM_FIELDS.
+    :return: A dictionary representing the updated details of the game store platform.
     :rtype: Response
     """
 
@@ -132,12 +134,13 @@ def update_platform(platform_id: str):
 @requires_role("admin")
 def delete_platform(platform_id: str):
     """
-    Delete a gaming platform by its ID.
+    Delete a game store platform by its ID.
 
-    This endpoint allows admin users to delete a game store platform from the database.
+    This endpoint facilitates the deletion of a game store platform from the database using the provided platform_id.
+    The function checks the existence of the platform before attempting deletion. It is restricted to users with admin roles.
 
-    :param str platform_id: The ID of the game store platform to be deleted.
-    :return: A success message if the deletion is successful.
+    :param str platform_id: The unique identifier of the game store platform to be deleted.
+    :return: A success message confirming the deletion if the platform exists, otherwise an error response.
     :rtype: Response
     """
 

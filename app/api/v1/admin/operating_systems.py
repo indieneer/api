@@ -45,6 +45,7 @@ def get_operating_system_by_id(operating_system_id: str):
     identified by the operating_system_id. It requires authentication and admin role permission for access.
 
     :param str operating_system_id: The unique identifier of the operating system to be retrieved.
+    :raises: NotFoundException if the operating system with the specified ID is not found.
     :return: A dictionary containing the details of the requested operating system.
     :rtype: Response
     """
@@ -67,9 +68,10 @@ def create_operating_system():
 
     This endpoint facilitates the addition of a new operating system record to the database.
     It requires admin authorization and expects a JSON payload with necessary operating system details.
+    The endpoint validates the incoming data against predefined operating system fields.
 
     :raises BadRequestException: If the provided data is invalid or incomplete.
-    :return: A dictionary containing the details of the newly created operating system.
+    :return: A dictionary containing the details of the newly created operating system along with the status code.
     :rtype: Response
     """
 
@@ -94,13 +96,14 @@ def update_operating_system(operating_system_id: str):
     """
     Update an existing operating system entry.
 
-    This endpoint allows for the modification of an existing operating system record identified by the operating_system_id.
+    This endpoint allows for the modification of an existing operating system record, identified by the operating_system_id.
     Requires admin privileges and a JSON payload with the updated details of the operating system.
+    The endpoint performs data validation to ensure only allowed fields are updated.
 
     :param str operating_system_id: The unique identifier of the operating system to be updated.
     :raises InternalServerErrorException: If no data is provided in the request.
     :raises UnprocessableEntityException: If the provided data contains keys not allowed in OPERATING_SYSTEM_FIELDS.
-    :return: A dictionary representing the updated details of the operating system.
+    :return: A dictionary representing the updated details of the operating system along with the status code.
     :rtype: Response
     """
 
@@ -130,11 +133,10 @@ def delete_operating_system(operating_system_id: str):
     Delete an operating system entry.
 
     This endpoint removes an existing operating system record from the database using the provided operating_system_id.
-    Access is restricted to users with admin roles.
+    Access is restricted to users with admin roles. It checks if the operating system exists before attempting deletion.
 
     :param str operating_system_id: The unique identifier of the operating system to be deleted.
-    :raises NotFoundException: If no operating system is found with the given operating_system_id.
-    :return: A success message confirming the deletion along with the details of the deleted operating system.
+    :return: A success message confirming the deletion along with the details of the deleted operating system if found, otherwise an error response.
     :rtype: Response
     """
 

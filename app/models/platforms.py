@@ -66,12 +66,13 @@ class PlatformsModel:
 
         This method searches for a platform in the database using the provided platform_id.
         If found, it returns a Platform object initialized with the platform's details.
+        Otherwise, it returns None, indicating that the platform was not found.
 
         :param str platform_id: The unique identifier of the platform.
-        :return: An instance of Platform initialized with the found platform's details,
-                 or None if the platform is not found.
+        :return: An instance of Platform initialized with the found platform's details, or None if the platform is not found.
         :rtype: Platform | None
         """
+
         platform = self.db.connection[self.collection].find_one({"_id": ObjectId(platform_id)})
 
         if platform is not None:
@@ -119,15 +120,14 @@ class PlatformsModel:
         Create a new platform in the database with a new ID.
 
         This method creates a new platform based on the provided input data.
-        It first converts the input data into JSON, then creates a Platform object,
-        which is subsequently inserted into the database. The method generates
-        a new ID for the platform.
+        It converts the input data into JSON, generates a slug from the platform's name, and inserts the new platform into the database with a new ID.
+        The method returns a Platform object initialized with the newly created platform's details.
 
-        :param input_data: The platform data to be created.
-        :type input_data: Platform
-        :return: The created platform data with a new ID.
+        :param Platform input_data: The data of the platform to be created.
+        :return: An instance of Platform initialized with the newly created platform's details, including the new ID.
         :rtype: Platform
         """
+
         platform_data = input_data.to_bson()
 
         platform_data['slug'] = slugify(platform_data['name'])
@@ -142,15 +142,18 @@ class PlatformsModel:
         """
         Update a platform in the database based on its ID.
 
-        This method updates the platform specified by the platform ID using the provided input data.
-        Only the fields provided in the input_data are updated; others are left untouched.
+        This method updates the platform specified by the platform_id using the provided input data.
+        It selectively updates only the fields provided in the input_data while leaving other fields untouched.
+        If the provided data is empty or invalid, it raises a ValueError.
 
         :param str platform_id: The unique identifier of the platform to be updated.
         :param PlatformPatch input_data: The data to update the platform with.
-        :return: The updated Platform object.
+        :return: The updated Platform object, or raises a NotFoundException if the platform is not found.
         :rtype: Platform
-        :raises: NotFoundException if the platform is not found.
+        :raises ValueError: If no valid fields are provided for update.
+        :raises NotFoundException: If the platform with the given ID is not found.
         """
+
         update_data = {k: v for k, v in input_data.to_json().items() if v is not None}
 
         if not update_data:
@@ -174,15 +177,16 @@ class PlatformsModel:
         """
         Delete a platform from the database based on its ID.
 
-        This method locates a platform in the database using the provided platform_id and deletes it.
-        If the platform is found and deleted, it returns a Platform object initialized with the
-        deleted platform's details. If no platform is found, it returns None.
+        This method locates and deletes a platform in the database using the provided platform_id.
+        If the platform is found and deleted, it returns a Platform object initialized with the deleted platform's details.
+        If no platform is found, it raises a NotFoundException.
 
         :param str platform_id: The unique identifier of the platform to be deleted.
-        :return: An instance of Platform initialized with the deleted platform's details,
-                 or None if no platform is found.
+        :return: An instance of Platform initialized with the deleted platform's details, or raises a NotFoundException if no platform is found.
         :rtype: Platform | None
+        :raises NotFoundException: If the platform with the given ID is not found.
         """
+
         platform = self.db.connection[self.collection].find_one_and_delete(
             {"_id": ObjectId(platform_id)}
         )
