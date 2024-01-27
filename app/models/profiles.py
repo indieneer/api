@@ -1,7 +1,8 @@
 from typing import Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
-from firebase_admin.exceptions import AlreadyExistsError
+
+import pymongo.errors
 
 from app.services import Database, ManagementAPI
 from app.services.firebase import Firebase
@@ -141,11 +142,11 @@ class ProfilesModel:
         UserRecord = self.firebase.auth.UserRecord
 
         # Create the user in Firebase
-        # Use ObjectId as UID
         user: UserRecord | None = None
         try:
             # First try create a user
             user = self.firebase.auth.create_user(
+                # Use ObjectId as UID so we can relate database and Firebase users
                 uid=str(ObjectId()),
                 **input_data.to_json()
             )
@@ -157,48 +158,71 @@ class ProfilesModel:
             user = self.firebase.auth.get_user_by_email(input_data.email)
             user = cast(UserRecord, user)
 
-            # If custom claims are set then the user is fully set up
-            # Don't let it create an account with the same data
-            if user.custom_claims is not None and "profile_id" in user.custom_claims:
+            # If custom claims are set then the user is fully set up,
+            # don't let the user continue
+            if user.custom_claims is not None and f"{app_config['FB_NAMESPACE']}/profile_id" in user.custom_claims:
                 raise error
-
-        # This should never be possible
-        if user is None:
-            raise Exception("User is none")
+        except Exception as error:
+            raise error
 
         # Create a user profile in the database
         # Identity provider ID will be the same as Mongo user profile's _id
-        profile = Profile(
-            email=input_data.email,
-            idp_id=cast(str, user.uid),
-            _id=ObjectId(user.uid)
-        )
-        self.db.connection[self.collection].insert_one(profile.to_bson())
+        profile: Profile | None = None
+        try:
+            # Try create a profile in database
+            profile = Profile(
+                email=input_data.email,
+                idp_id=cast(str, user.uid),
+                _id=ObjectId(user.uid)
+            )
+            self.db.connection[self.collection].insert_one(profile.to_bson())
+        except pymongo.errors.DuplicateKeyError as error:
+            # We expect a user existence in 1 case:
+            # - set_custom_user_claims failed on the previous sign up attempt
+            profile = self.db.connection[self.collection].find_one(
+                {"_id": ObjectId(user.uid)})
 
-        # Set custom claims: role, profile_id
+            if profile is None:
+                raise Exception("Profile is None")
+
+            profile = Profile(**profile)
+        except Exception as error:
+            raise error
+
+        # Set custom claims: roles, profile_id, permissions
         # Important: setting custom claims removes previously defined claims
         custom_claims = dict([
             (f"{app_config['FB_NAMESPACE']}/profile_id", str(profile._id)),
-            (f"{app_config['FB_NAMESPACE']}/role", FirebaseRole.User.value),
+            (f"{app_config['FB_NAMESPACE']}/roles", [FirebaseRole.User.value]),
+            (f"{app_config['FB_NAMESPACE']}/permissions", []),
         ])
-        self.firebase.auth.set_custom_user_claims(user.uid, custom_claims)
+        try:
+            self.firebase.auth.set_custom_user_claims(user.uid, custom_claims)
+        except Exception as error:
+            raise error
 
         return profile
 
     def patch_v2(self, input_data: ProfilePatch):
         pass
 
-    def delete_v2(self, user_id: str):
-        # TODO: add transaction
-        profile = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": ObjectId(user_id)}
-        )
+    def delete_v2(self, profile_id: str):
+        # Perform the deletion in transaction to handle failed Firebase operation
+        with self.db.client.start_session() as session:
+            with session.start_transaction():
+                profile = self.db.connection[self.collection].find_one_and_delete(
+                    {"_id": ObjectId(profile_id)},
+                    session=session
+                )
+                if profile is None:
+                    return
 
-        profile = Profile(**profile)
-        # Delete the user from Firebase
-        self.firebase.auth.delete_user(profile.idp_id)
+                profile = Profile(**profile)
 
-        return profile
+                # Delete user in Firebase
+                self.firebase.auth.delete_user(profile_id)
+
+                return profile
 
     def patch(self, user_id: str, input_data: ProfilePatch):
         """

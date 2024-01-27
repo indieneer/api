@@ -66,7 +66,8 @@ class FirebaseIdentityToolkitAPI:
 
         payload = {
             "email": email,
-            "password": password
+            "password": password,
+            "returnSecureToken": True
         }
 
         response = urllib3.request(
@@ -92,6 +93,9 @@ class FirebaseIdentityToolkitAPI:
         user = data.get("users", [])[0]
 
         return FirebaseUser(user)
+
+    # TODO: refresh token
+    # https://firebase.google.com/docs/reference/rest/auth#section-refresh-token
 
 # Firebase Admin SDK
 # https://firebase.google.com/docs/reference/admin/python
