@@ -31,13 +31,13 @@ def create_profile():
     profile_model = get_models(current_app).profiles
     data = request.get_json()
 
-    if data is None or not all(key in data for key in ('email', 'password')):
+    if data is None or not all(key in data and len(data[key]) > 0 for key in ('email', 'password', 'nickname')):
         return respond_error("Bad Request.", 400)
 
     profile_data = ProfileCreateV2(
         email=data.get("email"),
         password=data.get("password"),
-        display_name=data.get("email").split("@")[0],
+        nickname=data.get("nickname"),
         email_verified=False
     )
 

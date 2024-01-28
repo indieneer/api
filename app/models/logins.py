@@ -34,9 +34,8 @@ class LoginsModel:
 
     def login_v2(self, email: str, password: str):
         identity = self.firebase.identity_api.sign_in(email, password)
-        user = self.firebase.identity_api.lookup(identity.id_token)
 
-        return AuthenticatedUser(identity, user)
+        return identity
 
     def login_m2m(self, client_id: str, client_secret: str):
         return GetToken(

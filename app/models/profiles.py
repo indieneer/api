@@ -1,6 +1,8 @@
+import dis
 from typing import Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
+from click import Option
 
 import pymongo.errors
 
@@ -13,17 +15,26 @@ from app.models.base import BaseDocument, Serializable
 
 class Profile(BaseDocument):
     email: str
+    nickname: str
+    display_name: str
+    photo_url: str
     idp_id: str
 
     def __init__(
         self,
         email: str,
+        nickname: str,
+        display_name: str,
+        photo_url: str,
         idp_id: str,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
         self.email = email
+        self.nickname = nickname
+        self.display_name = display_name
+        self.photo_url = photo_url
         self.idp_id = idp_id
 
 
@@ -37,8 +48,11 @@ class ProfileCreate(Serializable):
 class ProfileCreateV2(Serializable):
     email: str
     password: str
-    display_name: str
+    nickname: str
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
     email_verified: Optional[bool] = False
+    role: Optional[FirebaseRole] = None
 
 
 @dataclass
@@ -141,14 +155,22 @@ class ProfilesModel:
         """
         UserRecord = self.firebase.auth.UserRecord
 
+        # Use display name or nickname as the initial display name
+        display_name = input_data.display_name or input_data.nickname
+        # Use generated avatar if none is provided
+        photo_url = input_data.photo_url or f"https://ui-avatars.com/api/?name={input_data.display_name}&background=random"
+
         # Create the user in Firebase
         user: UserRecord | None = None
         try:
-            # First try create a user
             user = self.firebase.auth.create_user(
                 # Use ObjectId as UID so we can relate database and Firebase users
                 uid=str(ObjectId()),
-                **input_data.to_json()
+                email=input_data.email,
+                password=input_data.password,
+                display_name=display_name,
+                photo_url=photo_url,
+                email_verified=input_data.email_verified
             )
             user = cast(UserRecord, user)
         except self.firebase.auth.EmailAlreadyExistsError as error:
@@ -172,6 +194,9 @@ class ProfilesModel:
             # Try create a profile in database
             profile = Profile(
                 email=input_data.email,
+                nickname=input_data.nickname,
+                display_name=display_name,
+                photo_url=photo_url,
                 idp_id=cast(str, user.uid),
                 _id=ObjectId(user.uid)
             )
@@ -191,9 +216,10 @@ class ProfilesModel:
 
         # Set custom claims: roles, profile_id, permissions
         # Important: setting custom claims removes previously defined claims
+        role = input_data.role or FirebaseRole.User
         custom_claims = dict([
             (f"{app_config['FB_NAMESPACE']}/profile_id", str(profile._id)),
-            (f"{app_config['FB_NAMESPACE']}/roles", [FirebaseRole.User.value]),
+            (f"{app_config['FB_NAMESPACE']}/roles", [role.value]),
             (f"{app_config['FB_NAMESPACE']}/permissions", []),
         ])
         try:

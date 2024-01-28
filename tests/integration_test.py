@@ -1,4 +1,4 @@
-from app.middlewares.requires_role import RequiresRoleExtension
+from config.constants import FirebaseRole
 import testicles
 import lib.constants as constants
 import typing
@@ -13,7 +13,7 @@ from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
 from app.models.products import ProductCreate
-from app.models.profiles import ProfileCreate
+from app.models.profiles import ProfileCreateV2
 from app.models.tags import TagCreate
 from app.models.products import Media, Requirements
 from app.models import (
@@ -28,12 +28,14 @@ from app.models import (
 from app.services import (
     Database,
     ManagementAPI,
+    Firebase,
     ServicesExtension
 )
 
 from app.main import app
 from config import app_config
 from app.middlewares.requires_auth import RequiresAuthExtension
+from app.middlewares.requires_role import RequiresRoleExtension
 from app.configure_app import configure_app
 from app.register_middlewares import register_middlewares
 from app.register_routes import register_routes
@@ -90,21 +92,24 @@ class IntegrationTest(testicles.IntegrationTest):
                 app_config["AUTH0_CLIENT_SECRET"],
                 f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
             )
+            firebase = Firebase(
+                app_config["FB_SERVICE_ACCOUNT"], app_config["FB_API_KEY"])
 
             strong_password = constants.strong_password
             weak_password = constants.weak_password
 
             services = ServicesExtension(
                 auth0=auth0,
+                firebase=firebase,
                 db=db
             )
             services.init_app(app)
 
             models = ModelsExtension(
-                profiles=ProfilesModel(auth0=auth0, db=db),
+                profiles=ProfilesModel(auth0=auth0, firebase=firebase, db=db),
                 platforms=PlatformsModel(db=db),
                 operating_systems=OperatingSystemsModel(db=db),
-                logins=LoginsModel(auth0=auth0),
+                logins=LoginsModel(auth0=auth0, firebase=firebase),
                 products=ProductsModel(db=db),
                 tags=TagsModel(db=db),
                 background_jobs=BackgroundJobsModel(db=db)
@@ -141,12 +146,19 @@ class IntegrationTest(testicles.IntegrationTest):
                 )
             )
 
-            regular_user, cleanup = factory.profiles.create(ProfileCreate(
-                "test_integration+regular@pork.com", strong_password))
+            regular_user, cleanup = factory.profiles.create(ProfileCreateV2(
+                email="test_integration+regular@pork.com",
+                password=strong_password,
+                nickname="test_integration_regular"
+            ))
             cleanups.append(cleanup)
 
-            admin_user, cleanup = factory.profiles.create_admin(ProfileCreate(
-                "test_integration+admin@pork.com", strong_password))
+            admin_user, cleanup = factory.profiles.create(ProfileCreateV2(
+                email="test_integration+admin@pork.com",
+                password=strong_password,
+                nickname="test_integration_admin",
+                role=FirebaseRole.Admin
+            ))
             cleanups.append(cleanup)
 
             product, cleanup = factory.products.create(

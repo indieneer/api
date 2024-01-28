@@ -1,10 +1,11 @@
+from typing import Dict
 from flask import request
 
 
 # Error handler
 # Format error response and append status code
 class AuthError(Exception):
-    def __init__(self, error, status_code):
+    def __init__(self, error: Dict, status_code: int):
         self.error = error
         self.status_code = status_code
 

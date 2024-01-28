@@ -103,11 +103,11 @@ class FirebaseIdentityToolkitAPI:
 
 class Firebase:
     _app: firebase_admin.App
-    _api_token: str
+    _api_key: str
 
-    def __init__(self, service_account: str, api_token: str) -> None:
+    def __init__(self, service_account: str, api_key: str) -> None:
         self._app = self.init_app(service_account)
-        self._api_token = api_token
+        self._api_key = api_key
 
     def init_app(self, service_account: str):
         service_account = json.loads(service_account)
@@ -121,4 +121,4 @@ class Firebase:
 
     @property
     def identity_api(self):
-        return FirebaseIdentityToolkitAPI(self._api_token)
+        return FirebaseIdentityToolkitAPI(self._api_key)

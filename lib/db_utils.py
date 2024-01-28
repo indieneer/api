@@ -37,15 +37,19 @@ def to_json(thing: Any):
     if isinstance(thing, ObjectId):
         return str(thing)
     elif isinstance(thing, dict):
+        out = {}
+
         for key, value in thing.items():
-            thing[key] = to_json(value)
+            out[key] = to_json(value)
 
-        return thing
+        return out
     elif isinstance(thing, list):
-        for idx, item in enumerate(thing):
-            thing[idx] = to_json(item)
+        out = []
 
-        return thing
+        for item in thing:
+            out.append(to_json(item))
+
+        return out
     elif isinstance(thing, tuple):
         return to_json(list(thing))
     elif isinstance(thing, (int, float, bool, str)) or thing is None:
@@ -55,37 +59,47 @@ def to_json(thing: Any):
     else:
         return str(thing)
 
+
 def to_dict(thing: Any):
     if isinstance(thing, Serializable):
         return to_dict(vars(thing))
     elif isinstance(thing, dict):
+        out = {}
+
         for key, value in thing.items():
-            thing[key] = to_dict(value)
+            out[key] = to_dict(value)
 
-        return thing
+        return out
     elif isinstance(thing, list):
-        for idx, item in enumerate(thing):
-            thing[idx] = to_dict(item)
+        out = []
 
-        return thing
+        for item in thing:
+            out.append(to_dict(item))
+
+        return out
     elif isinstance(thing, tuple):
         return to_dict(list(thing))
     else:
         return thing
 
+
 def to_bson(thing: Any):
     if isinstance(thing, ObjectId):
         return thing
     elif isinstance(thing, dict):
+        out = {}
+
         for key, value in thing.items():
-            thing[key] = to_bson(value)
+            out[key] = to_bson(value)
 
-        return thing
+        return out
     elif isinstance(thing, list):
-        for idx, item in enumerate(thing):
-            thing[idx] = to_bson(item)
+        out = []
 
-        return thing
+        for item in thing:
+            out.append(to_bson(item))
+
+        return out
     elif isinstance(thing, tuple):
         return to_bson(list(thing))
     elif isinstance(thing, (int, float, bool, str)) or thing is None:
