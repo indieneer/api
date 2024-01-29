@@ -16,7 +16,7 @@ class ErrorMiddleware(BaseHTTPMiddleware):
     def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
         return call_next(request)
 
-    def error_handler(self, e: Any):
+    def error_handler(self, e: Exception):
         if isinstance(e, AuthError):
             return make_response(respond_error(e.error.get("description", "Unauthorized"), e.status_code))
         elif isinstance(e, models_exceptions.NotFoundException):
@@ -28,4 +28,5 @@ class ErrorMiddleware(BaseHTTPMiddleware):
         elif isinstance(e, handlers_exceptions.UnprocessableEntityException):
             return make_response(respond_error(str(e), 422))
         else:
+            raise e
             return make_response(respond_error(str(e), 500))

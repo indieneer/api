@@ -43,19 +43,6 @@ jobs:
         with:
           mongodb-version: 7.0
 
-      - name: Restore cached Auth0 tokens
-        id: restore-auth0-cached-tokens
-        uses: actions/cache@v4
-        with:
-          path: ${{ vars.AUTH0_CACHE_DIR }}
-          key: tokens
-
-      - name: Print tokens
-        env:
-          AUTH0_CACHE_DIR: ${{ vars.AUTH0_CACHE_DIR }}
-        run: |
-          if [ -f "$AUTH0_CACHE_DIR/tokens" ]; then cat "$AUTH0_CACHE_DIR/tokens"; fi
-
       - name: Run tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -68,10 +55,3 @@ jobs:
           AUTH0_CACHE_DIR: ${{ vars.AUTH0_CACHE_DIR }}
         run: |
           python -m testicles.cli -t integration
-
-      - name: Cache Auth0 tokens
-        id: cache-auth0-tokens
-        uses: actions/cache@v4
-        with:
-          path: ${{ vars.AUTH0_CACHE_DIR }}
-          key: tokens

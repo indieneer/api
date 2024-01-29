@@ -110,10 +110,15 @@ class Firebase:
         self._api_key = api_key
 
     def init_app(self, service_account: str):
-        service_account = json.loads(service_account)
-        certificate = credentials.Certificate(service_account)
+        try:
+            # Use an initialized app if one exists
+            return firebase_admin.get_app()
+        except ValueError:
+            # Initialize app
+            service_account = json.loads(service_account)
+            certificate = credentials.Certificate(service_account)
 
-        return firebase_admin.initialize_app(certificate)
+            return firebase_admin.initialize_app(certificate)
 
     @property
     def auth(self):

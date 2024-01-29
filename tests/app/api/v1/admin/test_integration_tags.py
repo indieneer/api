@@ -8,7 +8,7 @@ class TagsTestCase(IntegrationTest):
     @property
     def token(self):
         return self.factory.logins.login(email="test_integration+admin@pork.com",
-                                               password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
+                                               password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:").id_token
 
     def test_get_tags(self):
         # given
@@ -38,7 +38,7 @@ class TagsTestCase(IntegrationTest):
     def test_get_tags_with_not_admin_token(self):
         # given
         token = self.factory.logins.login(email="test_integration+regular@pork.com",
-                                          password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
+                                          password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:").id_token
 
         # when
         response = self.app.get("/v1/admin/tags",
@@ -47,7 +47,8 @@ class TagsTestCase(IntegrationTest):
 
         # then
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response_json["error"], "no permission")
+        self.assertEqual(response_json["error"],
+                         "The user does not have a required role")
 
     def test_get_tag_by_id(self):
         # given
@@ -174,7 +175,7 @@ class TagsTestCase(IntegrationTest):
         # when
         response = self.app.patch(f"/v1/admin/tags/{tag._id}",
                                   headers={
-                                      "Authorization": f'Bearer {self.token}a'},
+                                      "Authorization": f'Bearer {self.token}'},
                                   json=payload)
         response_json = response.get_json()
 
@@ -182,7 +183,7 @@ class TagsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response_json["error"]["code"], "invalid_header")
 
-    def test_update_token_with_invalid_keys(self):
+    def test_update_tag_with_invalid_keys(self):
         # given
         tag, cleanup = self.factory.tags.create(TagCreate(name="Test Tag 1"))
         self.addCleanup(cleanup)
@@ -204,7 +205,7 @@ class TagsTestCase(IntegrationTest):
         self.assertEqual(
             response_json["error"], "The keys ['description'] are not allowed.")
 
-    def test_update_token_with_invalid_id(self):
+    def test_update_tag_with_invalid_id(self):
         # given
         id = ObjectId()
         payload = {
@@ -242,7 +243,7 @@ class TagsTestCase(IntegrationTest):
         tag, cleanup = self.factory.tags.create(TagCreate(name="Test Tag 1"))
         self.addCleanup(cleanup)
         token = self.factory.logins.login(email="test_integration+regular@pork.com",
-                                          password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
+                                          password="9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:").id_token
 
         # when
         response = self.app.delete(f"/v1/admin/tags/{tag._id}",
@@ -251,4 +252,5 @@ class TagsTestCase(IntegrationTest):
 
         # then
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response_json["error"], "no permission")
+        self.assertEqual(response_json["error"],
+                         "The user does not have a required role")

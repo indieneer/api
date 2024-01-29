@@ -70,8 +70,8 @@ def main(app: Flask):
     role_extension.init_app(app)
 
     # run initializers
-    # if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
-    initializers.run(services, models)
+    if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
+        initializers.run(services, models)
 
 
 if __name__ == "__main__":

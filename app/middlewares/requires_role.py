@@ -44,7 +44,7 @@ def requires_role(role: str):
             payload = g.get('payload')
             if not payload:
                 return respond_error("missing decoded user", 500)
-
+            print(payload, role)
             if get_requires_role(current_app).verify_role(payload, role):
                 return f(*args, **kwargs)
             else:

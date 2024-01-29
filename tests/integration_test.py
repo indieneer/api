@@ -266,8 +266,14 @@ class IntegrationTest(testicles.IntegrationTest):
         except Exception as e:
             print(e)
 
-        IntegrationTest._cleanup = lambda: [
-            fixture_cleanup() for fixture_cleanup in cleanups]
+        def cleanup():
+            for fixture_cleanup in cleanups:
+                try:
+                    fixture_cleanup()
+                except Exception as e:
+                    print(f"Failed to cleanup a fixture: {str(e)}")
+
+        IntegrationTest._cleanup = cleanup
 
     @staticmethod
     def tearDownTestRun():
