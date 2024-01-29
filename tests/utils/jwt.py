@@ -11,7 +11,7 @@ TEST_AUTH0_AUDIENCE = "https://api.indieneer.com"
 TEST_AUTH0_NAMESPACE = "https://indieneer.com"
 
 
-def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None=None):
+def create_test_token(profile_id: str, idp_id='auth0|1', roles: list[str] | None = None):
     """Used for unit testing
     """
 

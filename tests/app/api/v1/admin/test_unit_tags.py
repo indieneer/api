@@ -21,7 +21,8 @@ class TagsTestCase(UnitTest):
                 endpoint,
                 data=json.dumps(body),
                 content_type='application/json',
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
+                headers={"Authorization": "Bearer " +
+                         create_test_token("", roles=["admin"])}
             )
 
         def creates_and_returns_a_tag():
@@ -59,16 +60,17 @@ class TagsTestCase(UnitTest):
 
             # when
             with self.assertRaises(Exception) as context:
-                call_api({ "name": expected_input.name })
+                call_api({"name": expected_input.name})
 
             # then
-            self.assertEqual(str(context.exception), str(create_tag_mock.side_effect))
+            self.assertEqual(str(context.exception),
+                             str(create_tag_mock.side_effect))
             create_tag_mock.assert_called_once_with(expected_input)
 
         def fails_to_create_a_tag_when_body_is_invalid():
             # when
             with self.assertRaises(Exception) as context:
-                call_api({ "email": "test@mail.com", })
+                call_api({"email": "test@mail.com", })
 
             # then
             self.assertEqual(str(context.exception), "Bad Request.")
@@ -94,9 +96,11 @@ class TagsTestCase(UnitTest):
 
         def call_api(tag_id):
             return self.test_client.get(
-                endpoint.replace("<string:tag_id>", tag_id),
+                endpoint.replace("<string:tag_id>", str(tag_id)),
                 content_type='application/json',
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                }
             )
 
         def finds_and_returns_a_tag():
@@ -115,7 +119,7 @@ class TagsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_tag_mock.assert_called_once_with(mock_tag._id)
+            get_tag_mock.assert_called_once_with(str(mock_tag._id))
 
         def does_not_find_a_tag_and_returns_an_error():
             # given
@@ -154,9 +158,11 @@ class TagsTestCase(UnitTest):
 
         def call_api(tag_id, body):
             return self.test_client.patch(
-                endpoint.replace("<string:tag_id>", tag_id),
+                endpoint.replace("<string:tag_id>", str(tag_id)),
                 data=json.dumps(body),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
@@ -203,7 +209,8 @@ class TagsTestCase(UnitTest):
         def call_api(tag_id):
             return self.test_client.delete(
                 endpoint.replace("<string:tag_id>", tag_id),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                headers={"Authorization": "Bearer " +
+                         create_test_token("", roles=["admin"])},
                 content_type='application/json'
             )
 
