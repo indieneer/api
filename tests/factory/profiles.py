@@ -1,8 +1,6 @@
 from app.services import ServicesExtension
 from app.models import ModelsExtension
-from app.models.profiles import ProfileCreate, ProfileCreateV2
-from config.constants import AUTH0_ROLES, Auth0Role
-import time
+from app.models.profiles import ProfileCreateV2
 
 
 class ProfilesFactory:

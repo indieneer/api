@@ -17,7 +17,7 @@ class RequiresRoleExtension:
         app.extensions[self.KEY] = self
 
     def verify_role(self, payload: Dict, role: str):
-        roles = payload.get(app_config["AUTH0_NAMESPACE"] + "/roles", [])
+        roles = payload.get(app_config["FB_NAMESPACE"] + "/roles", [])
 
         return role.capitalize() in roles
 
@@ -44,7 +44,6 @@ def requires_role(role: str):
             payload = g.get('payload')
             if not payload:
                 return respond_error("missing decoded user", 500)
-            print(payload, role)
             if get_requires_role(current_app).verify_role(payload, role):
                 return f(*args, **kwargs)
             else:

@@ -27,7 +27,6 @@ from app.models import (
 )
 from app.services import (
     Database,
-    ManagementAPI,
     Firebase,
     ServicesExtension
 )
@@ -86,12 +85,6 @@ class IntegrationTest(testicles.IntegrationTest):
             register_middlewares(app)
 
             db = Database(app_config["MONGO_URI"], timeoutMS=3000)
-            auth0 = ManagementAPI(
-                app_config["AUTH0_DOMAIN"],
-                app_config["AUTH0_CLIENT_ID"],
-                app_config["AUTH0_CLIENT_SECRET"],
-                f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
-            )
             firebase = Firebase(
                 app_config["FB_SERVICE_ACCOUNT"], app_config["FB_API_KEY"])
 
@@ -99,17 +92,16 @@ class IntegrationTest(testicles.IntegrationTest):
             weak_password = constants.weak_password
 
             services = ServicesExtension(
-                auth0=auth0,
                 firebase=firebase,
                 db=db
             )
             services.init_app(app)
 
             models = ModelsExtension(
-                profiles=ProfilesModel(auth0=auth0, firebase=firebase, db=db),
+                profiles=ProfilesModel(firebase=firebase, db=db),
                 platforms=PlatformsModel(db=db),
                 operating_systems=OperatingSystemsModel(db=db),
-                logins=LoginsModel(auth0=auth0, firebase=firebase),
+                logins=LoginsModel(firebase=firebase),
                 products=ProductsModel(db=db),
                 tags=TagsModel(db=db),
                 background_jobs=BackgroundJobsModel(db=db)

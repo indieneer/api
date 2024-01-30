@@ -9,7 +9,7 @@ class ProfilesModelTestCase(IntegrationTest):
 
     def test_get_profile(self):
         profiles_model = ProfilesModel(
-            self.services.db, self.services.firebase, self.services.auth0)
+            self.services.db, self.services.firebase)
 
         # given
         fixture = self.fixtures.regular_user

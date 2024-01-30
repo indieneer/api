@@ -1,3 +1,4 @@
+from bson import ObjectId
 from flask import Flask, g
 from unittest.mock import patch, Mock, MagicMock
 
@@ -18,11 +19,11 @@ class RequiresAuthTestCase(UnitTest):
     def test_correct_token(self, get_requires_auth: MagicMock):
         # given
         mock_decoded_payload = {
-            "sub": "auth0|abcdedfghijklmnop"
+            "sub": str(ObjectId)
         }
         mock_handler = Mock()
         mock_handler.return_value = "Simple handler response"
-        
+
         verify_token_mock = get_requires_auth.return_value.verify_token
         verify_token_mock.return_value = mock_decoded_payload
 

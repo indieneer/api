@@ -1,15 +1,13 @@
-import dis
 from typing import Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
-from click import Option
 
 import pymongo.errors
+from app.services import Database
 
-from app.services import Database, ManagementAPI
 from app.services.firebase import Firebase
 from config import app_config
-from config.constants import AUTH0_ROLES, Auth0Role, FirebaseRole
+from config.constants import FirebaseRole
 from app.models.base import BaseDocument, Serializable
 
 
@@ -63,14 +61,12 @@ class ProfilePatch(Serializable):
 
 class ProfilesModel:
     db: Database
-    auth0: ManagementAPI
     firebase: Firebase
     collection: str = "profiles"
 
-    def __init__(self, db: Database, firebase: Firebase, auth0: ManagementAPI) -> None:
+    def __init__(self, db: Database, firebase: Firebase) -> None:
         self.db = db
         self.firebase = firebase
-        self.auth0 = auth0
 
     def get(self, user_id: str):
         """
@@ -105,44 +101,6 @@ class ProfilesModel:
 
         if profile is not None:
             return Profile(**profile)
-
-    def create(self, input_data: ProfileCreate):
-        """
-        Create a new user profile.
-
-        This function first creates a user in Auth0 with the provided details.
-        It assigns roles to the user, creates a user profile in the database,
-        and updates the Auth0 user metadata with the internal profile ID.
-
-        :param ProfileCreate input_data: The data required to create a new user profile.
-        :return: A Profile object representing the newly created user profile.
-        :rtype: Profile
-        """
-        # Create the user in Auth0
-        auth0_user = self.auth0.client.users.create({
-            "email": input_data.email,
-            "password": input_data.password,
-            "email_verified": True,
-            "connection": "Username-Password-Authentication"
-        })
-
-        idp_id = auth0_user["user_id"]
-        roles = [AUTH0_ROLES[Auth0Role.User.value]]
-
-        # Assign a role to the user
-        self.auth0.client.users.add_roles(idp_id, roles)
-
-        # Create a user profile in the database
-        profile_data = input_data.to_json()
-        profile_data['idp_id'] = idp_id
-        profile = Profile(**profile_data)
-        self.db.connection[self.collection].insert_one(profile.to_bson())
-
-        # Store internal user ID in Auth0 user's metadata
-        self.auth0.client.users.update(
-            idp_id, {"user_metadata": {"profile_id": str(profile._id)}})
-
-        return profile
 
     def create_v2(self, input_data: ProfileCreateV2):
         """Creates a user using Firebase provider
@@ -283,25 +241,3 @@ class ProfilesModel:
 
         if updated_profile is not None:
             return Profile(**updated_profile)
-
-    def delete(self, user_id: str):
-        """
-        Delete a user profile.
-
-        This method finds and deletes the user profile based on the provided user ID.
-        It also deletes the user from the authentication system (Auth0).
-
-        :param str user_id: The ID of the user whose profile is to be deleted.
-        :raises: NotFoundException if the profile is not found.
-        :return: The deleted Profile object, if found and deleted successfully.
-        :rtype: Profile
-        """
-        profile = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": ObjectId(user_id)}
-        )
-
-        profile = Profile(**profile)
-        # Delete the user from Auth0
-        self.auth0.client.users.delete(profile.idp_id)
-
-        return profile
