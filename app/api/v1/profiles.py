@@ -21,11 +21,14 @@ PROFILE_FIELDS = [
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id: str):
     """
-    Retrieve a profile by its ID.
+    Retrieve a user profile by its ID.
 
-    :param str profile_id: The ID of the profile to retrieve.
-    :return: The requested profile in JSON format.
+    This endpoint fetches the details of a user profile from the database, identified by the profile_id.
+    The function raises an exception if the profile is not found.
+
+    :param str profile_id: The unique identifier of the profile to be retrieved.
     :raises NotFoundException: If the profile with the given ID does not exist.
+    :return: The requested profile in JSON format.
     :rtype: dict
     """
 
@@ -41,9 +44,13 @@ def get_profile(profile_id: str):
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
     """
-    Create a new profile.
+    Create a new user profile.
 
-    :return: The created profile in JSON format.
+    This endpoint is responsible for creating a new user profile.
+    It expects a JSON payload containing the necessary profile information, specifically 'email' and 'password'.
+    The function validates the incoming data and returns an error response if the validation fails.
+
+    :return: The created profile in JSON format along with a status code indicating successful creation.
     :rtype: dict
     :status 201: Profile created successfully.
     """
@@ -105,11 +112,12 @@ def delete_profile(user_id: str):
 @requires_auth
 def get_authenticated_profile():
     """
-    Retrieve the profile of a user that is currently authenticated.
+    Retrieve the profile of the currently authenticated user.
 
     This endpoint requires authentication and returns the profile of the currently authenticated user.
+    The function raises an exception if the profile is not found or if there is an issue with the authentication payload.
 
-    :raises: NotFoundException if the profile is not found.
+    :raises NotFoundException: If the profile is not found or the authentication payload is invalid.
     :return: A dictionary representing the user's profile.
     :rtype: dict
     """

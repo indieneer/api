@@ -23,11 +23,12 @@ def get_tags():
     Retrieve all tags.
 
     This endpoint requires authentication and is accessible only to users with an 'admin' role.
-    It retrieves all tags from the database.
+    It retrieves all tags from the database, returning a structured list of tag details.
 
     :return: A success response with the list of all tags.
-    :rtype: dict
+    :rtype: Response
     """
+
     tags = get_models(current_app).tags.get_all()
 
     return respond_success(db_utils.to_json(tags))
@@ -42,12 +43,13 @@ def get_tag_by_id(tag_id):
 
     This endpoint requires authentication and is accessible only to users with an 'admin' role.
     It retrieves the tag corresponding to the given tag_id.
+    If no tag is found with the provided ID, a not-found error response is returned.
 
     :param str tag_id: The ID of the tag to be retrieved.
-    :raises IndexError: If no tag with the provided ID is found.
-    :return: A success response with the details of the requested tag.
-    :rtype: dict
+    :return: A success response with the details of the requested tag if found, otherwise an error response.
+    :rtype: Response
     """
+
     try:
         tags =  get_models(current_app).tags
         tag = tags.get(tag_id)
@@ -69,12 +71,13 @@ def create_tag():
     Create a new tag.
 
     This endpoint requires authentication and is accessible only to users with an 'admin' role.
-    It creates a new tag with the data provided in the request body.
+    It creates a new tag with the data provided in the request body, validating the incoming data against the required structure and validation rules.
 
-    :raises: ValueError if the request body does not conform to the required structure or validation rules.
+    :raises UnprocessableEntityException: If the request body does not conform to the required structure or validation rules.
     :return: A success response with the details of the created tag, including its ID.
-    :rtype: dict
+    :rtype: Response
     """
+
     tag_data = request.get_json()
     required_fields = {"name": R.Required()}
 
@@ -109,14 +112,16 @@ def update_tag(tag_id):
 
     This endpoint requires authentication and is accessible only to users with an 'admin' role.
     It updates the tag corresponding to the given tag_id with the data provided in the request body.
-    The update is restricted to certain fields defined in GENRE_FIELDS.
+    The update is restricted to certain fields defined in TAG_FIELDS.
+    The function raises an exception for invalid key fields and returns an error response if the tag is not found.
 
     :param str tag_id: The ID of the tag to be updated.
-    :raises ValueError: If the request body contains keys that are not allowed.
+    :raises UnprocessableEntityException: If the request body contains keys that are not allowed.
     :raises NotFoundException: If no tag with the provided ID is found.
-    :return: A success response with the details of the updated tag.
-    :rtype: dict
+    :return: A success response with the details of the updated tag if found, otherwise an error response.
+    :rtype: Response
     """
+
     update_data = request.get_json()
 
     # Validate keys in update data
@@ -142,13 +147,13 @@ def delete_tag(tag_id):
     Delete a specific tag by its ID.
 
     This endpoint requires authentication and is accessible only to users with an 'admin' role.
-    It deletes the tag corresponding to the given tag_id.
+    It deletes the tag corresponding to the given tag_id. If the tag is not found, an error response is returned.
 
     :param str tag_id: The ID of the tag to be deleted.
-    :raises NotFoundException: If no tag with the provided ID is found.
-    :return: A success response indicating successful deletion of the tag.
-    :rtype: dict
+    :return: A success response indicating successful deletion of the tag if found, otherwise an error response.
+    :rtype: Response
     """
+
     tags = get_models(current_app).tags
 
     deleted_tag = tags.delete(tag_id)
