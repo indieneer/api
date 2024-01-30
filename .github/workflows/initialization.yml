@@ -27,3 +27,5 @@ jobs:
       - name: Run main
         run: |
           python -m app.gunicorn
+        env:
+          FB_SERVICE_ACCOUNT: ${{ secrets.FB_SERVICE_ACCOUNT }}

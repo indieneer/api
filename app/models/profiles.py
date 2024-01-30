@@ -40,12 +40,6 @@ class Profile(BaseDocument):
 class ProfileCreate(Serializable):
     email: str
     password: str
-
-
-@dataclass
-class ProfileCreateV2(Serializable):
-    email: str
-    password: str
     nickname: str
     display_name: Optional[str] = None
     photo_url: Optional[str] = None
@@ -102,11 +96,11 @@ class ProfilesModel:
         if profile is not None:
             return Profile(**profile)
 
-    def create_v2(self, input_data: ProfileCreateV2):
+    def create_v2(self, input_data: ProfileCreate):
         """Creates a user using Firebase provider
 
         Args:
-            input_data (ProfileCreateV2): Attributes that will be used to create a user
+            input_data (ProfileCreate): Attributes that will be used to create a user
 
         Returns:
             Profile: Created profile

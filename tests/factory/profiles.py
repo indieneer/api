@@ -1,6 +1,6 @@
 from app.services import ServicesExtension
 from app.models import ModelsExtension
-from app.models.profiles import ProfileCreateV2
+from app.models.profiles import ProfileCreate
 
 
 class ProfilesFactory:
@@ -32,7 +32,7 @@ class ProfilesFactory:
                 # Intentionally skip error if a user does not exist
                 pass
 
-    def create(self, input: ProfileCreateV2):
+    def create(self, input: ProfileCreate):
         self.cleanup(input.email)
 
         profile = self.models.profiles.create_v2(input)

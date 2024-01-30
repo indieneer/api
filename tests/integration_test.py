@@ -13,7 +13,7 @@ from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
 from app.models.products import ProductCreate
-from app.models.profiles import ProfileCreateV2
+from app.models.profiles import ProfileCreate
 from app.models.tags import TagCreate
 from app.models.products import Media, Requirements
 from app.models import (
@@ -138,14 +138,14 @@ class IntegrationTest(testicles.IntegrationTest):
                 )
             )
 
-            regular_user, cleanup = factory.profiles.create(ProfileCreateV2(
+            regular_user, cleanup = factory.profiles.create(ProfileCreate(
                 email="test_integration+regular@pork.com",
                 password=strong_password,
                 nickname="test_integration_regular"
             ))
             cleanups.append(cleanup)
 
-            admin_user, cleanup = factory.profiles.create(ProfileCreateV2(
+            admin_user, cleanup = factory.profiles.create(ProfileCreate(
                 email="test_integration+admin@pork.com",
                 password=strong_password,
                 nickname="test_integration_admin",
