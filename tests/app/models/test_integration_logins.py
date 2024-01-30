@@ -1,38 +1,62 @@
+import jwt
+from config.constants import FirebaseRole
+
+from lib import constants
+
 from app.models.logins import LoginsModel
 from tests.integration_test import IntegrationTest
-import jwt
 
 
 class LoginsModelTestCase(IntegrationTest):
 
     def test_login_user(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
-        logins_model = LoginsModel(auth0=self.services.auth0)
+        # given
+        logins_model = LoginsModel(firebase=self.services.firebase)
 
-        email = "pork@gmail.com"
-        password = "126655443"
+        # when
+        result = logins_model.login(
+            self.fixtures.regular_user.email, constants.strong_password)
 
-        result = logins_model.login(email, password)
-
-        access_token = result["access_token"]
-
+        access_token = result.id_token
+        # TODO: replace with firebase token validator
         decoded = jwt.decode(access_token, options={"verify_signature": False})
 
-        self.assertIn('https://indieneer.com/profile_id', decoded.keys())
-        self.assertNotIn("Admin", decoded['https://indieneer.com/roles'])
+        # then
+        self.assertEqual(
+            decoded['https://indieneer.com/profile_id'],
+            str(self.fixtures.regular_user._id)
+        )
+        self.assertNotIn(
+            FirebaseRole.Admin.value,
+            decoded['https://indieneer.com/roles']
+        )
+        self.assertIn(
+            FirebaseRole.User.value,
+            decoded['https://indieneer.com/roles']
+        )
 
     def test_login_admin(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
-        logins_model = LoginsModel(auth0=self.services.auth0)
+        # given
+        logins_model = LoginsModel(firebase=self.services.firebase)
 
-        email = "john.pork+admin@john.pork"
-        password = "JohnPork@1"
+        # when
+        result = logins_model.login(
+            self.fixtures.admin_user.email, constants.strong_password)
 
-        result = logins_model.login(email, password)
-
-        access_token = result["access_token"]
-
+        access_token = result.id_token
+        # TODO: replace with firebase token validator
         decoded = jwt.decode(access_token, options={"verify_signature": False})
 
-        self.assertIn('https://indieneer.com/profile_id', decoded.keys())
-        self.assertIn("Admin", decoded['https://indieneer.com/roles'])
+        # then
+        self.assertEqual(
+            decoded['https://indieneer.com/profile_id'],
+            str(self.fixtures.admin_user._id)
+        )
+        self.assertNotIn(
+            FirebaseRole.User.value,
+            decoded['https://indieneer.com/roles']
+        )
+        self.assertIn(
+            FirebaseRole.Admin.value,
+            decoded['https://indieneer.com/roles']
+        )

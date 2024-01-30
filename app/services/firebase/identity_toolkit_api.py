@@ -24,8 +24,17 @@ class IdentityToolkitAPI:
             "POST", f"{self._base_url}/v1/accounts:signInWithPassword?key={self._api_key}",
             json=payload
         )
+        response_json = response.json()
 
-        return FirebaseUserIdentity(response.json())
+        if response.status >= 400:
+            if "error" in response_json:
+                error = response_json["error"]
+                if "message" in error and error["message"] == "INVALID_LOGIN_CREDENTIALS":
+                    raise Exception("Wrong email or password.")
+
+            raise Exception(f"Failed to sign in: {response_json}")
+
+        return FirebaseUserIdentity(response_json)
 
     def lookup(self, idToken: str):
         # https://firebase.google.com/docs/reference/rest/auth#section-get-account-info

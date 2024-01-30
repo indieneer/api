@@ -34,6 +34,9 @@ def logins():
 
         return respond_success(identity.to_json())
     except Exception as error:
+        if str(error) == "Wrong email or password.":
+            return respond_error(str(error), 403)
+
         return respond_error(str(error), 500)
 
 

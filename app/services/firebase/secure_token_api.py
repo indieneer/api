@@ -25,6 +25,3 @@ class SecureTokenAPI:
         )
 
         return FirebaseRefreshedToken(response.json())
-
-    # TODO: refresh token
-    # https://firebase.google.com/docs/reference/rest/auth#section-refresh-token
