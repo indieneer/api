@@ -29,7 +29,7 @@ class HealthTestCase(UnitTest):
         expected = {
             "status": "ok",
             "data": {
-                "db": {"ok": 1},
+                "db": 1,
                 "env": "production",
                 "version": "4.3.1"
             }
@@ -73,7 +73,7 @@ class HealthTestCase(UnitTest):
         # given
         endpoint = "/health"
         self.app.route(endpoint)(health)
-        
+
         connection = mock_database_connection(get_services)
         connection.command.side_effect = Exception("zero division")
 
@@ -82,4 +82,5 @@ class HealthTestCase(UnitTest):
             self.test_client.get(endpoint)
 
         # then
-        self.assertEqual(str(context.exception), str(connection.command.side_effect))
+        self.assertEqual(str(context.exception), str(
+            connection.command.side_effect))

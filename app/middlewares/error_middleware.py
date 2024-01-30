@@ -28,5 +28,4 @@ class ErrorMiddleware(BaseHTTPMiddleware):
         elif isinstance(e, handlers_exceptions.UnprocessableEntityException):
             return make_response(respond_error(str(e), 422))
         else:
-            raise e
             return make_response(respond_error(str(e), 500))
