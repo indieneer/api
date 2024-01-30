@@ -17,7 +17,7 @@ class LoginsModel:
     def __init__(self, firebase: Firebase) -> None:
         self.firebase = firebase
 
-    def login_v2(self, email: str, password: str):
+    def login(self, email: str, password: str):
         identity = self.firebase.identity_api.sign_in(email, password)
 
         return identity

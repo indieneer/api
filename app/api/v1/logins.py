@@ -30,7 +30,7 @@ def logins():
         return respond_error("Email and password are required.", 400)
 
     try:
-        identity = logins_model.login_v2(email, password)
+        identity = logins_model.login(email, password)
 
         return respond_success(identity.to_json())
     except Exception as error:

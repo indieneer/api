@@ -45,7 +45,7 @@ class LoginsFactory:
                 identity = data.identity
 
         if identity is None:
-            identity = self.models.logins.login_v2(email, password)
+            identity = self.models.logins.login(email, password)
 
             if cache:
                 self.cache(email, password, identity)
