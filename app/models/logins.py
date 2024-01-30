@@ -21,3 +21,10 @@ class LoginsModel:
         identity = self.firebase.identity_api.sign_in(email, password)
 
         return identity
+
+    def exchange_refresh_token(self, refresh_token: str):
+        token = self.firebase.secure_token_api.exchange_refresh_token(
+            refresh_token
+        )
+
+        return token
