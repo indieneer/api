@@ -1,12 +1,9 @@
-import json
-
 from flask import Blueprint, current_app, request
 from math import ceil
 import re
 
 from lib.http_utils import respond_success
 from app.services import get_services
-import requests
 
 search_controller = Blueprint('search', __name__, url_prefix='/search')
 
@@ -72,37 +69,4 @@ def search():
 
     return respond_success(data, meta=meta)
 
-
-@search_controller.route('/elasticsearch', methods=["GET"])
-def search_elasticsearch():
-    """
-    Perform a search query on ElasticSearch.
-
-    This endpoint handles GET requests to search in ElasticSearch using the provided query parameters.
-    It constructs a search payload and sends it to the ElasticSearch service. If the search is successful,
-    it returns the search results, otherwise, it logs an error and returns None.
-
-    :param str query: The search query provided as a query parameter, defaults to an empty string.
-    :param int size: The number of search results to return, defaults to 15.
-    :return: The search results if the request is successful, otherwise None.
-    :rtype: dict or None
-    """
-    query = request.args.get('query', '')
-    size = request.args.get('size', 15, type=int)
-
-    # TODO: Move to .env
-    url = 'https://indieneer-es-15d49606cdd6.herokuapp.com/search'
-    headers = {'Content-Type': 'application/json'}
-    payload = {
-        'query': query,
-        'size': size
-    }
-
-    response = requests.post(url, headers=headers, data=json.dumps(payload))
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error: {response.status_code}")
-        return None
 
