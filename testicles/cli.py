@@ -90,6 +90,8 @@ tests_count = {
 }
 
 # Scan tests
+
+
 def create_callback():
     def count_test(test_case: unittest.TestCase):
         if isinstance(test_case, UnitTest):
@@ -171,8 +173,7 @@ try:
 except TestFailException:
     sys.exit(1)
 except Exception as e:
-    print(traceback.format_exc())
-    print(e.__class__, str(e))
+    traceback.print_exc()
 
     sys.exit(1)
 finally:

@@ -1,3 +1,4 @@
+import traceback
 from config.constants import FirebaseRole
 import testicles
 import lib.constants as constants
@@ -150,7 +151,7 @@ class IntegrationTest(testicles.IntegrationTest):
             regular_user, cleanup = factory.profiles.create(ProfileCreate(
                 email="test_integration+regular@pork.com",
                 password=strong_password,
-                nickname="test_integration_regular"
+                nickname="test_integration_regular",
             ))
             cleanups.append(cleanup)
 
@@ -265,7 +266,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     models=models
                 )
         except Exception as e:
-            print(e)
+            raise e
 
         def cleanup():
             for fixture_cleanup in cleanups:
