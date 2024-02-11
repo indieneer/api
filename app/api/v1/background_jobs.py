@@ -3,6 +3,7 @@ from flask import Blueprint, request, current_app, g
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models, exceptions as models_exceptions
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate
+from config import app_config
 from config.constants import FirebaseRole
 from lib.http_utils import respond_success
 from lib import db_utils
@@ -38,7 +39,7 @@ def get_background_job(background_job_id: str):
         current_app).background_jobs.get(background_job_id)
     if background_job is None:
         raise models_exceptions.NotFoundException(BackgroundJob.__name__)
-    if background_job.created_by != g.get("payload").get("sub"):
+    if background_job.created_by != g.get("payload").get(f"{app_config['FB_NAMESPACE']}/profile_id"):
         raise models_exceptions.ForbiddenException()
 
     return respond_success(background_job.to_json())
@@ -80,7 +81,7 @@ def create_background_job():
 
     try:
         background_job = background_job_model.create(
-            BackgroundJobCreate(**data, created_by=g.get("payload").get("sub")))
+            BackgroundJobCreate(**data, created_by=g.get("payload").get(f"{app_config['FB_NAMESPACE']}/profile_id")))
 
         return respond_success(background_job.to_json(), status_code=201)
     except ValueError as e:
@@ -111,7 +112,7 @@ def update_background_job(background_job_id: str):
         current_app).background_jobs.get(background_job_id)
     if background_job is None:
         raise models_exceptions.NotFoundException(BackgroundJob.__name__)
-    if background_job.created_by != g.get("payload").get("sub"):
+    if background_job.created_by != g.get("payload").get(f"{app_config['FB_NAMESPACE']}/profile_id"):
         raise models_exceptions.ForbiddenException()
 
     try:
@@ -151,7 +152,7 @@ def create_background_job_event(background_job_id: str):
         current_app).background_jobs.get(background_job_id)
     if background_job is None:
         raise models_exceptions.NotFoundException(BackgroundJob.__name__)
-    if background_job.created_by != g.get("payload").get("sub"):
+    if background_job.created_by != g.get("payload").get(f"{app_config['FB_NAMESPACE']}/profile_id"):
         raise models_exceptions.ForbiddenException()
 
     try:

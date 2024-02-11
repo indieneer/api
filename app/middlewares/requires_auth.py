@@ -20,7 +20,7 @@ class RequiresAuthExtension:
         auth = get_services(current_app).firebase.auth
 
         try:
-            return auth.verify_id_token(token, check_revoked=True)
+            return auth.verify_id_token(token, check_revoked=True, clock_skew_seconds=10)
         except ValueError as error:
             raise AuthError(
                 {"code": "missing_token", "description": str(error)}, 401

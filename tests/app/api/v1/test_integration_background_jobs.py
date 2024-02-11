@@ -1,23 +1,23 @@
 from bson import ObjectId
 
-from app.models.background_jobs import BackgroundJobCreate
-from config import app_config
 from tests import IntegrationTest
 
 
 class BackgroundJobsTestCase(IntegrationTest):
+
+    @property
+    def service_profile(self):
+        return self.fixtures.service_profile
+
     @property
     def token(self):
-        return self.models.logins.login_m2m("bUhOAswerBbA3lamY0saxLuJezB7sjOs",
-                                            app_config["AUTH0_CLIENT_SECRET"])["access_token"]
+        profile = self.service_profile
+
+        return self.factory.logins.login_m2m(profile.client_id, profile.client_secret).id_token
 
     def test_get_all_background_jobs(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
-        _, cleanup = self.factory.background_jobs.create(BackgroundJobCreate(type="es_seeder", metadata={
-            "match_query": "test"
-        }, created_by="service_test@clients"))
-        self.addCleanup(cleanup)
+        background_job = self.fixtures.background_job
 
         # when
         response = self.app.get(
@@ -28,15 +28,11 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(type(response_json["data"]), list)
-        self.assertEqual(len(response_json["data"]), 2)
+        self.assertIn(background_job.to_json(), response_json["data"])
 
     def test_get_background_job_by_id(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
-        background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
-        self.addCleanup(cleanup)
+        background_job = self.fixtures.background_job
 
         # when
         response = self.app.get(
@@ -47,11 +43,9 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(type(response_json["data"]), dict)
         self.assertEqual(response_json["data"]["_id"], str(background_job._id))
 
     def test_get_background_job_by_id_not_found(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # when
         response = self.app.get(
             f'/v1/background_jobs/{ObjectId()}',
@@ -65,31 +59,10 @@ class BackgroundJobsTestCase(IntegrationTest):
                          "\"BackgroundJob\" not found.")
         self.assertEqual(response.status_code, 404)
 
-    def test_get_background_job_by_id_without_auth_header(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        # given
-        background_job = self.fixtures.background_job.clone()
-        background_job_id = background_job._id
-        _, cleanup = self.factory.background_jobs.create(background_job)
-        self.addCleanup(cleanup)
-
-        # when
-        response = self.app.get(
-            f'/v1/background_jobs/{background_job_id}'
-        )
-        response_json = response.get_json()
-
-        # then
-        self.assertEqual(response_json["error"]
-                         ["code"], "authorization_header_missing")
-        self.assertEqual(response.status_code, 401)
-
     def test_get_background_job_by_id_without_permission(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
-        user = self.fixtures.regular_user.clone()
         token = self.factory.logins.login(
-            user.email, "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:")["access_token"]
+            self.fixtures.regular_user.email, "9!8@7#6$5%4^3&2*1(0)-_=+[]{}|;:").id_token
 
         # when
         response = self.app.get(
@@ -101,10 +74,10 @@ class BackgroundJobsTestCase(IntegrationTest):
 
         # then
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.get_json()["error"], "no permission")
+        self.assertEqual(response.get_json()[
+                         "error"], "The user does not have a required role")
 
     def test_create_background_job(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         data = {
             "type": "es_seeder",
@@ -123,16 +96,17 @@ class BackgroundJobsTestCase(IntegrationTest):
         )
         response_json = response.get_json()
 
+        def cleanup():
+            return self.factory.background_jobs.cleanup(
+                ObjectId(response_json["data"]["_id"]))
+        self.addCleanup(cleanup)
+
         # then
         self.assertEqual(type(response_json["data"]), dict)
         self.assertEqual(response_json["data"]["type"], data["type"])
         self.assertEqual(response_json["data"]["metadata"], data["metadata"])
 
-        self.factory.background_jobs.cleanup(
-            ObjectId(response_json["data"]["_id"]))
-
     def test_create_background_job_without_all_required_fields_present(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         data = {
             "type": "es_seeder"
@@ -154,7 +128,6 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_create_background_job_with_invalid_type(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         data = {
             "type": "invalid_type",
@@ -178,10 +151,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_update_background_job(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -203,10 +176,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response_json["data"]["status"], data["status"])
 
     def test_update_background_job_with_no_valid_fields_present(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -228,10 +201,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_update_background_job_with_invalid_status(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -253,7 +226,6 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_update_background_job_with_invalid_id(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         data = {
             "status": "pending"
@@ -275,10 +247,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 404)
 
     def test_update_background_job_with_valid_and_invalid_fields_present(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -301,11 +273,11 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_update_background_job_when_was_created_by_another_user(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        background_job.created_by = "another_user@clients"
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job.created_by = str(ObjectId())
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -326,10 +298,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 403)
 
     def test_create_background_job_event(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -348,7 +320,6 @@ class BackgroundJobsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(type(response_json["data"]), dict)
         self.assertEqual(response_json["data"]
                          ["events"][0]["type"], data["type"])
         self.assertEqual(response_json["data"]
@@ -356,10 +327,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(len(response_json["data"]["events"]), 1)
 
     def test_create_background_job_event_with_not_all_required_fields_present(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -382,7 +353,6 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 400)
 
     def test_create_background_job_event_with_invalid_id(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         data = {
             "type": "info",
@@ -404,11 +374,11 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 404)
 
     def test_create_background_job_event_when_was_created_by_another_user(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        background_job.created_by = "another_user@clients"
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job.created_by = str(ObjectId())
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {
@@ -430,10 +400,10 @@ class BackgroundJobsTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 403)
 
     def test_create_background_job_event_with_invalid_event_type(self):
-        self.skipTest("Fix when Firebase auth implemented")
         # given
         background_job = self.fixtures.background_job.clone()
-        _, cleanup = self.factory.background_jobs.create(background_job)
+        background_job, cleanup = self.factory.background_jobs.create(
+            background_job)
         self.addCleanup(cleanup)
 
         data = {

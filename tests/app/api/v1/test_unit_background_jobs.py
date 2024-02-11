@@ -1,11 +1,14 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from bson import ObjectId
+
 from app.api.exceptions import BadRequestException
 from app.api.v1.background_jobs import get_background_job, get_all_background_jobs, create_background_job, \
     create_background_job_event, update_background_job
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate, Event
 from app.models.exceptions import ForbiddenException, NotFoundException
+from config.constants import FirebaseRole
 from tests import UnitTest
 from tests.utils.jwt import create_test_token
 
@@ -18,9 +21,11 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_background_job_mock = get_models.return_value.background_jobs.get
 
+        profile_id = str(ObjectId())
+
         def call_api(background_job_id: str):
             token = create_test_token(
-                profile_id="1", idp_id="service_test@clients")
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.get(
                 endpoint.replace("<string:background_job_id>",
@@ -32,7 +37,7 @@ class BackgroundJobsTestCase(UnitTest):
         def finds_and_returns_a_background_job():
             # given
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
 
@@ -110,9 +115,11 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_all_background_jobs_mock = get_models.return_value.background_jobs.get_all
 
+        profile_id = str(ObjectId())
+
         def call_api():
             token = create_test_token(
-                profile_id="1", idp_id="service_test@clients")
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.get(
                 endpoint,
@@ -124,10 +131,10 @@ class BackgroundJobsTestCase(UnitTest):
             # given
             mock_background_jobs = [
                 BackgroundJob(
-                    status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                    status="running", created_by=profile_id, metadata={"match_query": "test"},
                     type="es_seeder"),
                 BackgroundJob(
-                    status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                    status="running", created_by=profile_id, metadata={"match_query": "test"},
                     type="es_seeder")
             ]
             get_all_background_jobs_mock.return_value = mock_background_jobs
@@ -160,11 +167,12 @@ class BackgroundJobsTestCase(UnitTest):
         self.app.route(endpoint, methods=["POST"])(create_background_job)
 
         create_background_job_mock = get_models.return_value.background_jobs.create
-        service_account_id = "service_test@clients"
+
+        profile_id = str(ObjectId())
 
         def call_api(body):
             token = create_test_token(
-                profile_id="1", idp_id=service_account_id)
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.post(
                 endpoint,
@@ -176,7 +184,7 @@ class BackgroundJobsTestCase(UnitTest):
         def creates_and_returns_a_background_job():
             # given
             expected_input = BackgroundJobCreate(
-                type="es_seeder", metadata={"match_query": "test"}, created_by=service_account_id
+                type="es_seeder", metadata={"match_query": "test"}, created_by=profile_id
             )
             mock_background_job = BackgroundJob(
                 status="running",
@@ -227,7 +235,7 @@ class BackgroundJobsTestCase(UnitTest):
                 "status": "error"
             }
             expected_input = BackgroundJobCreate(
-                type="unsupported_type", metadata={}, created_by=service_account_id)
+                type="unsupported_type", metadata={}, created_by=profile_id)
             create_background_job_mock.side_effect = BadRequestException(
                 expected_response["error"])
 
@@ -263,9 +271,11 @@ class BackgroundJobsTestCase(UnitTest):
         get_background_job_mock = get_models.return_value.background_jobs.get
         patch_background_job_mock = get_models.return_value.background_jobs.patch
 
+        profile_id = str(ObjectId())
+
         def call_api(background_job_id: str, body: dict):
             token = create_test_token(
-                profile_id="1", idp_id="service_test@clients")
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.patch(
                 endpoint.replace("<string:background_job_id>",
@@ -278,7 +288,7 @@ class BackgroundJobsTestCase(UnitTest):
         def patches_and_returns_a_background_job():
             # given
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
             patch_background_job_mock.return_value = mock_background_job
@@ -386,11 +396,12 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_background_job_mock = get_models.return_value.background_jobs.get
         add_background_job_event_mock = get_models.return_value.background_jobs.add_event
-        service_account_id = "service_test@clients"
+
+        profile_id = str(ObjectId())
 
         def call_api(background_job_id: str, body: dict):
             token = create_test_token(
-                profile_id="1", idp_id=service_account_id)
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.post(
                 endpoint.replace("<string:background_job_id>",
@@ -404,7 +415,7 @@ class BackgroundJobsTestCase(UnitTest):
             # given
             mock_event = Event(message="test", type="info")
             mock_background_job = BackgroundJob(
-                status="running", created_by=service_account_id, metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder", events=[mock_event])
 
             get_background_job_mock.return_value = mock_background_job
@@ -506,7 +517,7 @@ class BackgroundJobsTestCase(UnitTest):
             mock_event_create = EventCreate(
                 type="unsupported_type", message="test")
             mock_background_job = BackgroundJob(
-                status="running", created_by=service_account_id, metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
 
             get_background_job_mock.return_value = mock_background_job

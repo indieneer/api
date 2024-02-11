@@ -1,4 +1,5 @@
 import traceback
+from app.models.service_profiles import ServiceProfileCreate
 from config.constants import FirebaseRole
 import testicles
 import lib.constants as constants
@@ -6,7 +7,7 @@ import typing
 from bson import ObjectId
 
 from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, \
-    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory
+    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory, ServiceProfilesFactory
 from tests.fixtures import Fixtures
 
 from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
@@ -57,6 +58,11 @@ class IntegrationTest(testicles.IntegrationTest):
             return super().run(result)
 
         raise Exception("Dependecies must be injected.")
+
+    def before_all(self):
+        """Hook function to set up test run for a class
+        """
+        pass
 
     def inject_dependencies(
             self,
@@ -145,6 +151,10 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 logins=LoginsFactory(
                     models=models
+                ),
+                service_profiles=ServiceProfilesFactory(
+                    models=models,
+                    services=services
                 )
             )
 
@@ -160,6 +170,11 @@ class IntegrationTest(testicles.IntegrationTest):
                 password=strong_password,
                 nickname="test_integration_admin",
                 role=FirebaseRole.Admin
+            ))
+            cleanups.append(cleanup)
+
+            service_profile, cleanup = factory.service_profiles.create(ServiceProfileCreate(
+                permissions=[]
             ))
             cleanups.append(cleanup)
 
@@ -242,7 +257,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     metadata={
                         "match_query": "test"
                     },
-                    created_by="bUhOAswerBbA3lamY0saxLuJezB7sjOs@clients"
+                    created_by=str(service_profile._id)
                 )
             )
             cleanups.append(cleanup)
@@ -254,10 +269,11 @@ class IntegrationTest(testicles.IntegrationTest):
                 platform=platform,
                 operating_system=operating_system,
                 tag=tag,
-                background_job=background_job
+                background_job=background_job,
+                service_profile=service_profile
             )
 
-            # Inject dependencies
+            # Inject dependencies and trigger before all
             for test_case in IntegrationTest._test_cases:
                 typing.cast(IntegrationTest, test_case).inject_dependencies(
                     factory=factory,
@@ -265,6 +281,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     services=services,
                     models=models
                 )
+                typing.cast(IntegrationTest, test_case).before_all()
         except Exception as e:
             raise e
 

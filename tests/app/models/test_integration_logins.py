@@ -11,7 +11,11 @@ class LoginsModelTestCase(IntegrationTest):
 
     def test_login_user(self):
         # given
-        logins_model = LoginsModel(firebase=self.services.firebase)
+        logins_model = LoginsModel(
+            firebase=self.services.firebase,
+            profiles=self.models.profiles,
+            service_profiles=self.models.service_profiles
+        )
 
         # when
         result = logins_model.login(
@@ -37,7 +41,11 @@ class LoginsModelTestCase(IntegrationTest):
 
     def test_login_admin(self):
         # given
-        logins_model = LoginsModel(firebase=self.services.firebase)
+        logins_model = LoginsModel(
+            firebase=self.services.firebase,
+            profiles=self.models.profiles,
+            service_profiles=self.models.service_profiles
+        )
 
         # when
         result = logins_model.login(

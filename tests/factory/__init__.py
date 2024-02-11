@@ -7,6 +7,7 @@ from .operating_systems import OperatingSystemsFactory
 from .tags import TagsFactory
 from .platforms import PlatformsFactory
 from .logins import LoginsFactory
+from .service_profiles import ServiceProfilesFactory
 
 
 @dataclass
@@ -18,3 +19,4 @@ class Factory:
     tags: TagsFactory
     background_jobs: BackgroundJobsFactory
     logins: LoginsFactory
+    service_profiles: ServiceProfilesFactory
