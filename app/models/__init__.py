@@ -9,6 +9,7 @@ from .logins import LoginsModel
 from .products import ProductsModel
 from .tags import TagsModel
 from .background_jobs import BackgroundJobsModel
+from .service_profiles import ServiceProfilesModel
 
 
 class ModelsExtension:
@@ -25,6 +26,7 @@ class ModelsExtension:
     logins: LoginsModel
     tags: TagsModel
     background_jobs: BackgroundJobsModel
+    service_profiles: ServiceProfilesModel
 
     def __init__(
         self,
@@ -34,7 +36,8 @@ class ModelsExtension:
         operating_systems: OperatingSystemsModel,
         logins: LoginsModel,
         tags: TagsModel,
-        background_jobs: BackgroundJobsModel
+        background_jobs: BackgroundJobsModel,
+        service_profiles: ServiceProfilesModel
     ) -> None:
         self.products = products
         self.profiles = profiles
@@ -43,6 +46,7 @@ class ModelsExtension:
         self.logins = logins
         self.tags = tags
         self.background_jobs = background_jobs
+        self.service_profiles = service_profiles
 
     def init_app(self, app: Flask):
         app.extensions[self.KEY] = self

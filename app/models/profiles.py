@@ -1,4 +1,4 @@
-from typing import Optional, cast
+from typing import List, Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
 
@@ -17,6 +17,7 @@ class Profile(BaseDocument):
     display_name: str
     photo_url: str
     idp_id: str
+    roles: List[str]
 
     def __init__(
         self,
@@ -25,6 +26,7 @@ class Profile(BaseDocument):
         display_name: str,
         photo_url: str,
         idp_id: str,
+        roles: List[str],
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -34,6 +36,7 @@ class Profile(BaseDocument):
         self.display_name = display_name
         self.photo_url = photo_url
         self.idp_id = idp_id
+        self.roles = roles
 
 
 @dataclass
@@ -142,6 +145,7 @@ class ProfilesModel:
         # Create a user profile in the database
         # Identity provider ID will be the same as Mongo user profile's _id
         profile: Profile | None = None
+        role = input_data.role or FirebaseRole.User
         try:
             # Try create a profile in database
             profile = Profile(
@@ -150,6 +154,7 @@ class ProfilesModel:
                 display_name=display_name,
                 photo_url=photo_url,
                 idp_id=cast(str, user.uid),
+                roles=[role.value],
                 _id=ObjectId(user.uid)
             )
             self.db.connection[self.collection].insert_one(profile.to_bson())
@@ -168,7 +173,6 @@ class ProfilesModel:
 
         # Set custom claims: roles, profile_id, permissions
         # Important: setting custom claims removes previously defined claims
-        role = input_data.role or FirebaseRole.User
         custom_claims = dict([
             (f"{app_config['FB_NAMESPACE']}/profile_id", str(profile._id)),
             (f"{app_config['FB_NAMESPACE']}/roles", [role.value]),

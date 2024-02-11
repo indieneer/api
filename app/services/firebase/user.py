@@ -61,3 +61,14 @@ class FirebaseUserIdentity(Serializable):
         self.expires_in = identity.get("expiresIn", "")
         self.local_id = identity.get("localId", "")
         self.registered = identity.get("registered", False)
+
+
+class FirebaseServiceIdentity(Serializable):
+    id_token: str
+    refresh_token: str
+    expires_in: str
+
+    def __init__(self, identity: Dict) -> None:
+        self.id_token = identity.get("idToken", "")
+        self.refresh_token = identity.get("refreshToken", "")
+        self.expires_in = identity.get("expiresIn", "")

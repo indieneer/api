@@ -20,7 +20,8 @@ def main(app: Flask):
         LoginsModel,
         TagsModel,
         PlatformsModel,
-        BackgroundJobsModel
+        BackgroundJobsModel,
+        ServiceProfilesModel
     )
     from app.middlewares.requires_auth import RequiresAuthExtension
     from app.middlewares.requires_role import RequiresRoleExtension
@@ -36,7 +37,9 @@ def main(app: Flask):
     # create dependencies
     db = Database(app_config["MONGO_URI"], timeoutMS=3000)
     firebase = Firebase(
-        app_config["FB_SERVICE_ACCOUNT"], app_config["FB_API_KEY"])
+        app_config["FB_SERVICE_ACCOUNT"],
+        app_config["FB_API_KEY"]
+    )
 
     services = ServicesExtension(
         firebase=firebase,
@@ -44,14 +47,21 @@ def main(app: Flask):
     )
     services.init_app(app)
 
+    profiles_model = ProfilesModel(db=db, firebase=firebase)
+    service_profiles_model = ServiceProfilesModel(db=db, firebase=firebase)
     models = ModelsExtension(
-        profiles=ProfilesModel(db=db, firebase=firebase),
+        profiles=profiles_model,
         products=ProductsModel(db=db),
         platforms=PlatformsModel(db=db),
         operating_systems=OperatingSystemsModel(db=db),
-        logins=LoginsModel(firebase=firebase),
+        logins=LoginsModel(
+            firebase=firebase,
+            profiles=profiles_model,
+            service_profiles=service_profiles_model
+        ),
         tags=TagsModel(db=db),
-        background_jobs=BackgroundJobsModel(db=db)
+        background_jobs=BackgroundJobsModel(db=db),
+        service_profiles=service_profiles_model
     )
     models.init_app(app)
 

@@ -40,6 +40,36 @@ def logins():
         return respond_error(str(error), 500)
 
 
+@logins_controller.route('/m2m', methods=["POST"])
+def logins_m2m():
+    """
+    Authenticate a user and provide JWT token(s) via Firebase.
+
+    This endpoint is used to authenticate the user by email and password, and if successful,
+    returns the authentication token(s).
+
+    :return: Authentication token(s) if successful, otherwise an error message and status code.
+    :rtype: dict or tuple
+    """
+    logins_model = get_models(current_app).logins
+
+    data = request.get_json()
+
+    client_id = data.get("client_id")
+    client_secret = data.get("client_secret")
+
+    # Input validation
+    if not client_id or not client_secret:
+        return respond_error("Client id and client secret are required.", 400)
+
+    try:
+        token = logins_model.login_m2m(client_id, client_secret)
+
+        return respond_success(token.to_json())
+    except Exception as error:
+        return respond_error(str(error), 500)
+
+
 @logins_controller.route('/refresh_tokens', methods=["POST"])
 def exchange_refresh_token():
     """

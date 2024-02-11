@@ -30,5 +30,6 @@ app_config = {
     "ROOT_USER_PASSWORD": env.get("ROOT_USER_PASSWORD"),
     "FB_NAMESPACE": env.get("FB_NAMESPACE"),
     "FB_SERVICE_ACCOUNT": get_fb_service_account(),
-    "FB_API_KEY": env.get("FB_API_KEY")
+    "FB_API_KEY": env.get("FB_API_KEY"),
+    "FB_M2M_SECRET_KEY": env.get("FB_M2M_SECRET_KEY")
 }

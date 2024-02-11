@@ -1,6 +1,6 @@
 import urllib3
 
-from .user import FirebaseUser, FirebaseUserIdentity
+from .user import FirebaseUser, FirebaseUserIdentity, FirebaseServiceIdentity
 
 
 class IdentityToolkitAPI:
@@ -35,6 +35,25 @@ class IdentityToolkitAPI:
             raise Exception(f"Failed to sign in: {response_json}")
 
         return FirebaseUserIdentity(response_json)
+
+    def sign_in_with_custom_token(self, token: str):
+        # https://firebase.google.com/docs/reference/rest/auth#section-verify-custom-token
+
+        payload = {
+            "token": token,
+            "returnSecureToken": True
+        }
+
+        response = urllib3.request(
+            "POST", f"{self._base_url}/v1/accounts:signInWithCustomToken?key={self._api_key}",
+            json=payload
+        )
+        response_json = response.json()
+
+        if response.status >= 400:
+            raise Exception(f"Failed to sign in: {response_json}")
+
+        return FirebaseServiceIdentity(response_json)
 
     def lookup(self, idToken: str):
         # https://firebase.google.com/docs/reference/rest/auth#section-get-account-info

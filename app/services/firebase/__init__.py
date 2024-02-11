@@ -5,7 +5,7 @@ import firebase_admin
 import firebase_admin.auth
 import firebase_admin.credentials
 
-from .user import FirebaseUser, FirebaseUserIdentity, FirebaseRefreshedToken
+from .user import FirebaseUser, FirebaseUserIdentity, FirebaseRefreshedToken, FirebaseServiceIdentity
 from .identity_toolkit_api import IdentityToolkitAPI
 from .secure_token_api import SecureTokenAPI
 
@@ -51,5 +51,6 @@ __all__: Tuple[str, ...] = (
     "FirebaseUser",
     "FirebaseUserIdentity",
     "FirebaseRefreshedToken",
+    "FirebaseServiceIdentity",
     "Firebase"
 )
