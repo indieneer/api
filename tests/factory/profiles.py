@@ -27,9 +27,9 @@ class ProfilesFactory:
         db_profile = self.models.profiles.find_by_email(email)
         if db_profile is not None:
             try:
-                self.models.profiles.delete_v2(str(db_profile._id))
-            except auth.UserNotFoundError:
-                # Intentionally skip error if a user does not exist
+                self.models.profiles.delete_db_user(str(db_profile._id))
+            except:
+                # Intentionally skip error
                 pass
 
     def create(self, input: ProfileCreate):

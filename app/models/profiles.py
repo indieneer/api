@@ -188,6 +188,15 @@ class ProfilesModel:
     def patch_v2(self, input_data: ProfilePatch):
         pass
 
+    def delete_db_user(self, profile_id: str):
+        profile = self.db.connection[self.collection].find_one_and_delete(
+            {"_id": ObjectId(profile_id)},
+        )
+        if profile is None:
+            return
+
+        return Profile(**profile)
+
     def delete_v2(self, profile_id: str):
         # Perform the deletion in transaction to handle failed Firebase operation
         with self.db.client.start_session() as session:
