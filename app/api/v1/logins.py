@@ -64,6 +64,8 @@ def logins_m2m():
 
     try:
         token = logins_model.login_m2m(client_id, client_secret)
+        if token is None:
+            return respond_error("Client id or client secret is incorrect", 401)
 
         return respond_success(token.to_json())
     except Exception as error:

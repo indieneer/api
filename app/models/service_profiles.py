@@ -1,5 +1,6 @@
 import base64
 from dataclasses import dataclass
+from enum import Enum
 import hmac
 from typing import List
 from hashlib import sha256
@@ -64,18 +65,19 @@ class ServiceProfilesModel:
         return ServiceProfile(**profile)
 
     def create(self, input_data: ServiceProfileCreate):
-        client_id = str(ObjectId())
+        client_id = ObjectId()
         client_secret = hmac.new(
-            base64.b32encode(app_config['FB_M2M_SECRET_KEY']),
-            client_id.encode("utf-8"),
+            base64.b32encode(app_config['FB_M2M_SECRET_KEY'].encode("utf-8")),
+            str(client_id).encode("utf-8"),
             sha256
         ).hexdigest()
 
         profile = ServiceProfile(
             idp_id=f"service|{client_id}",
-            client_id=client_id,
+            client_id=str(client_id),
             client_secret=client_secret,
-            permissions=input_data.permissions
+            permissions=input_data.permissions,
+            _id=client_id
         )
 
         self.db.connection[self.collection].insert_one(profile.to_bson())

@@ -1,4 +1,5 @@
 import datetime
+from enum import Enum
 from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
 
@@ -57,6 +58,11 @@ class BackgroundJobPatch(Serializable):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class BackgroundJobsPermissions(Enum):
+    Read = "background_jobs:read"
+    Write = "background_jobs:write"
+
+
 class BackgroundJobsModel:
     db: Database
     collection: str = "background_jobs"
@@ -104,7 +110,8 @@ class BackgroundJobsModel:
 
         background_job = BackgroundJob(**input_data.to_bson())
 
-        self.db.connection[self.collection].insert_one(background_job.to_bson())
+        self.db.connection[self.collection].insert_one(
+            background_job.to_bson())
 
         return background_job
 
@@ -118,11 +125,13 @@ class BackgroundJobsModel:
         :return: The updated background job data.
         :rtype: BackgroundJob
         """
-        background_job = self.db.connection[self.collection].find_one({"_id": ObjectId(background_job_id)})
+        background_job = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(background_job_id)})
         if background_job is None:
             return None
 
-        payload = {key: value for key, value in input_data.to_json().items() if value is not None}
+        payload = {key: value for key,
+                   value in input_data.to_json().items() if value is not None}
         if payload.get("metadata") is not None:
             for key, value in background_job["metadata"].items():
                 if not input_data.to_json()["metadata"].get(key):
@@ -154,7 +163,8 @@ class BackgroundJobsModel:
             validate_event_type(event["type"])
         del background_job_data["_id"]
 
-        inserted_id = self.db.connection[self.collection].insert_one(background_job_data).inserted_id
+        inserted_id = self.db.connection[self.collection].insert_one(
+            background_job_data).inserted_id
         background_job_data["_id"] = inserted_id
 
         return BackgroundJob(**background_job_data)

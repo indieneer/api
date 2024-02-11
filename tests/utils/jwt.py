@@ -12,7 +12,7 @@ TEST_AUTH_AUDIENCE = "https://api.indieneer.com"
 TEST_AUTH_NAMESPACE = "https://indieneer.com"
 
 
-def create_test_token(profile_id: str, idp_id: str | None = None, roles: list[str] | None = None):
+def create_test_token(profile_id: str, idp_id: str | None = None, roles: list[str] | None = None, permissions: list[str] | None = None):
     """Used for unit testing
     """
 
@@ -27,6 +27,7 @@ def create_test_token(profile_id: str, idp_id: str | None = None, roles: list[st
             "scope": [],
             f"{TEST_AUTH_NAMESPACE}/profile_id": profile_id,
             f"{TEST_AUTH_NAMESPACE}/roles": [role.capitalize() for role in roles],
+            f"{TEST_AUTH_NAMESPACE}/permissions": permissions or [],
             "aud": TEST_AUTH_AUDIENCE,
             "iss": "https://" + TEST_AUTH_DOMAIN + "/"
         },

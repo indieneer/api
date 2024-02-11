@@ -23,7 +23,8 @@ from app.models import (
     ModelsExtension,
     LoginsModel,
     ProductsModel,
-    TagsModel
+    TagsModel,
+    ServiceProfilesModel
 )
 from app.services import (
     Database,
@@ -97,14 +98,22 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             services.init_app(app)
 
+            profiles_model = ProfilesModel(firebase=firebase, db=db)
+            service_profiles_model = ServiceProfilesModel(
+                firebase=firebase, db=db)
             models = ModelsExtension(
-                profiles=ProfilesModel(firebase=firebase, db=db),
+                profiles=profiles_model,
                 platforms=PlatformsModel(db=db),
                 operating_systems=OperatingSystemsModel(db=db),
-                logins=LoginsModel(firebase=firebase),
+                logins=LoginsModel(
+                    firebase=firebase,
+                    profiles=profiles_model,
+                    service_profiles=service_profiles_model
+                ),
                 products=ProductsModel(db=db),
                 tags=TagsModel(db=db),
-                background_jobs=BackgroundJobsModel(db=db)
+                background_jobs=BackgroundJobsModel(db=db),
+                service_profiles=service_profiles_model
             )
             models.init_app(app)
 
