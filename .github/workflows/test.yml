@@ -49,5 +49,6 @@ jobs:
           FB_NAMESPACE: ${{ vars.FB_NAMESPACE }}
           FB_API_KEY: ${{ secrets.FB_API_KEY }}
           FB_SERVICE_ACCOUNT: ${{ secrets.FB_SERVICE_ACCOUNT }}
+          FB_M2M_SECRET_KEY: ${{ vars.FB_M2M_SECRET_KEY }}
         run: |
           python -m testicles.cli -t integration
