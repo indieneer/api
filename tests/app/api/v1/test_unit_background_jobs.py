@@ -10,7 +10,7 @@ from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, Backg
 from app.models.exceptions import ForbiddenException, NotFoundException
 from config.constants import FirebaseRole
 from tests import UnitTest
-from tests.utils.jwt import create_test_token
+from tests.utils.jwt import TEST_AUTH_NAMESPACE, create_test_token
 
 
 class BackgroundJobsTestCase(UnitTest):
@@ -34,12 +34,14 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def finds_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def finds_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             mock_background_job = BackgroundJob(
                 status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_response = {
                 "status": "ok",
@@ -181,7 +183,8 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def creates_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def creates_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             expected_input = BackgroundJobCreate(
                 type="es_seeder", metadata={"match_query": "test"}, created_by=profile_id
@@ -193,6 +196,7 @@ class BackgroundJobsTestCase(UnitTest):
                 type=expected_input.type
             )
             create_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_response = {
                 "status": "ok",
@@ -285,13 +289,15 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def patches_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def patches_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             mock_background_job = BackgroundJob(
                 status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
             patch_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_input = BackgroundJobPatch(
                 status="running"
@@ -411,12 +417,14 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def creates_and_returns_a_background_job_event():
+        @patch("app.api.v1.background_jobs.app_config")
+        def creates_and_returns_a_background_job_event(app_config_mock: MagicMock):
             # given
             mock_event = Event(message="test", type="info")
             mock_background_job = BackgroundJob(
                 status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder", events=[mock_event])
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             get_background_job_mock.return_value = mock_background_job
             add_background_job_event_mock.return_value = mock_background_job
@@ -512,13 +520,15 @@ class BackgroundJobsTestCase(UnitTest):
                 get_background_job_mock.assert_called_once_with(mock_id)
                 add_background_job_event_mock.assert_not_called()
 
-        def fails_to_create_a_background_job_event_when_event_type_is_not_supported():
+        @patch("app.api.v1.background_jobs.app_config")
+        def fails_to_create_a_background_job_event_when_event_type_is_not_supported(app_config_mock: MagicMock):
             # given
             mock_event_create = EventCreate(
                 type="unsupported_type", message="test")
             mock_background_job = BackgroundJob(
                 status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             get_background_job_mock.return_value = mock_background_job
 
