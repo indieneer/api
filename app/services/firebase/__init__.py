@@ -5,9 +5,10 @@ import firebase_admin
 import firebase_admin.auth
 import firebase_admin.credentials
 
-from .user import FirebaseUser, FirebaseUserIdentity, FirebaseRefreshedToken, FirebaseServiceIdentity
 from .identity_toolkit_api import IdentityToolkitAPI
 from .secure_token_api import SecureTokenAPI
+from .user import (FirebaseRefreshedToken, FirebaseServiceIdentity,
+                   FirebaseUser, FirebaseUserIdentity)
 
 # Firebase Admin SDK
 # https://firebase.google.com/docs/reference/admin/python

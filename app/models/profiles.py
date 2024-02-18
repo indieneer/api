@@ -1,15 +1,15 @@
-from typing import List, Optional, cast
-from bson import ObjectId
 from dataclasses import dataclass
-from pymongo import ReturnDocument
+from typing import List, Optional, cast
 
 import pymongo.errors
-from app.services import Database
+from bson import ObjectId
+from pymongo import ReturnDocument
 
+from app.models.base import BaseDocument, Serializable
+from app.services import Database
 from app.services.firebase import Firebase
 from config import app_config
 from config.constants import FirebaseRole
-from app.models.base import BaseDocument, Serializable
 
 
 class Profile(BaseDocument):
@@ -209,7 +209,7 @@ class ProfilesModel:
                 profile = Profile(**profile)
 
                 # Delete user in Firebase
-                self.firebase.auth.delete_user(profile_id)
+                self.firebase.auth.delete_user(profile.idp_id)
 
                 return profile
 
