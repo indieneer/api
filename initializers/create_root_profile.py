@@ -18,7 +18,7 @@ def run(models: ModelsExtension):
         if profile is not None:
             raise Exception("Skipping root user creation")
 
-        profile = models.profiles.create_v2(ProfileCreate(
+        profile = models.profiles.create(ProfileCreate(
             email=app_config["ROOT_USER_EMAIL"],
             nickname="indieneer",
             password=app_config["ROOT_USER_PASSWORD"],

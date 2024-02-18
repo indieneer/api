@@ -27,7 +27,7 @@ class ProfilesFactory:
         db_profile = self.models.profiles.find_by_email(email)
         if db_profile is not None:
             try:
-                self.models.profiles.delete_db_user(str(db_profile._id))
+                self.models.profiles.delete_db_profile(str(db_profile._id))
             except:
                 # Intentionally skip error
                 pass
@@ -35,6 +35,6 @@ class ProfilesFactory:
     def create(self, input: ProfileCreate):
         self.cleanup(input.email)
 
-        profile = self.models.profiles.create_v2(input)
+        profile = self.models.profiles.create(input)
 
         return profile, lambda: self.cleanup(profile.email)

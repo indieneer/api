@@ -1,6 +1,7 @@
 from typing import List, Optional, cast
 from bson import ObjectId
 from dataclasses import dataclass
+from pymongo import ReturnDocument
 
 import pymongo.errors
 from app.services import Database
@@ -99,7 +100,7 @@ class ProfilesModel:
         if profile is not None:
             return Profile(**profile)
 
-    def create_v2(self, input_data: ProfileCreate):
+    def create(self, input_data: ProfileCreate):
         """Creates a user using Firebase provider
 
         Args:
@@ -185,10 +186,7 @@ class ProfilesModel:
 
         return profile
 
-    def patch_v2(self, input_data: ProfilePatch):
-        pass
-
-    def delete_db_user(self, profile_id: str):
+    def delete_db_profile(self, profile_id: str):
         profile = self.db.connection[self.collection].find_one_and_delete(
             {"_id": ObjectId(profile_id)},
         )
@@ -197,7 +195,7 @@ class ProfilesModel:
 
         return Profile(**profile)
 
-    def delete_v2(self, profile_id: str):
+    def delete(self, profile_id: str):
         # Perform the deletion in transaction to handle failed Firebase operation
         with self.db.client.start_session() as session:
             with session.start_transaction():
@@ -227,24 +225,13 @@ class ProfilesModel:
         :return: The updated Profile object or None.
         :rtype: Profile or None
         """
-        # Find the existing profile
-        existing_profile = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(user_id)})
-        if not existing_profile:
-            return None  # Might be changed to an exception raise
-
-        # Prepare the update data
         update_data = input_data.to_bson()
 
-        # Update the profile in the database
-        self.db.connection[self.collection].update_one(
+        profile = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(user_id)},
-            {"$set": update_data}
+            {"$set": update_data},
+            return_document=ReturnDocument.AFTER
         )
 
-        # Fetch the updated profile
-        updated_profile = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(user_id)})
-
-        if updated_profile is not None:
-            return Profile(**updated_profile)
+        if profile is not None:
+            return Profile(**profile)

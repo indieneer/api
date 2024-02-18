@@ -30,7 +30,7 @@ class ServiceProfilesFactory:
             str(profile_id))
         if db_profile is not None:
             try:
-                self.models.profiles.delete_db_user(str(db_profile._id))
+                self.models.profiles.delete_db_profile(str(db_profile._id))
             except:
                 # Intentionally skip error
                 pass

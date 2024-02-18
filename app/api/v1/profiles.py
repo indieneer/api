@@ -68,7 +68,7 @@ def create_profile():
         email_verified=False
     )
 
-    profile = profile_model.create_v2(profile_data)
+    profile = profile_model.create(profile_data)
 
     return respond_success(profile.to_json(), None, 201)
 
@@ -100,7 +100,7 @@ def delete_profile(user_id: str):
         raise models_exceptions.ForbiddenException
 
     profiles = get_models(current_app).profiles
-    profile = profiles.delete_v2(user_id)
+    profile = profiles.delete(user_id)
 
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
