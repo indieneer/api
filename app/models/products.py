@@ -8,56 +8,122 @@ from app.services import Database
 from app.models.base import BaseDocument, Serializable
 
 
+@dataclass
+class Screenshot:
+    thumbnail_url: str
+    full_url: str
+
+
+@dataclass
+class Format:
+    res_480: str
+    res_max: str
+
+
+@dataclass
+class Movie:
+    name: str
+    thumbnail_url: str
+    formats: Dict[str, Format]
+
+
+@dataclass
+class Media:
+    header_url: str
+    background_url: str
+    screenshots: List[Screenshot]
+    movies: List[Movie]
+
+
+@dataclass
+class PlatformOsRequirements:
+    minimum: Dict[str, str]
+    recommended: Dict[str, str]
+
+
+@dataclass
+class Requirements:
+    windows: PlatformOsRequirements
+    mac: PlatformOsRequirements
+    linux: PlatformOsRequirements
+
+
+@dataclass
+class Price:
+    currency: str
+    initial: int
+    final: int
+    final_formatted: str
+
+
+@dataclass
+class ReleaseDate:
+    date: Optional[str]
+    coming_soon: bool
+
+
 class Product(BaseDocument):
     type: str
     name: str
+    slug: str
     required_age: int
-    detailed_description: str
     short_description: str
+    detailed_description: str
+    is_free: bool
+    platforms: Dict[str, str]
+    price: Dict[str, Optional[Price]]
     supported_languages: List[str]
-    media: Dict[str, Union[str, List[Dict[str, str]]]]
-    requirements: Dict[str, Dict[str, str]]
+    media: Media
+    requirements: Requirements
     developers: List[str]
     publishers: List[str]
-    platforms: List[str]
+    platforms_os: List[str]
+    categories: List[ObjectId]
     genres: List[ObjectId]
-    release_date: str
-    slug: str
+    release_date: ReleaseDate
 
     def __init__(
             self,
             type: str,
             name: str,
+            slug: str,
             required_age: int,
-            detailed_description: str,
             short_description: str,
+            detailed_description: str,
+            is_free: bool,
+            platforms: Dict[str, str],
+            price: Dict[str, Optional[Price]],
             supported_languages: List[str],
-            media: Dict[str, Union[str, List[Dict[str, str]]]],
-            requirements: Dict[str, Dict[str, str]],
+            media: Media,
+            requirements: Requirements,
             developers: List[str],
             publishers: List[str],
-            platforms: List[str],
-            genres: List[ObjectId],
-            release_date: str,
-            slug: Optional[str] = None,
+            platforms_os: List[str],
+            categories: List[str],
+            genres: List[str],
+            release_date: ReleaseDate,
             **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
         self.type = type
         self.name = name
+        self.slug = slug
         self.required_age = required_age
-        self.detailed_description = detailed_description
         self.short_description = short_description
+        self.detailed_description = detailed_description
+        self.is_free = is_free
+        self.platforms = platforms
+        self.price = price
         self.supported_languages = supported_languages
         self.media = media
         self.requirements = requirements
         self.developers = developers
         self.publishers = publishers
-        self.platforms = platforms
+        self.platforms_os = platforms_os
         self.genres = genres
+        self.categories = categories
         self.release_date = release_date
-        self.slug = slug if slug is not None else slugify(name)
 
 
 @dataclass
@@ -70,44 +136,54 @@ class Media(Serializable):
 
 @dataclass
 class Requirements(Serializable):
-    pc: Optional[Dict[str, str]] = None
-    mac: Optional[Dict[str, str]] = None
-    linux: Optional[Dict[str, str]] = None
+    windows: Optional[Dict[str, Dict[str]]] = None
+    mac: Optional[Dict[str, Dict[str]]] = None
+    linux: Optional[Dict[str, Dict[str]]] = None
 
 
 @dataclass
 class ProductCreate(Serializable):
     type: str
     name: str
+    slug: str
     required_age: int
-    detailed_description: str
     short_description: str
+    detailed_description: str
+    is_free: bool
+    platforms: Dict[str, str]
+    price: Dict[str, Optional[Price]]
     supported_languages: List[str]
     media: Media
     requirements: Requirements
     developers: List[str]
     publishers: List[str]
-    platforms: List[str]
-    genres: List[ObjectId]
-    release_date: str
+    platforms_os: List[str]
+    categories: List[str]
+    genres: List[str]
+    release_date: ReleaseDate
 
 
 @dataclass
 class ProductPatch(Serializable):
     type: Optional[str] = None
     name: Optional[str] = None
+    slug: Optional[str] = None
     required_age: Optional[int] = None
-    detailed_description: Optional[str] = None
     short_description: Optional[str] = None
+    detailed_description: Optional[str] = None
+    is_free: Optional[bool] = None
     # A necessary measure to prevent mutability pitfall
+    platforms: Optional[Dict[str, str]] = field(default_factory=dict)
+    price: Optional[Dict[str, Optional[Price]]] = field(default_factory=dict)
     supported_languages: Optional[List[str]] = field(default_factory=list)
     media: Optional[Media] = None
     requirements: Optional[Requirements] = None
     developers: Optional[List[str]] = field(default_factory=list)
     publishers: Optional[List[str]] = field(default_factory=list)
-    platforms: Optional[List[str]] = field(default_factory=list)
-    genres: Optional[List[ObjectId]] = field(default_factory=list)
-    release_date: Optional[str] = None
+    platforms_os: List[str] = field(default_factory=list)
+    categories: List[str] = field(default_factory=list)
+    genres: Optional[List[str]] = field(default_factory=list)
+    release_date: Optional[ReleaseDate] = field(default_factory=dict)
 
 
 class ProductsModel:
