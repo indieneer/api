@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional, cast
 
+import firebase_admin.auth
 import pymongo.errors
 from bson import ObjectId
 from pymongo import ReturnDocument
@@ -114,7 +115,7 @@ class ProfilesModel:
         # Use display name or nickname as the initial display name
         display_name = input_data.display_name or input_data.nickname
         # Use generated avatar if none is provided
-        photo_url = input_data.photo_url or f"https://ui-avatars.com/api/?name={input_data.display_name}&background=random"
+        photo_url = input_data.photo_url or f"https://ui-avatars.com/api/?name={display_name}&background=random"
 
         # Create the user in Firebase
         user: UserRecord | None = None
@@ -129,7 +130,7 @@ class ProfilesModel:
                 email_verified=input_data.email_verified
             )
             user = cast(UserRecord, user)
-        except self.firebase.auth.EmailAlreadyExistsError as error:
+        except firebase_admin.auth.EmailAlreadyExistsError as error:
             # We expect a user existence in 2 cases:
             # - user creation failed on one of the below steps and we are re-creating it
             # - user creation succeeded
@@ -152,8 +153,8 @@ class ProfilesModel:
             profile = Profile(
                 email=input_data.email,
                 nickname=input_data.nickname,
-                display_name=display_name,
-                photo_url=photo_url,
+                display_name=user.display_name or display_name,
+                photo_url=user.photo_url or photo_url,
                 idp_id=cast(str, user.uid),
                 roles=[role.value],
                 _id=ObjectId(user.uid)
