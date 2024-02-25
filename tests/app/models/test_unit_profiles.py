@@ -404,9 +404,9 @@ class ProfilesTestCase(UnitTest):
                         email_verified=asserts["email_verified"])
                     insert_one_mock.assert_called_once_with(profile_mock["value"].to_bson())
                     set_custom_user_claims_mock.assert_called_once_with(user_id_mock["value"], dict([
-                        (f"{app_config['FB_NAMESPACE']}/profile_id", str(profile_mock["value"]._id)),
-                        (f"{app_config['FB_NAMESPACE']}/roles", [asserts["role"]]),
-                        (f"{app_config['FB_NAMESPACE']}/permissions", []),
+                        (f"{app_config_mock['FB_NAMESPACE']}/profile_id", str(profile_mock["value"]._id)),
+                        (f"{app_config_mock['FB_NAMESPACE']}/roles", [asserts["role"]]),
+                        (f"{app_config_mock['FB_NAMESPACE']}/permissions", []),
                     ]))
                     self.assertEqual(result.to_json(), profile_mock["value"].to_json())
 
@@ -440,7 +440,7 @@ class ProfilesTestCase(UnitTest):
                     # given
                     mock_id = str(ObjectId())
                     customAttributes = {}
-                    customAttributes[f"{app_config['FB_NAMESPACE']}/profile_id"] = mock_id
+                    customAttributes[f"{app_config_mock['FB_NAMESPACE']}/profile_id"] = mock_id
                     get_user_by_email_mock.return_value = UserRecord({
                         "localId": mock_id,
                         "customAttributes": json.dumps(customAttributes)
