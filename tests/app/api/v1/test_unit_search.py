@@ -1,20 +1,20 @@
 from unittest.mock import patch
 
 from bson import ObjectId
+
 from app.api.v1.search import search
-from tests.mocks.services import mock_database_connection
 from tests import UnitTest
 
 
 class SearchTestCase(UnitTest):
 
     @patch('app.api.v1.search.get_services')
-    def test_search(self, mock_client):
+    def test_search(self, get_services):
         # given
         endpoint = "/search"
         self.app.route(endpoint)(search)
 
-        mock_client = mock_database_connection(mock_client)
+        mock_client = get_services.return_value.db.connection
 
         params1 = {"page": "1", "name": "Counter"}
         data1 = [
