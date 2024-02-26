@@ -1,3 +1,4 @@
+import dis
 import json
 from unittest.mock import ANY, MagicMock, patch
 
@@ -6,9 +7,11 @@ import firebase_admin.auth
 import firebase_admin.exceptions
 import pymongo.errors
 from bson import ObjectId
+from pymongo import ReturnDocument
 from pymongo.collection import Collection
 
-from app.models.profiles import Profile, ProfileCreate, ProfilesModel
+from app.models.profiles import (Profile, ProfileCreate, ProfilePatch,
+                                 ProfilesModel)
 from config.constants import FirebaseRole
 from testicles.unit_test import UnitTest
 from tests.mocks.app_config import mock_app_config
@@ -634,6 +637,72 @@ class ProfilesTestCase(UnitTest):
         tests = [
             creates_a_profile,
             when
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+            after_test()
+
+    def test_patch(self):
+        model = ProfilesModel(db=db_mock, firebase=firebase_mock)
+        find_one_and_update_mock = mock_collection_method(
+            db_mock, ProfilesModel.collection, Collection.find_one_and_update.__name__)
+
+        def after_test():
+            self.reset_mock(find_one_and_update_mock)
+
+        def patches_a_profile():
+            # given
+            mock_id = ObjectId()
+            mock_email = "john.doe.edit@gmail.com"
+            input_data = ProfilePatch(
+                email=mock_email
+            )
+            mock_profile = Profile(
+                email=mock_email,
+                nickname="john_doe",
+                display_name="John Doe",
+                photo_url="https://images.com/image.png",
+                idp_id=str(mock_id),
+                roles=[FirebaseRole.User.value],
+                _id=mock_id
+            )
+            find_one_and_update_mock.return_value = mock_profile.to_bson()
+
+            # when
+            result = model.patch(str(mock_id), input_data)
+
+            # then
+            find_one_and_update_mock.assert_called_once_with(
+                {"_id": mock_id},
+                {"$set": input_data.to_bson()},
+                return_document=ReturnDocument.AFTER
+            )
+            self.assertEqual(result.to_json(), mock_profile.to_json())
+
+        def does_not_find_a_profile_and_returns_none():
+            # given
+            mock_id = ObjectId()
+            input_data = ProfilePatch(
+                email="john.doe.edit@gmail.com"
+            )
+            find_one_and_update_mock.return_value = None
+
+            # when
+            result = model.patch(str(mock_id), input_data)
+
+            # then
+            find_one_and_update_mock.assert_called_once_with(
+                {"_id": mock_id},
+                {"$set": input_data.to_bson()},
+                return_document=ReturnDocument.AFTER
+            )
+            self.assertIsNone(result)
+
+        tests = [
+            patches_a_profile,
+            does_not_find_a_profile_and_returns_none
         ]
 
         for test in tests:
