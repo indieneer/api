@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional, List, Dict, Union
 from bson import ObjectId
 from dataclasses import dataclass, field
-from .utils import slugify
 
 from app.services import Database
 from app.models.base import BaseDocument, Serializable
@@ -15,16 +14,16 @@ class Screenshot:
 
 
 @dataclass
-class Format:
-    res_480: str
-    res_max: str
+class Resolution:
+    px480: Optional[str]
+    max: str
 
 
 @dataclass
 class Movie:
     name: str
     thumbnail_url: str
-    formats: Dict[str, Format]
+    formats: Dict[str, Union[Resolution, Dict[str, str]]]
 
 
 @dataclass
@@ -37,15 +36,15 @@ class Media:
 
 @dataclass
 class PlatformOsRequirements:
-    minimum: Dict[str, str]
-    recommended: Dict[str, str]
+    minimum: Optional[Dict[str, str]]
+    recommended: Optional[Dict[str, str]]
 
 
 @dataclass
 class Requirements:
-    windows: PlatformOsRequirements
-    mac: PlatformOsRequirements
-    linux: PlatformOsRequirements
+    windows: Optional[PlatformOsRequirements]
+    mac: Optional[PlatformOsRequirements]
+    linux: Optional[PlatformOsRequirements]
 
 
 @dataclass
@@ -99,8 +98,8 @@ class Product(BaseDocument):
             developers: List[str],
             publishers: List[str],
             platforms_os: List[str],
-            categories: List[str],
-            genres: List[str],
+            categories: List[ObjectId],
+            genres: List[ObjectId],
             release_date: ReleaseDate,
             **kwargs
     ) -> None:
@@ -127,21 +126,6 @@ class Product(BaseDocument):
 
 
 @dataclass
-class Media(Serializable):
-    header_url: str
-    background_url: str
-    screenshots: List[Dict[str, str]]
-    movies: List[Dict[str, Union[str, Dict[str, Dict[str, str]]]]]
-
-
-@dataclass
-class Requirements(Serializable):
-    windows: Optional[Dict[str, Dict[str]]] = None
-    mac: Optional[Dict[str, Dict[str]]] = None
-    linux: Optional[Dict[str, Dict[str]]] = None
-
-
-@dataclass
 class ProductCreate(Serializable):
     type: str
     name: str
@@ -158,8 +142,8 @@ class ProductCreate(Serializable):
     developers: List[str]
     publishers: List[str]
     platforms_os: List[str]
-    categories: List[str]
-    genres: List[str]
+    categories: List[ObjectId]
+    genres: List[ObjectId]
     release_date: ReleaseDate
 
 
@@ -180,9 +164,9 @@ class ProductPatch(Serializable):
     requirements: Optional[Requirements] = None
     developers: Optional[List[str]] = field(default_factory=list)
     publishers: Optional[List[str]] = field(default_factory=list)
-    platforms_os: List[str] = field(default_factory=list)
-    categories: List[str] = field(default_factory=list)
-    genres: Optional[List[str]] = field(default_factory=list)
+    platforms_os: Optional[List[str]] = field(default_factory=list)
+    categories: Optional[List[ObjectId]] = field(default_factory=list)
+    genres: Optional[ObjectId] = field(default_factory=list)
     release_date: Optional[ReleaseDate] = field(default_factory=dict)
 
 
@@ -196,6 +180,54 @@ class ProductsModel:
 
     db: Database
     collection: str = "products"
+
+    def get_aggregation_pipeline(self, query: dict = None):
+        if query is None:
+            query = {}
+
+        return [
+            query,
+            {
+                '$lookup': {
+                    'from': 'tags',
+                    'let': {'genreIds': '$genres'},
+                    'pipeline': [
+                        {'$match': {'$expr': {'$in': ['$_id', '$$genreIds']}}},
+                        {'$project': {'name': 1, '_id': 0}}
+                    ],
+                    'as': 'genres'
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'tags',
+                    'let': {'categoryIds': '$categories'},
+                    'pipeline': [
+                        {'$match': {'$expr': {'$in': ['$_id', '$$categoryIds']}}},
+                        {'$project': {'name': 1, '_id': 0}}
+                    ],
+                    'as': 'categories'
+                }
+            },
+            {
+                '$addFields': {
+                    'genres': {
+                        '$reduce': {
+                            'input': '$genres',
+                            'initialValue': [],
+                            'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                        }
+                    },
+                    'categories': {
+                        '$reduce': {
+                            'input': '$categories',
+                            'initialValue': [],
+                            'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                        }
+                    }
+                }
+            }
+        ]
 
     def __init__(self, db: Database) -> None:
         """
@@ -214,11 +246,12 @@ class ProductsModel:
         :return: The product data if found.
         :rtype: Optional[Product]
         """
-        product_data = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(product_id)})
+        pipeline = self.get_aggregation_pipeline({"$match": {"_id": ObjectId(product_id)}})
 
+        product_data = self.db.connection[self.collection].aggregate(pipeline).next()
         if product_data:
             return Product(**product_data)
+
         return None
 
     def get_all(self):
@@ -231,7 +264,9 @@ class ProductsModel:
         :return: A list of Product objects representing all the products in the database.
         :rtype: list[Product]
         """
-        products = [Product(**item) for item in self.db.connection[self.collection].find()]
+
+        pipeline = self.get_aggregation_pipeline()
+        products = [Product(**item) for item in self.db.connection[self.collection].aggregate(pipeline)]
 
         return products if products else []
 
@@ -246,11 +281,13 @@ class ProductsModel:
         :return: The product data if found, otherwise None.
         :rtype: Optional[Product]
         """
-        product_data = self.db.connection[self.collection].find_one(
-            {"slug": product_slug})
 
+        pipeline = self.get_aggregation_pipeline({"$match": {"slug": product_slug}})
+
+        product_data = self.db.connection[self.collection].aggregate(pipeline).next()
         if product_data:
             return Product(**product_data)
+
         return None
 
     def create(self, input_data: ProductCreate) -> Product:
