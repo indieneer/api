@@ -4,6 +4,7 @@ from unittest.mock import ANY, MagicMock, patch
 import bson.errors
 import firebase_admin.auth
 import firebase_admin.exceptions
+import pymongo.errors
 from bson import ObjectId
 from pymongo.collection import Collection
 
@@ -83,7 +84,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_mock.reset_mock()
+            self.reset_mock(db_mock)
 
     def test_find_by_email(self):
         model = ProfilesModel(db=db_mock, firebase=firebase_mock)
@@ -122,7 +123,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_mock.reset_mock()
+            self.reset_mock(db_mock)
 
     def test_delete_db_profile(self):
         model = ProfilesModel(db=db_mock, firebase=firebase_mock)
@@ -168,7 +169,7 @@ class ProfilesTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_mock.reset_mock()
+            self.reset_mock(db_mock)
 
     def test_delete(self):
         model = ProfilesModel(db=db_mock, firebase=firebase_mock)
@@ -242,8 +243,8 @@ class ProfilesTestCase(UnitTest):
             with self.subTest(test.__name__):
                 test()
 
-            db_mock.reset_mock()
-            firebase_mock.reset_mock()
+            self.reset_mock(db_mock)
+            self.reset_mock(firebase_mock)
 
     @patch("app.models.profiles.app_config")
     def test_create(self, app_config_mock: MagicMock):
@@ -253,12 +254,21 @@ class ProfilesTestCase(UnitTest):
             "FB_NAMESPACE": TEST_AUTH_NAMESPACE
         })
 
+        def after_test():
+            self.reset_mock(db_mock)
+            self.reset_mock(firebase_mock)
+
         def creates_a_profile():
             create_user_mock = mock_auth_method(firebase_mock, firebase_admin.auth.create_user.__name__)
             insert_one_mock = mock_collection_method(
                 db_mock, ProfilesModel.collection, Collection.insert_one.__name__)
             set_custom_user_claims_mock = mock_auth_method(
                 firebase_mock, firebase_admin.auth.set_custom_user_claims.__name__)
+
+            def after_test():
+                self.reset_mock(create_user_mock)
+                self.reset_mock(insert_one_mock)
+                self.reset_mock(set_custom_user_claims_mock)
 
             tests = [
                 {
@@ -407,21 +417,30 @@ class ProfilesTestCase(UnitTest):
                     ]))
                     self.assertEqual(result.to_json(), profile_mock["value"].to_json())
 
-                create_user_mock.reset_mock()
-                insert_one_mock.reset_mock()
-                set_custom_user_claims_mock.reset_mock()
+                after_test()
 
-        def when_fails_to_create_a_firebase_user():
+        def when():
             input_data = ProfileCreate(
                 email="john.doe@gmail.com",
                 password="john_doe_123456",
                 nickname="john_doe",
             )
+            get_user_by_email_mock = mock_auth_method(firebase_mock, firebase_admin.auth.get_user_by_email.__name__)
             create_user_mock = mock_auth_method(firebase_mock, firebase_admin.auth.create_user.__name__)
+            find_one_mock = mock_collection_method(
+                db_mock, ProfilesModel.collection, Collection.find_one.__name__)
+            insert_one_mock = mock_collection_method(
+                db_mock, ProfilesModel.collection, Collection.insert_one.__name__)
             set_custom_user_claims_mock = mock_auth_method(
                 firebase_mock, firebase_admin.auth.set_custom_user_claims.__name__)
 
-            def when_exception():
+            def after_test():
+                self.reset_mock(create_user_mock)
+                self.reset_mock(find_one_mock)
+                self.reset_mock(insert_one_mock)
+                self.reset_mock(set_custom_user_claims_mock)
+
+            def firebase_exception_raises_an_error():
                 # given
                 create_user_mock.side_effect = Exception('BANG!')
 
@@ -430,14 +449,18 @@ class ProfilesTestCase(UnitTest):
                     model.create(input_data)
 
                 # then
+                create_user_mock.assert_called_once()
                 self.assertEqual(context.exception, create_user_mock.side_effect)
 
-            def when_user_already_exists():
-                get_user_by_email_mock = mock_auth_method(firebase_mock, firebase_admin.auth.get_user_by_email.__name__)
-
+            def firebase_user_already_exists():
                 def before_test():
                     create_user_mock.side_effect = firebase_admin.auth.EmailAlreadyExistsError(
                         "already exists", "", 409)
+
+                def after_test():
+                    self.reset_mock(create_user_mock)
+                    self.reset_mock(get_user_by_email_mock)
+                    self.reset_mock(insert_one_mock)
 
                 def when_custom_claims_are_set_raises_an_error():
                     # given
@@ -456,7 +479,7 @@ class ProfilesTestCase(UnitTest):
                     # then
                     self.assertEqual(context.exception, create_user_mock.side_effect)
 
-                def when_custom_claims_are_not_set_creates_a_user():
+                def when_custom_claims_are_not_set_creates_a_profile():
                     # given
                     mock_id = ObjectId()
                     get_user_by_email_mock.return_value = UserRecord({
@@ -468,18 +491,14 @@ class ProfilesTestCase(UnitTest):
                         "emailVerified": input_data.email_verified
                     })
 
-                    insert_one_mock = mock_collection_method(
-                        db_mock, ProfilesModel.collection, Collection.insert_one.__name__)
-                    mock_profile = Profile(
-                        email=input_data.email,
-                        nickname=input_data.nickname,
-                        display_name="Existing Name",
-                        photo_url="https://existing.com/image.png",
-                        idp_id=str(mock_id),
-                        roles=[FirebaseRole.User.value],
-                        _id=mock_id
-                    )
-                    insert_one_mock.return_value = mock_profile
+                    # - mock db user
+                    def create_insert_one_side_effect(profile_mock: dict):
+                        def side_effect(bson_object: dict):
+                            profile_mock["value"] = Profile(**bson_object)
+
+                        return side_effect
+                    profile_mock: dict[str, Profile | None] = {"value": None}
+                    insert_one_mock.side_effect = create_insert_one_side_effect(profile_mock)
 
                     # when
                     result = model.create(input_data)
@@ -487,47 +506,137 @@ class ProfilesTestCase(UnitTest):
                     # then
                     create_user_mock.assert_called_once()
                     get_user_by_email_mock.assert_called_once_with(input_data.email)
-                    insert_one_mock.assert_called_once_with(mock_profile.to_bson())
+                    insert_one_mock.assert_called_once_with(profile_mock["value"].to_bson())
                     set_custom_user_claims_mock.assert_called_once_with(str(mock_id), dict([
-                        (f"{app_config_mock['FB_NAMESPACE']}/profile_id", str(mock_profile._id)),
+                        (f"{app_config_mock['FB_NAMESPACE']}/profile_id", str(profile_mock["value"]._id)),
                         (f"{app_config_mock['FB_NAMESPACE']}/roles", mock_profile.roles),
                         (f"{app_config_mock['FB_NAMESPACE']}/permissions", []),
                     ]))
 
-                    self.assertEqual(result.to_json(), mock_profile.to_json())
+                    self.assertEqual(result.to_json(), profile_mock["value"].to_json())
 
                 tests = [
                     when_custom_claims_are_set_raises_an_error,
-                    when_custom_claims_are_not_set_creates_a_user
+                    when_custom_claims_are_not_set_creates_a_profile
                 ]
 
                 for test in tests:
                     before_test()
-
                     with self.subTest(test.__name__):
                         test()
+                    after_test()
 
-                    create_user_mock.reset_mock()
-                    get_user_by_email_mock.reset_mock()
+            def database_exception_raises_an_error():
+                # given
+                create_user_mock.return_value = UserRecord({
+                    "localId": str(ObjectId()),
+                    "displayName": input_data.display_name,
+                    "email": input_data.email,
+                    "emailVerified": input_data.email_verified
+                })
+                insert_one_mock.side_effect = Exception('BANG!')
+
+                # when
+                with self.assertRaises(Exception) as context:
+                    model.create(input_data)
+
+                # then
+                create_user_mock.assert_called_once()
+                insert_one_mock.assert_called_once()
+                self.assertEqual(context.exception, insert_one_mock.side_effect)
+
+            def firebase_and_database_profiles_already_exist():
+                mock_id = ObjectId()
+
+                def before_test():
+                    create_user_mock.side_effect = firebase_admin.auth.EmailAlreadyExistsError(
+                        "already exists", "", 409)
+                    get_user_by_email_mock.return_value = UserRecord({
+                        "localId": str(mock_id),
+                        "displayName": input_data.display_name,
+                        "email": input_data.email,
+                        "emailVerified": input_data.email_verified
+                    })
+                    insert_one_mock.side_effect = pymongo.errors.DuplicateKeyError("email already exists")
+
+                def after_test():
+                    self.reset_mock(create_user_mock)
+                    self.reset_mock(insert_one_mock)
+                    self.reset_mock(get_user_by_email_mock)
+                    self.reset_mock(find_one_mock)
+
+                def when_idp_id_does_not_match_raises_an_error():
+                    # given
+                    find_one_mock.return_value = None
+
+                    # when
+                    with self.assertRaises(Exception) as context:
+                        model.create(input_data)
+
+                    # then
+                    create_user_mock.assert_called_once()
+                    get_user_by_email_mock.assert_called_once_with(input_data.email)
+                    insert_one_mock.assert_called_once()
+                    find_one_mock.assert_called_once_with({"_id": mock_id})
+                    self.assertEqual(str(context.exception), "Profile is None")
+
+                def when_idp_id_matches_sets_custom_claims():
+                    # given
+                    profile_mock = Profile(
+                        email=input_data.email,
+                        display_name=input_data.nickname,
+                        idp_id=str(mock_id),
+                        nickname=input_data.nickname,
+                        photo_url=f"https://ui-avatars.com/api/?name={input_data.nickname}&background=random",
+                        roles=[FirebaseRole.User.value],
+                        _id=mock_id
+                    )
+                    find_one_mock.return_value = profile_mock.to_bson()
+
+                    # when
+                    result = model.create(input_data)
+
+                    # then
+                    create_user_mock.assert_called_once()
+                    get_user_by_email_mock.assert_called_once_with(input_data.email)
+                    insert_one_mock.assert_called_once()
+                    find_one_mock.assert_called_once_with({"_id": profile_mock._id})
+                    set_custom_user_claims_mock.assert_called_once_with(str(mock_id), dict([
+                        (f"{app_config_mock['FB_NAMESPACE']}/profile_id", str(profile_mock._id)),
+                        (f"{app_config_mock['FB_NAMESPACE']}/roles", profile_mock.roles),
+                        (f"{app_config_mock['FB_NAMESPACE']}/permissions", []),
+                    ]))
+                    self.assertEqual(result.to_json(), profile_mock.to_json())
+
+                tests = [
+                    when_idp_id_does_not_match_raises_an_error,
+                    when_idp_id_matches_sets_custom_claims
+                ]
+
+                for test in tests:
+                    before_test()
+                    with self.subTest(test.__name__):
+                        test()
+                    after_test()
 
             tests = [
-                when_exception,
-                when_user_already_exists
+                firebase_exception_raises_an_error,
+                firebase_user_already_exists,
+                database_exception_raises_an_error,
+                firebase_and_database_profiles_already_exist
             ]
 
             for test in tests:
                 with self.subTest(test.__name__):
                     test()
-                create_user_mock.reset_mock()
-                set_custom_user_claims_mock.reset_mock()
+                after_test()
 
         tests = [
             creates_a_profile,
-            when_fails_to_create_a_firebase_user
+            when
         ]
 
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_mock.reset_mock()
-            firebase_mock.reset_mock()
+            after_test()

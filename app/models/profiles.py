@@ -129,6 +129,7 @@ class ProfilesModel:
                 photo_url=photo_url,
                 email_verified=input_data.email_verified
             )
+
             user = cast(UserRecord, user)
         except firebase_admin.auth.EmailAlreadyExistsError as error:
             # We expect a user existence in 2 cases:
@@ -136,7 +137,6 @@ class ProfilesModel:
             # - user creation succeeded
             user = self.firebase.auth.get_user_by_email(input_data.email)
             user = cast(UserRecord, user)
-
             # If custom claims are set then the user is fully set up,
             # don't let the user continue
             if user.custom_claims is not None and f"{app_config['FB_NAMESPACE']}/profile_id" in user.custom_claims:

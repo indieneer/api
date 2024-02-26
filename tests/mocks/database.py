@@ -3,8 +3,14 @@ from unittest.mock import MagicMock
 
 
 def mock_collection(db: MagicMock, collection: str):
-    collection_mock = MagicMock()
-    db.connection.__getitem__.side_effect = lambda c: collection_mock if c == collection else None
+    collection_mock = db.connection[collection]
+
+    # keep track of mocked collections, so that when mocking a wrong collection name we will know about this
+    if isinstance(db.connection.mocked_collections, list) == False:
+        db.connection._mocked_collections = []
+        db.connection.__getitem__.side_effect = lambda c: collection_mock if c in db.connection._mocked_collections else None
+
+    db.connection._mocked_collections.append(collection)
 
     return collection_mock
 
