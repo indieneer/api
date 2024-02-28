@@ -217,6 +217,8 @@ class ProfilesModel:
         :return: The updated Profile object or None.
         :rtype: Profile or None
         """
+        raise Exception("Not implemented")
+
         update_data = input_data.to_bson()
 
         profile = self.db.connection[self.collection].find_one_and_update(

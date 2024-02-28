@@ -136,3 +136,6 @@ class ProfilesModelTestCase(IntegrationTest):
         ]
 
         self.run_subtests(tests)
+
+    def test_patch(self):
+        self.skipTest("Not implemented")
