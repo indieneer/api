@@ -1,46 +1,34 @@
 import traceback
-from app.models.service_profiles import ServiceProfileCreate
-from config.constants import FirebaseRole
-import testicles
-import lib.constants as constants
 import typing
+
 from bson import ObjectId
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, \
-    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory, ServiceProfilesFactory
-from tests.fixtures import Fixtures
-
-from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
-
-from app.models.operating_systems import OperatingSystemCreate
-from app.models.platforms import PlatformCreate
-from app.models.products import ProductCreate
-from app.models.profiles import ProfileCreate
-from app.models.tags import TagCreate
-from app.models.products import Media, Requirements
-from app.models import (
-    ProfilesModel,
-    PlatformsModel,
-    OperatingSystemsModel,
-    ModelsExtension,
-    LoginsModel,
-    ProductsModel,
-    TagsModel,
-    ServiceProfilesModel
-)
-from app.services import (
-    Database,
-    Firebase,
-    ServicesExtension
-)
-
+import lib.constants as constants
+import testicles
+from app.configure_app import configure_app
 from app.main import app
-from config import app_config
 from app.middlewares.requires_auth import RequiresAuthExtension
 from app.middlewares.requires_role import RequiresRoleExtension
-from app.configure_app import configure_app
+from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
+                        PlatformsModel, ProductsModel, ProfilesModel,
+                        ServiceProfilesModel, TagsModel)
+from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
+from app.models.operating_systems import OperatingSystemCreate
+from app.models.platforms import PlatformCreate
+from app.models.products import Media, ProductCreate, Requirements
+from app.models.profiles import ProfileCreate
+from app.models.service_profiles import ServiceProfileCreate
+from app.models.tags import TagCreate
 from app.register_middlewares import register_middlewares
 from app.register_routes import register_routes
+from app.services import Database, Firebase, ServicesExtension
+from config import app_config
+from config.constants import FirebaseRole
+from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
+                           OperatingSystemsFactory, PlatformsFactory,
+                           ProductsFactory, ProfilesFactory,
+                           ServiceProfilesFactory, TagsFactory)
+from tests.fixtures import Fixtures
 
 
 class IntegrationTest(testicles.IntegrationTest):
@@ -63,6 +51,29 @@ class IntegrationTest(testicles.IntegrationTest):
         """Hook function to set up test run for a class
         """
         pass
+
+    def run_subtests(self,
+                     tests: list[typing.Callable],
+                     before_each: typing.Callable | None = None,
+                     before_all: typing.Callable | None = None,
+                     after_each: typing.Callable | None = None,
+                     after_all: typing.Callable | None = None,
+                     ):
+        if before_all:
+            before_all()
+
+        for test in tests:
+            if before_each:
+                before_each()
+
+            with self.subTest(test.__name__):
+                test()
+
+            if after_each:
+                after_each()
+
+        if after_all:
+            after_all()
 
     def inject_dependencies(
             self,

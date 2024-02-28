@@ -62,11 +62,7 @@ class {{entity_cap}}TestCase(UnitTest):
             sub_test_2,
         ]
 
-        for test in tests:
-            before_test()
-            with self.subTest(test.__name__):
-                test()
-            after_test()
+        self.run_subtests(tests, before_each=before_test, after_each=after_test)
 
     def test_list(self):
         self.skipTest("Not implemented")

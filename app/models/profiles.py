@@ -67,7 +67,7 @@ class ProfilesModel:
         self.db = db
         self.firebase = firebase
 
-    def get(self, user_id: str):
+    def get(self, profile_id: str):
         """
         Retrieve a user profile based on the user ID.
 
@@ -79,7 +79,7 @@ class ProfilesModel:
         :rtype: Profile or None
         """
         profile = self.db.connection[self.collection].find_one(
-            {"_id": ObjectId(user_id)})
+            {"_id": ObjectId(profile_id)})
 
         if profile is not None:
             return Profile(**profile)

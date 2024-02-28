@@ -50,8 +50,4 @@ class {{entity_cap}}ModelTestCase(IntegrationTest):
             does_not_find_an_item,
         ]
 
-        for test in tests:
-            before_test()
-            with self.subTest(test.__name__):
-                test()
-            after_test()
+        self.run_subtests(tests, before_each=before_test, after_each=after_test)

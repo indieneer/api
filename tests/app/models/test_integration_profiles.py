@@ -1,75 +1,38 @@
-import random
+from bson import ObjectId
 
-from app.main import app
-from app.models.profiles import ProfilesModel, ProfilePatch, ProfileCreate
+from app.models.profiles import ProfilesModel
 from tests.integration_test import IntegrationTest
 
 
 class ProfilesModelTestCase(IntegrationTest):
 
-    def test_get_profile(self):
-        profiles_model = ProfilesModel(
-            self.services.db, self.services.firebase)
+    def test_get(self):
+        model = ProfilesModel(db=self.services.db, firebase=self.services.firebase)
 
-        # given
-        fixture = self.fixtures.regular_user
+        def finds_a_profile():
+            # given
+            fixture = self.fixtures.regular_user
 
-        # when
-        retrieved_profile = profiles_model.get(str(fixture._id))
+            # when
+            result = model.get(str(fixture._id))
 
-        # then
-        self.assertIsNotNone(fixture._id)
-        self.assertEqual(fixture._id, retrieved_profile._id)
-        self.assertEqual(fixture.email, retrieved_profile.email)
+            # then
+            self.assertIsNotNone(result)
+            self.assertEqual(result._id, fixture._id)
 
-    def test_create_profile(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        # given
-        salt = ''.join(random.choices('0123456789', k=10))
-        test_profile = self.models.profiles.create(ProfileCreate(
-            email=f'{salt}test.pork@pork.com', password=f'JohnPork2003{salt}'))
-        self.addCleanup(lambda: self.factory.profiles.cleanup(
-            str(test_profile._id)))
+        def does_not_find_a_profile():
+            # given
+            mock_id = ObjectId()
 
-        self.assertEqual(test_profile.email, f'{salt}test.pork@pork.com')
-        self.assertIn("auth0|", test_profile.idp_id)
+            # when
+            result = model.get(str(mock_id))
 
-    def test_patch_profile(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        # FIXME: Change this test after merging PR #42
-        profiles_model = ProfilesModel(
-            self.services.db, self.services.firebase, self.services.auth0)
+            # then
+            self.assertIsNone(result)
 
-        # given
-        test_profile, cleanup = self.factory.profiles.create(
-            ProfileCreate(email="test.pork@pork.com", password="JohnPork2003"))
-        self.addCleanup(cleanup)
-        patch_data = ProfilePatch(email="updated@example.com")
+        tests = [
+            finds_a_profile,
+            does_not_find_a_profile,
+        ]
 
-        # when
-        updated_profile = profiles_model.patch(
-            str(test_profile._id), patch_data)
-
-        # then
-        self.assertIsNotNone(updated_profile)
-        self.assertEqual(updated_profile.email, "updated@example.com")
-
-    def test_delete_profile(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        profiles_model = ProfilesModel(self.services.db, self.services.auth0)
-
-        # given
-        factory = self.factory.profiles
-        test_profile, cleanup = factory.create(ProfileCreate(
-            email="test.pork@pork.com", password="JohnPork2003"))
-        self.addCleanup(cleanup)
-
-        # when
-        deleted_profile = profiles_model.delete(str(test_profile._id))
-        retrieved_profile_after_deletion = profiles_model.get(
-            str(test_profile._id))
-
-        # then
-        self.assertIsNotNone(deleted_profile)
-        self.assertEqual(deleted_profile._id, test_profile._id)
-        self.assertIsNone(retrieved_profile_after_deletion)
+        self.run_subtests(tests)
