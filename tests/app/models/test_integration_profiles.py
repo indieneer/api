@@ -36,3 +36,35 @@ class ProfilesModelTestCase(IntegrationTest):
         ]
 
         self.run_subtests(tests)
+
+    def test_find_by_email(self):
+        model = ProfilesModel(db=self.services.db, firebase=self.services.firebase)
+
+        def finds_a_profile():
+            # given
+            fixture = self.fixtures.regular_user
+
+            # when
+            result = model.get(str(fixture._id))
+
+            # then
+            self.assertIsNotNone(result)
+            self.assertEqual(result._id, fixture._id)
+            self.assertEqual(result.email, fixture.email)
+
+        def does_not_find_a_profile():
+            # given
+            mock_email = "john.doe@nonexisting.com"
+
+            # when
+            result = model.find_by_email(mock_email)
+
+            # then
+            self.assertIsNone(result)
+
+        tests = [
+            finds_a_profile,
+            does_not_find_a_profile,
+        ]
+
+        self.run_subtests(tests)
