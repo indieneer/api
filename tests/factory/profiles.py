@@ -1,6 +1,8 @@
-from app.services import ServicesExtension
+from bson import ObjectId
+
 from app.models import ModelsExtension
 from app.models.profiles import ProfileCreate
+from app.services import ServicesExtension
 
 
 class ProfilesFactory:
@@ -27,8 +29,8 @@ class ProfilesFactory:
         db_profile = self.models.profiles.find_by_email(email)
         if db_profile is not None:
             try:
-                self.models.profiles.delete_db_profile(str(db_profile._id))
-            except:
+                self.delete_db_profile(str(db_profile._id))
+            except BaseException:
                 # Intentionally skip error
                 pass
 
@@ -38,3 +40,10 @@ class ProfilesFactory:
         profile = self.models.profiles.create(input)
 
         return profile, lambda: self.cleanup(profile.email)
+
+    def delete_db_profile(self, profile_id: str):
+        model = self.models.profiles
+
+        model.db.connection[model.collection].find_one_and_delete(
+            {"_id": ObjectId(profile_id)},
+        )

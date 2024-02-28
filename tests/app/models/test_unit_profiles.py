@@ -127,52 +127,6 @@ class ProfilesTestCase(UnitTest):
                 test()
             self.reset_mock(db_mock)
 
-    def test_delete_db_profile(self):
-        model = ProfilesModel(db=db_mock, firebase=firebase_mock)
-
-        def deletes_and_returns_a_profile():
-            # given
-            find_one_and_delete_mock = mock_collection_method(
-                db_mock,
-                ProfilesModel.collection,
-                Collection.find_one_and_delete.__name__
-            )
-            find_one_and_delete_mock.return_value = mock_profile.to_json()
-
-            # when
-            result = model.delete_db_profile(str(mock_profile._id))
-
-            # then
-            self.assertEqual(result, mock_profile)
-            find_one_and_delete_mock.assert_called_once_with({"_id": mock_profile._id})
-
-        def when_profile_does_not_exist_it_does_not_delete_a_profile():
-            # given
-            mock_id = ObjectId()
-            find_one_and_delete_mock = mock_collection_method(
-                db_mock,
-                ProfilesModel.collection,
-                Collection.find_one_and_delete.__name__
-            )
-            find_one_and_delete_mock.return_value = None
-
-            # when
-            result = model.delete_db_profile(str(mock_id))
-
-            # then
-            self.assertIsNone(result)
-            find_one_and_delete_mock.assert_called_once_with({"_id": mock_id})
-
-        tests = [
-            deletes_and_returns_a_profile,
-            when_profile_does_not_exist_it_does_not_delete_a_profile
-        ]
-
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            self.reset_mock(db_mock)
-
     def test_delete(self):
         model = ProfilesModel(db=db_mock, firebase=firebase_mock)
 

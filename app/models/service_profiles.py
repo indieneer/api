@@ -1,9 +1,10 @@
 import base64
+import hmac
 from dataclasses import dataclass
 from enum import Enum
-import hmac
-from typing import List
 from hashlib import sha256
+from typing import List
+
 from bson import ObjectId
 
 from app.models.base import BaseDocument
@@ -90,15 +91,6 @@ class ServiceProfilesModel:
             {"permissions": input_data.permissions}
         )
 
-        if profile is None:
-            return
-
-        return ServiceProfile(**profile)
-
-    def delete_db_profile(self, profile_id: str):
-        profile = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": ObjectId(profile_id)},
-        )
         if profile is None:
             return
 

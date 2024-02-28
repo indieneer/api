@@ -187,15 +187,6 @@ class ProfilesModel:
 
         return profile
 
-    def delete_db_profile(self, profile_id: str):
-        profile = self.db.connection[self.collection].find_one_and_delete(
-            {"_id": ObjectId(profile_id)},
-        )
-        if profile is None:
-            return
-
-        return Profile(**profile)
-
     def delete(self, profile_id: str):
         # Perform the deletion in transaction to handle failed Firebase operation
         with self.db.client.start_session() as session:

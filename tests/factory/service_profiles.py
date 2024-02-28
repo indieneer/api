@@ -1,8 +1,10 @@
+from typing import Union
+
+from bson import ObjectId
+
 from app.models import ModelsExtension
 from app.models.service_profiles import ServiceProfile, ServiceProfileCreate
 from app.services import Database, ServicesExtension
-from bson import ObjectId
-from typing import Union
 
 
 class ServiceProfilesFactory:
@@ -26,12 +28,11 @@ class ServiceProfilesFactory:
         except Exception as error:
             raise error
 
-        db_profile = self.models.service_profiles.delete_db_profile(
-            str(profile_id))
+        db_profile = self.delete_db_profile(str(profile_id))
         if db_profile is not None:
             try:
-                self.models.profiles.delete_db_profile(str(db_profile._id))
-            except:
+                self.delete_db_profile(str(db_profile._id))
+            except BaseException:
                 # Intentionally skip error
                 pass
 
@@ -42,3 +43,10 @@ class ServiceProfilesFactory:
             profile = self.models.service_profiles.create(input_data)
 
         return profile, lambda: self.cleanup(profile._id)
+
+    def delete_db_profile(self, profile_id: str):
+        model = self.models.service_profiles
+
+        model.db.connection[model.collection].find_one_and_delete(
+            {"_id": ObjectId(profile_id)},
+        )

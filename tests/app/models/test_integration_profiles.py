@@ -1,7 +1,11 @@
+from unittest.mock import MagicMock
+
+import firebase_admin.auth
 from bson import ObjectId
 
 from app.models.profiles import ProfileCreate, ProfilesModel
 from tests.integration_test import IntegrationTest
+from tests.mocks.firebase import mock_auth_method
 
 
 class ProfilesModelTestCase(IntegrationTest):
@@ -69,7 +73,7 @@ class ProfilesModelTestCase(IntegrationTest):
 
         self.run_subtests(tests)
 
-    def test_delete_db_profile(self):
+    def test_delete(self):
         model = ProfilesModel(db=self.services.db, firebase=self.services.firebase)
 
         profile, cleanup = self.factory.profiles.create(ProfileCreate(
@@ -82,22 +86,53 @@ class ProfilesModelTestCase(IntegrationTest):
 
         def deletes_a_profile_and_returns_it():
             # when
-            result = model.delete_db_profile(str(profile._id))
+            result = model.delete(str(profile._id))
 
             # then
             self.assertIsNotNone(result)
             self.assertEqual(result._id, profile._id)
 
-        def does_not_find_a_profile_and_returns_none():
+            with self.assertRaises(firebase_admin.auth.UserNotFoundError):
+                self.services.firebase.auth.get_user(result.idp_id)
+
+        def when_db_profile_does_not_exist_returns_none():
             # when
-            result = model.delete_db_profile(str(profile._id))
+            result = model.delete(str(profile._id))
 
             # then
             self.assertIsNone(result)
 
+        # mocking firebase error to test the db transaction
+        def when_fails_to_delete_firebase_profile_reverts_db_profile():
+            # given
+            firebase_mock = MagicMock()
+            model = ProfilesModel(db=self.services.db, firebase=firebase_mock)
+
+            delete_user_mock = mock_auth_method(firebase_mock, firebase_admin.auth.delete_user.__name__)
+            delete_user_mock.side_effect = firebase_admin.auth.InsufficientPermissionError("", "", 403)
+
+            profile, cleanup = self.factory.profiles.create(ProfileCreate(
+                display_name="John Doe",
+                email="john.doe@gmail.com",
+                nickname="john_doe",
+                password="John_Doe@235"
+            ))
+            self.addCleanup(cleanup)
+
+            # when
+            with self.assertRaises(firebase_admin.auth.InsufficientPermissionError):
+                model.delete(str(profile._id))
+
+            # then
+            delete_user_mock.assert_called_once_with(profile.idp_id)
+
+            reverted_profile = self.models.profiles.get(str(profile._id))
+            self.assertIsNotNone(reverted_profile)
+
         tests = [
             deletes_a_profile_and_returns_it,
-            does_not_find_a_profile_and_returns_none
+            when_db_profile_does_not_exist_returns_none,
+            when_fails_to_delete_firebase_profile_reverts_db_profile
         ]
 
         self.run_subtests(tests)
