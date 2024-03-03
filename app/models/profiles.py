@@ -167,7 +167,7 @@ class ProfilesModel:
                 {"_id": ObjectId(user.uid)})
 
             if profile is None:
-                raise Exception("Profile is None")
+                raise error
 
             profile = Profile(**profile)
         except Exception as error:

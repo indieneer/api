@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Dict, Any, cast
+
+from datetime import datetime
+from typing import Any, Dict, cast
 
 from bson import ObjectId
 
@@ -102,7 +104,7 @@ def to_bson(thing: Any):
         return out
     elif isinstance(thing, tuple):
         return to_bson(list(thing))
-    elif isinstance(thing, (int, float, bool, str)) or thing is None:
+    elif isinstance(thing, (int, float, bool, str, datetime)) or thing is None:
         return thing
     elif isinstance(thing, Serializable):
         return to_bson(vars(thing))
