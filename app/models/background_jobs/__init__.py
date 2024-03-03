@@ -1,17 +1,18 @@
 import datetime
-from enum import Enum
-from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.models.base import BaseDocument, Serializable
 from app.services import Database
+
 from .event import Event, EventCreate
 from .metadata import BaseMetadata, JobMetadata
 from .status_type import StatusType
-from .validator import validate_job_type, validate_status, validate_event_type
+from .validator import validate_event_type, validate_job_type, validate_status
 
 
 class BackgroundJob(BaseDocument):
@@ -137,7 +138,7 @@ class BackgroundJobsModel:
                 if not input_data.to_json()["metadata"].get(key):
                     payload["metadata"][key] = value
             payload["metadata"] = JobMetadata.create(background_job["type"],
-                                                     **payload["metadata"]).to_json()
+                                                     **payload["metadata"]).to_bson()
 
         if payload.get("status") is not None:
             validate_status(payload["status"])
@@ -156,7 +157,7 @@ class BackgroundJobsModel:
         :return: The created background job data with a new ID.
         :rtype: BackgroundJob
         """
-        background_job_data = input_data.to_json()
+        background_job_data = input_data.to_bson()
         validate_job_type(background_job_data["type"])
         validate_status(background_job_data["status"])
         for event in background_job_data["events"]:
@@ -197,7 +198,7 @@ class BackgroundJobsModel:
 
         updated = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(background_job_id)},
-            {"$push": {"events": Event(**event.to_json()).to_json()}},
+            {"$push": {"events": Event(**event.to_json()).to_bson()}},
             return_document=ReturnDocument.AFTER
         )
 

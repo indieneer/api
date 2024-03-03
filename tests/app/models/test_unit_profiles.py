@@ -534,7 +534,7 @@ class ProfilesTestCase(UnitTest):
                     get_user_by_email_mock.assert_called_once_with(input_data.email)
                     insert_one_mock.assert_called_once()
                     find_one_mock.assert_called_once_with({"_id": mock_id})
-                    self.assertEqual(str(context.exception), "Profile is None")
+                    self.assertEqual(str(context.exception), "email already exists")
 
                 def when_idp_id_matches_sets_custom_claims():
                     # given
