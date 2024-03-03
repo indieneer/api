@@ -43,6 +43,10 @@ jobs:
         with:
           mongodb-version: 7.0
 
+      - name: Migrate DB
+        run: |
+          pymongo-migrate -u ${{ secrets.MONGO_URI }} -c migrations -m migrations
+
       - name: Run tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
