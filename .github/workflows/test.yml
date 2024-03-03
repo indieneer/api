@@ -45,7 +45,7 @@ jobs:
 
       - name: Migrate DB
         run: |
-          pymongo-migrate -u ${{ secrets.MONGO_URI }} -c migrations -m migrations
+          pymongo-migrate migrate -u "${{ secrets.MONGO_URI }}" -c migrations -m migrations
 
       - name: Run tests
         env:
