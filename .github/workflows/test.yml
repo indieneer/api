@@ -41,6 +41,7 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
+          mongodb-replica-set: test-rs
           mongodb-version: 7.0
 
       - name: Migrate DB
