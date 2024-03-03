@@ -1,11 +1,12 @@
-from typing import Optional
-from bson import ObjectId
 from dataclasses import dataclass
+from typing import Optional
 
+from bson import ObjectId
 from pymongo import ReturnDocument
 
-from app.services import Database
 from app.models.base import BaseDocument, Serializable
+from app.services import Database
+
 from .exceptions import NotFoundException
 
 
@@ -87,7 +88,6 @@ class TagsModel:
         """
 
         tag = Tag(**input_data.to_json())
-
         self.db.connection[self.collection].insert_one(tag.to_bson())
 
         return tag
@@ -153,4 +153,3 @@ class TagsModel:
             return Tag(**tag)
         else:
             raise NotFoundException(Tag.__name__)
-

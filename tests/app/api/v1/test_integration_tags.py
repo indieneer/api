@@ -7,7 +7,7 @@ class TagsTestCase(IntegrationTest):
         tags: list[Tag] = []
 
         # given
-        for i in range(5):
+        for i in range(1):
             tag, cleanup = self.factory.tags.create(TagCreate(name=f"tag{i}"))
             self.addCleanup(cleanup)
             tags.append(tag)

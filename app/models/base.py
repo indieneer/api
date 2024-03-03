@@ -1,8 +1,10 @@
-import json
 import datetime
+import json
 from copy import deepcopy
-from bson import ObjectId
 from typing import Optional
+
+from bson import ObjectId
+
 from lib.db_utils import Serializable
 
 
@@ -13,11 +15,11 @@ class BaseDocument(Serializable):
 
     def __init__(
         self,
-         **kwargs
-        ) -> None:
+        **kwargs
+    ) -> None:
         super().__init__()
 
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow().replace(microsecond=0)
 
         self._id = kwargs.get("_id", ObjectId())
         self.created_at = kwargs.get("created_at", now)
