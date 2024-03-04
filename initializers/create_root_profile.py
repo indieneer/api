@@ -1,55 +1,37 @@
-from auth0.exceptions import Auth0Error
+import firebase_admin.auth
 
-from app.services import ServicesExtension
+from app.models import ModelsExtension
+from app.models.profiles import ProfileCreate
 from config import app_config
-from config.constants import (
-    AUTH0_ROLES,
-    Auth0Role
-)
+from config.constants import FirebaseRole
 
 
-def run(services: ServicesExtension):
+def run(models: ModelsExtension):
     """Creates a root admin profile for future management
 
     Args:
         services (ServicesExtension): services
     """
-
     try:
-        auth0_mgmt = services.auth0.client
-        profiles = services.db.connection["profiles"]
+        profile = models.profiles.find_by_email(app_config["ROOT_USER_EMAIL"])
 
-        user = services.auth0.client.users.create({
-            "email": app_config["ROOT_USER_EMAIL"],
-            "password": app_config["ROOT_USER_PASSWORD"],
-            "email_verified": True,
-            "connection": "Username-Password-Authentication"
-        })
+        if profile is not None:
+            raise Exception("Skipping root user creation")
 
-        roles = [AUTH0_ROLES[Auth0Role.Admin.value]]
-        auth0_mgmt.users.add_roles(user["user_id"], roles)
+        profile = models.profiles.create(ProfileCreate(
+            email=app_config["ROOT_USER_EMAIL"],
+            nickname="indieneer",
+            password=app_config["ROOT_USER_PASSWORD"],
+            display_name="Admin",
+            email_verified=True,
+            role=FirebaseRole.Admin
+        ))
 
-        # todo: delegate profile creation to profile model
-        admin_profile = {
-            "email": user["email"],
-            "idpId": user["idp_id"],
-        }
-        profiles.insert_one(admin_profile)
+        if profile is None:
+            raise Exception("user is missing in the database")
 
-        # update user's metadata in auth0 with internal
-        # profile id in order to later easily verify
-        # user identity
-        auth0_mgmt.users.update(user["user_id"], {
-            "user_metadata": {
-                "profile_id": str(admin_profile["_id"])
-            }
-        })
-
-        print(f'Root profile created.')
-    except Auth0Error as e:
-        if e.status_code == 409:
-            print('Skipping root profile creation.')
-        else:
-            print(f"ERROR: {str(e)}")
+        print(f"Root profile created: {profile._id}")
+    except firebase_admin.auth.EmailAlreadyExistsError as error:
+        print(f"Skipping root user creation: {error}")
     except Exception as e:
-        print(f"ERROR: {str(e)}")
+        print(f"Failed to create root user: {e}")

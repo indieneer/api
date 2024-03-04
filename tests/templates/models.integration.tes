@@ -1,0 +1,53 @@
+from bson import ObjectId
+from app.models.{{entity_low}} import {{entity_cap}}Model
+from tests.integration_test import IntegrationTest
+
+# Guide
+# 
+# 1. Make sure to test all possible scenarios (exceptions, expected results, etc)
+# 2. Use fixtures as a pre-created resource to test a generic flow (e.g. retrieve an existing item)
+# 3. Do not use fixtures in mutating tests (patch, post), otherwise other tests will fail.
+#    Fixtures must be immutable, if you need a quick copy you can use `fixture.clone()`
+# 4. Make sure to cleanup created resources (if any) with `self.addCleanup(cleanup)`
+# 5. Create as many nested subtests as needed
+
+class {{entity_cap}}ModelTestCase(IntegrationTest):
+
+    def test_get(self):
+        model = {{entity_cap}}Model(self.services.db)
+
+        def before_test():
+            # do something before each test
+            pass
+
+        def after_test():
+            # do something after each test
+            pass
+
+        def finds_an_item():
+            # given
+            fixture = self.fixtures.item
+
+            # when
+            result = model.find(str(fixture._id))
+            
+            # then
+            self.assertIsNotNone(result)
+            self.assertEqual(result._id, fixture._id)
+
+        def does_not_find_an_item():
+            # given
+            mock_id = ObjectId()
+
+            # when
+            result = model.find(str(mock_id))
+            
+            # then
+            self.assertIsNone(result)
+
+        tests = [
+            finds_an_item,
+            does_not_find_an_item,
+        ]
+
+        self.run_subtests(tests, before_each=before_test, after_each=after_test)

@@ -1,17 +1,17 @@
 import argparse
-import unittest
-import traceback
 import importlib
 import io
 import os
 import re
 import sys
-from typing import Callable, Any, Pattern
+import traceback
+import unittest
+from typing import Any, Callable, Pattern
 
-from .unit_test import UnitTest
+from .environment import setup_environment
 from .integration_test import IntegrationTest
 from .text_test_result import CustomTextTestResult, TestFailException
-from .environment import setup_environment
+from .unit_test import UnitTest
 
 # Usage
 #
@@ -46,13 +46,24 @@ cli_parser = argparse.ArgumentParser(description='CLI for test runs')
 
 # Setup arguments for CLI
 cli_parser.add_argument(
-    "-sd", "--start-dir", type=str, help="path to directory with tests relative to the current working directory, e.g. \"tests\", defaults to \"tests\"", default="tests")
+    "-sd",
+    "--start-dir",
+    type=str,
+    help="path to directory with tests relative to the current working directory, e.g. \"tests\", defaults to \"tests\"",
+    default="tests")
 cli_parser.add_argument(
-    "-td", "--top-level-dir", type=str, help="path to the project root directory, e.g. \".\", defaults to \".\"", default=".")
+    "-td",
+    "--top-level-dir",
+    type=str,
+    help="path to the project root directory, e.g. \".\", defaults to \".\"",
+    default=".")
 cli_parser.add_argument(
     "-t", "--type", type=str, help="\"unit\" or \"integration\"")
 cli_parser.add_argument(
-    "-f", "--file", type=str, help="path to file relative to the current working directory, e.g. \".\\tests\\path\\to\\file.py\"")
+    "-f",
+    "--file",
+    type=str,
+    help="path to file relative to the current working directory, e.g. \".\\tests\\path\\to\\file.py\"")
 cli_parser.add_argument(
     "-r", "--run", type=str, help="regular expression that matches a test function, e.g. \"^test_incorrect_token\"")
 
@@ -90,6 +101,8 @@ tests_count = {
 }
 
 # Scan tests
+
+
 def create_callback():
     def count_test(test_case: unittest.TestCase):
         if isinstance(test_case, UnitTest):
@@ -171,8 +184,7 @@ try:
 except TestFailException:
     sys.exit(1)
 except Exception as e:
-    print(traceback.format_exc())
-    print(e.__class__, str(e))
+    traceback.print_exc()
 
     sys.exit(1)
 finally:

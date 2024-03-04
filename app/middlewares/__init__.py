@@ -1,10 +1,11 @@
+from typing import Dict
 from flask import request
 
 
 # Error handler
 # Format error response and append status code
 class AuthError(Exception):
-    def __init__(self, error, status_code):
+    def __init__(self, error: Dict, status_code: int):
         self.error = error
         self.status_code = status_code
 
@@ -40,4 +41,3 @@ def get_token_auth_header():
 
 from .requires_auth import requires_auth  # nopep8
 from .requires_role import requires_role  # nopep8
-from .requires_service_account import requires_service_account  # nopep8

@@ -1,0 +1,77 @@
+from unittest.mock import ANY, MagicMock, patch
+
+import pymongo.errors
+from bson import ObjectId
+from pymongo import ReturnDocument
+from pymongo.collection import Collection
+
+from app.models.{{entity_low}} import {{entity_cap}}Model
+
+from testicles.unit_test import UnitTest
+from tests.mocks.database import mock_collection_method
+
+
+# Guide
+# 
+# 1. Make sure to test all possible scenarios (exceptions, expected results, etc)
+# 2. Create mocks and use mock helpers from `tests/mocks`
+# 3. Do not forget to reset reusable mocks between test runs
+# 4. Create as many nested subtests as needed
+
+
+# Reuse mock
+db_mock = MagicMock()
+
+
+class {{entity_cap}}TestCase(UnitTest):
+
+    def test_get_by_id(self):
+        model = {{entity_cap}}Model(db=db_mock)
+        find_one_mock = mock_collection_method(db_mock, {{entity_cap}}Model.collection, Collection.find_one.__name__)
+
+        def before_test():
+            # reuse mocks before each test
+            find_one_mock.side_effect = Exception("no permissions")
+
+        def after_test():
+            # reset mocks here
+            self.reset_mock(db_mock)
+
+        def sub_test_1():
+            # given
+            mock_id = ObjectId()
+
+            # when
+            with self.assertRaises(Exception) as context:
+                model.find(str(mock_id))
+
+            # then
+            find_one_mock.assert_called_once_with(str(mock_id))
+            self.assertEquals(str(context.exception), "no permissions")
+        
+        def sub_test_2():
+            # given
+
+            # when
+
+            # then
+            pass
+
+        tests = [
+            sub_test_1,
+            sub_test_2,
+        ]
+
+        self.run_subtests(tests, before_each=before_test, after_each=after_test)
+
+    def test_list(self):
+        self.skipTest("Not implemented")
+
+    def test_create(self):
+        self.skipTest("Not implemented")
+
+    def test_patch(self):
+        self.skipTest("Not implemented")
+
+    def test_delete(self):
+        self.skipTest("Not implemented")

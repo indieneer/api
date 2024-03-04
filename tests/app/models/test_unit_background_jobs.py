@@ -37,7 +37,8 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # then
             self.assertEqual(result._id, mock_background_job["_id"])
-            self.mock_collection.find_one.assert_called_once_with({"_id": ObjectId(mock_background_job["_id"])})
+            self.mock_collection.find_one.assert_called_once_with(
+                {"_id": ObjectId(mock_background_job["_id"])})
 
         def does_not_find_background_job_and_returns_none():
             # given
@@ -49,7 +50,8 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # then
             self.assertIsNone(result)
-            self.mock_collection.find_one.assert_called_once_with({"_id": ObjectId(mock_id)})
+            self.mock_collection.find_one.assert_called_once_with(
+                {"_id": ObjectId(mock_id)})
 
         tests = [
             finds_and_returns_background_job,
@@ -156,15 +158,19 @@ class BackgroundJobsModelTestCase(UnitTest):
                 status="success"
             )
 
-            mock_background_job["status"] = mock_background_job_patch.to_json()["status"]
+            mock_background_job["status"] = mock_background_job_patch.to_json()[
+                "status"]
             self.mock_collection.find_one_and_update.return_value = mock_background_job
 
             # when
-            result = self.model.patch(str(mock_background_job["_id"]), mock_background_job_patch)
+            result = self.model.patch(
+                str(mock_background_job["_id"]), mock_background_job_patch)
 
             # then
-            self.assertEqual(result.to_json()["status"], mock_background_job_patch.to_json()["status"])
-            self.mock_collection.find_one.assert_called_with({"_id": ObjectId(mock_background_job["_id"])})
+            self.assertEqual(result.to_json()[
+                             "status"], mock_background_job_patch.to_json()["status"])
+            self.mock_collection.find_one.assert_called_with(
+                {"_id": ObjectId(mock_background_job["_id"])})
             self.mock_collection.find_one_and_update.assert_called_once_with(
                 {"_id": ObjectId(mock_background_job["_id"])},
                 {"$set": {"status": "success"}},
@@ -184,7 +190,8 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # then
             self.assertIsNone(result)
-            self.mock_collection.find_one.assert_called_with({"_id": ObjectId(mock_id)})
+            self.mock_collection.find_one.assert_called_with(
+                {"_id": ObjectId(mock_id)})
             self.mock_collection.find_one_and_update.assert_not_called()
 
         def fails_to_patch_background_job_with_invalid_status_and_returns_an_error():
@@ -198,10 +205,12 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # when
             with self.assertRaises(ValueError):
-                self.model.patch(str(mock_background_job["_id"]), mock_background_job_patch)
+                self.model.patch(
+                    str(mock_background_job["_id"]), mock_background_job_patch)
 
             # then
-            self.mock_collection.find_one.assert_called_with({"_id": ObjectId(mock_background_job["_id"])})
+            self.mock_collection.find_one.assert_called_with(
+                {"_id": ObjectId(mock_background_job["_id"])})
             self.mock_collection.find_one_and_update.assert_not_called()
 
         tests = [
@@ -219,15 +228,17 @@ class BackgroundJobsModelTestCase(UnitTest):
     def test_put_background_job(self):
         def inserts_and_returns_background_job():
             # given
-            mock_background_job = BackgroundJob(**self.get_new_mock_background_job())
-            self.mock_collection.insert_one.inserted_id.return_value = mock_background_job._id
+            mock_background_job = BackgroundJob(
+                **self.get_new_mock_background_job())
+            self.mock_collection.insert_one.return_value.inserted_id = mock_background_job._id
 
             # when
             result = self.model.put(mock_background_job)
 
             # then
             self.assertEqual(result.to_json(), mock_background_job.to_json())
-            self.mock_collection.insert_one.assert_called_once_with(mock_background_job.to_json())
+            self.mock_collection.insert_one.assert_called_once_with(
+                mock_background_job.to_bson())
 
         def fails_to_insert_background_job_with_invalid_type_and_returns_an_error():
             # given
@@ -256,7 +267,8 @@ class BackgroundJobsModelTestCase(UnitTest):
         def fails_to_insert_background_job_with_invalid_event_type_and_returns_an_error():
             # given
             mock_background_job = self.get_new_mock_background_job()
-            mock_background_job["events"] = [Event(type="invalid_type", message="test")]
+            mock_background_job["events"] = [
+                Event(type="invalid_type", message="test")]
 
             # when
             with self.assertRaises(ValueError):
@@ -282,18 +294,21 @@ class BackgroundJobsModelTestCase(UnitTest):
         def deletes_and_returns_deleted_count():
             # given
             mock_background_job = self.get_new_mock_background_job()
-            self.mock_collection.delete_one.return_value = DeleteResult({"n": 1}, True)
+            self.mock_collection.delete_one.return_value = DeleteResult({
+                                                                        "n": 1}, True)
 
             # when
             result = self.model.delete(str(mock_background_job["_id"]))
 
             # then
             self.assertEqual(result, 1)
-            self.mock_collection.delete_one.assert_called_once_with({"_id": ObjectId(mock_background_job["_id"])})
+            self.mock_collection.delete_one.assert_called_once_with(
+                {"_id": ObjectId(mock_background_job["_id"])})
 
         def does_not_delete_and_returns_zero():
             # given
-            self.mock_collection.delete_one.return_value = DeleteResult({"n": 0}, True)
+            self.mock_collection.delete_one.return_value = DeleteResult({
+                                                                        "n": 0}, True)
 
             mock_id = str(ObjectId())
 
@@ -302,7 +317,8 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # then
             self.assertEqual(result, 0)
-            self.mock_collection.delete_one.assert_called_once_with({"_id": ObjectId(mock_id)})
+            self.mock_collection.delete_one.assert_called_once_with(
+                {"_id": ObjectId(mock_id)})
 
         tests = [
             deletes_and_returns_deleted_count,
@@ -319,7 +335,8 @@ class BackgroundJobsModelTestCase(UnitTest):
         def adds_event_and_returns_updated_background_job():
             # given
             mock_background_job = deepcopy(self.get_new_mock_background_job())
-            mock_background_job["events"] = [Event(type="info", message="test info")]
+            mock_background_job["events"] = [
+                Event(type="info", message="test info")]
 
             self.mock_collection.find_one_and_update.return_value = mock_background_job
 
@@ -329,10 +346,12 @@ class BackgroundJobsModelTestCase(UnitTest):
             )
 
             # when
-            result = self.model.add_event(str(mock_background_job["_id"]), mock_event)
+            result = self.model.add_event(
+                str(mock_background_job["_id"]), mock_event)
 
             # then
-            self.assertEqual(result.to_json()["events"][0]["type"], mock_event.type)
+            self.assertEqual(result.to_json()[
+                             "events"][0]["type"], mock_event.type)
             self.mock_collection.find_one_and_update.assert_called_once()
 
         def fails_to_add_event_with_invalid_event_type_and_returns_an_error():
@@ -347,7 +366,8 @@ class BackgroundJobsModelTestCase(UnitTest):
 
             # when
             with self.assertRaises(ValueError):
-                self.model.add_event(str(mock_background_job["_id"]), mock_event)
+                self.model.add_event(
+                    str(mock_background_job["_id"]), mock_event)
 
             # then
             self.mock_collection.find_one_and_update.assert_not_called()

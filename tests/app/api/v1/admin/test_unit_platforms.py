@@ -13,7 +13,7 @@ class PlatformsTestCase(UnitTest):
     def test_create_platform(self, get_models: MagicMock):
         endpoint = "/platforms"
         self.app.route(endpoint, methods=["POST"])(create_platform)
-        
+
         create_platform_mock = get_models.return_value.platforms.create
 
         def call_api(body):
@@ -21,12 +21,14 @@ class PlatformsTestCase(UnitTest):
                 endpoint,
                 data=json.dumps(body),
                 content_type='application/json',
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
+                headers={"Authorization": "Bearer " +
+                         create_test_token("", roles=["admin"])}
             )
 
         def creates_and_returns_a_platform():
             # given
-            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/", enabled=True, icon_url="icon/url", slug="epic-games")
+            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/",
+                                     enabled=True, icon_url="icon/url", slug="epic-games")
             create_platform_mock.return_value = mock_platform
 
             expected_input = PlatformCreate(
@@ -56,7 +58,8 @@ class PlatformsTestCase(UnitTest):
 
         def fails_to_create_a_platform_and_returns_an_error():
             # given
-            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/", enabled=True, icon_url="icon/url", slug="epic-games")
+            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/",
+                                     enabled=True, icon_url="icon/url", slug="epic-games")
             create_platform_mock.side_effect = Exception("BANG!")
 
             expected_input = PlatformCreate(
@@ -76,13 +79,14 @@ class PlatformsTestCase(UnitTest):
                 })
 
             # then
-            self.assertEqual(str(context.exception), str(create_platform_mock.side_effect))
+            self.assertEqual(str(context.exception), str(
+                create_platform_mock.side_effect))
             create_platform_mock.assert_called_once_with(expected_input)
 
         def fails_to_create_a_platform_when_body_is_invalid():
             # when
             with self.assertRaises(Exception) as context:
-                call_api({ "email": "test@mail.com" })
+                call_api({"email": "test@mail.com"})
 
             # then
             self.assertEqual(str(context.exception), "Invalid data provided.")
@@ -108,14 +112,17 @@ class PlatformsTestCase(UnitTest):
 
         def call_api(platform_id):
             return self.test_client.get(
-                endpoint.replace("<string:platform_id>", platform_id),
+                endpoint.replace("<string:platform_id>", str(platform_id)),
                 content_type='application/json',
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                }
             )
 
         def finds_and_returns_a_platform():
             # given
-            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/", enabled=True, icon_url="icon/url", slug="epic-games")
+            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/",
+                                     enabled=True, icon_url="icon/url", slug="epic-games")
             get_platform_mock.return_value = mock_platform
 
             expected_response = {
@@ -129,7 +136,7 @@ class PlatformsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_platform_mock.assert_called_once_with(mock_platform._id)
+            get_platform_mock.assert_called_once_with(str(mock_platform._id))
 
         def does_not_find_a_platform_and_returns_an_error():
             # given
@@ -168,15 +175,18 @@ class PlatformsTestCase(UnitTest):
 
         def call_api(platform_id, body):
             return self.test_client.patch(
-                endpoint.replace("<string:platform_id>", platform_id),
+                endpoint.replace("<string:platform_id>", str(platform_id)),
                 data=json.dumps(body),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
         def patches_and_returns_the_platform():
             # given
-            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/", enabled=True, icon_url="icon/url", slug="epic-games")
+            mock_platform = Platform(name="Epic Games", base_url="https://store.epicgames.com/",
+                                     enabled=True, icon_url="icon/url", slug="epic-games")
             patch_platform_mock.return_value = mock_platform
 
             expected_input = PlatformPatch(
@@ -216,16 +226,18 @@ class PlatformsTestCase(UnitTest):
     @patch("app.api.v1.admin.platforms.get_models")
     def test_delete_platform(self, get_models: MagicMock):
         self.maxDiff = None
-        
+
         endpoint = "/platforms/<string:platform_id>"
         self.app.route(endpoint, methods=["DELETE"])(delete_platform)
-        
+
         delete_platform_mock = get_models.return_value.platforms.delete
 
         def call_api(platform_id):
             return self.test_client.delete(
-                endpoint.replace("<string:platform_id>", platform_id),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                endpoint.replace("<string:platform_id>", str(platform_id)),
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
@@ -246,7 +258,9 @@ class PlatformsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            delete_platform_mock.assert_called_once_with(mock_platform._id)
+            delete_platform_mock.assert_called_once_with(
+                str(mock_platform._id)
+            )
 
         def fails_to_delete_a_nonexistent_platform():
             # given

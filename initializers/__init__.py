@@ -1,3 +1,4 @@
+from app.models import ModelsExtension
 from app.services import ServicesExtension
 
 from . import (
@@ -5,5 +6,5 @@ from . import (
 )
 
 
-def run(services: ServicesExtension):
-    create_root_profile.run(services)
+def run(services: ServicesExtension, models: ModelsExtension):
+    create_root_profile.run(models)

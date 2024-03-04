@@ -9,7 +9,7 @@ health_controller = Blueprint('health', __name__, url_prefix='/health')
 
 
 @health_controller.route('/')
-def health() -> dict:
+def health():
     """
     Check the health status of the Indieneer API.
 
@@ -29,9 +29,8 @@ def health() -> dict:
     try:
         db = get_services(current_app).db
         mongodb_status = db.connection.command("ping")
-        health_obj["db"] = mongodb_status
+        health_obj["db"] = mongodb_status.get("ok", 0.0)
     except ServerSelectionTimeoutError as error:
         health_obj["db"] = str(error)
 
     return respond_success(health_obj)
-

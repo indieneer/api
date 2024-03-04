@@ -1,42 +1,34 @@
-from app.middlewares.requires_role import RequiresRoleExtension
-import testicles
-import lib.constants as constants
+import traceback
 import typing
+
 from bson import ObjectId
 
-from tests.factory import Factory, ProfilesFactory, ProductsFactory, TagsFactory, PlatformsFactory, \
-    OperatingSystemsFactory, BackgroundJobsFactory, LoginsFactory
-from tests.fixtures import Fixtures
-
-from app.models.background_jobs import BackgroundJobsModel, BackgroundJobCreate
-
+import lib.constants as constants
+import testicles
+from app.configure_app import configure_app
+from app.main import app
+from app.middlewares.requires_auth import RequiresAuthExtension
+from app.middlewares.requires_role import RequiresRoleExtension
+from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
+                        PlatformsModel, ProductsModel, ProfilesModel,
+                        ServiceProfilesModel, TagsModel)
+from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
-from app.models.products import ProductCreate
+from app.models.products import Media, ProductCreate, Requirements
 from app.models.profiles import ProfileCreate
+from app.models.service_profiles import ServiceProfileCreate
 from app.models.tags import TagCreate
-from app.models.products import Media, Requirements
-from app.models import (
-    ProfilesModel,
-    PlatformsModel,
-    OperatingSystemsModel,
-    ModelsExtension,
-    LoginsModel,
-    ProductsModel,
-    TagsModel
-)
-from app.services import (
-    Database,
-    ManagementAPI,
-    ServicesExtension
-)
-
-from app.main import app
-from config import app_config
-from app.middlewares.requires_auth import RequiresAuthExtension
-from app.configure_app import configure_app
 from app.register_middlewares import register_middlewares
 from app.register_routes import register_routes
+from app.services import Database, Firebase, ServicesExtension
+from config import app_config
+from config.constants import FirebaseRole
+from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
+                           OperatingSystemsFactory, PlatformsFactory,
+                           ProductsFactory, ProfilesFactory,
+                           ServiceProfilesFactory, TagsFactory)
+from tests.fixtures import Fixtures
 
 
 class IntegrationTest(testicles.IntegrationTest):
@@ -54,6 +46,34 @@ class IntegrationTest(testicles.IntegrationTest):
             return super().run(result)
 
         raise Exception("Dependecies must be injected.")
+
+    def before_all(self):
+        """Hook function to set up test run for a class
+        """
+        pass
+
+    def run_subtests(self,
+                     tests: list[typing.Callable],
+                     before_each: typing.Callable | None = None,
+                     before_all: typing.Callable | None = None,
+                     after_each: typing.Callable | None = None,
+                     after_all: typing.Callable | None = None,
+                     ):
+        if before_all:
+            before_all()
+
+        for test in tests:
+            if before_each:
+                before_each()
+
+            with self.subTest(test.__name__):
+                test()
+
+            if after_each:
+                after_each()
+
+        if after_all:
+            after_all()
 
     def inject_dependencies(
             self,
@@ -84,30 +104,34 @@ class IntegrationTest(testicles.IntegrationTest):
             register_middlewares(app)
 
             db = Database(app_config["MONGO_URI"], timeoutMS=3000)
-            auth0 = ManagementAPI(
-                app_config["AUTH0_DOMAIN"],
-                app_config["AUTH0_CLIENT_ID"],
-                app_config["AUTH0_CLIENT_SECRET"],
-                f'https://{app_config["AUTH0_DOMAIN"]}/api/v2/'
-            )
+            firebase = Firebase(
+                app_config["FB_SERVICE_ACCOUNT"], app_config["FB_API_KEY"])
 
             strong_password = constants.strong_password
             weak_password = constants.weak_password
 
             services = ServicesExtension(
-                auth0=auth0,
+                firebase=firebase,
                 db=db
             )
             services.init_app(app)
 
+            profiles_model = ProfilesModel(firebase=firebase, db=db)
+            service_profiles_model = ServiceProfilesModel(
+                firebase=firebase, db=db)
             models = ModelsExtension(
-                profiles=ProfilesModel(auth0=auth0, db=db),
+                profiles=profiles_model,
                 platforms=PlatformsModel(db=db),
                 operating_systems=OperatingSystemsModel(db=db),
-                logins=LoginsModel(auth0=auth0),
+                logins=LoginsModel(
+                    firebase=firebase,
+                    profiles=profiles_model,
+                    service_profiles=service_profiles_model
+                ),
                 products=ProductsModel(db=db),
                 tags=TagsModel(db=db),
-                background_jobs=BackgroundJobsModel(db=db)
+                background_jobs=BackgroundJobsModel(db=db),
+                service_profiles=service_profiles_model
             )
             models.init_app(app)
 
@@ -138,15 +162,31 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 logins=LoginsFactory(
                     models=models
+                ),
+                service_profiles=ServiceProfilesFactory(
+                    models=models,
+                    services=services
                 )
             )
 
             regular_user, cleanup = factory.profiles.create(ProfileCreate(
-                "test_integration+regular@pork.com", strong_password))
+                email="test_integration+regular@pork.com",
+                password=strong_password,
+                nickname="test_integration_regular",
+            ))
             cleanups.append(cleanup)
 
-            admin_user, cleanup = factory.profiles.create_admin(ProfileCreate(
-                "test_integration+admin@pork.com", strong_password))
+            admin_user, cleanup = factory.profiles.create(ProfileCreate(
+                email="test_integration+admin@pork.com",
+                password=strong_password,
+                nickname="test_integration_admin",
+                role=FirebaseRole.Admin
+            ))
+            cleanups.append(cleanup)
+
+            service_profile, cleanup = factory.service_profiles.create(ServiceProfileCreate(
+                permissions=[]
+            ))
             cleanups.append(cleanup)
 
             product, cleanup = factory.products.create(
@@ -228,7 +268,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     metadata={
                         "match_query": "test"
                     },
-                    created_by="bUhOAswerBbA3lamY0saxLuJezB7sjOs@clients"
+                    created_by=str(service_profile._id)
                 )
             )
             cleanups.append(cleanup)
@@ -240,10 +280,11 @@ class IntegrationTest(testicles.IntegrationTest):
                 platform=platform,
                 operating_system=operating_system,
                 tag=tag,
-                background_job=background_job
+                background_job=background_job,
+                service_profile=service_profile
             )
 
-            # Inject dependencies
+            # Inject dependencies and trigger before all
             for test_case in IntegrationTest._test_cases:
                 typing.cast(IntegrationTest, test_case).inject_dependencies(
                     factory=factory,
@@ -251,11 +292,18 @@ class IntegrationTest(testicles.IntegrationTest):
                     services=services,
                     models=models
                 )
+                typing.cast(IntegrationTest, test_case).before_all()
         except Exception as e:
-            print(e)
+            raise e
 
-        IntegrationTest._cleanup = lambda: [
-            fixture_cleanup() for fixture_cleanup in cleanups]
+        def cleanup():
+            for fixture_cleanup in cleanups:
+                try:
+                    fixture_cleanup()
+                except Exception as e:
+                    print(f"Failed to cleanup a fixture: {str(e)}")
+
+        IntegrationTest._cleanup = cleanup
 
     @staticmethod
     def tearDownTestRun():
