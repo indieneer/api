@@ -1,16 +1,15 @@
 from typing import cast
+
 from app.models.profiles import ProfilesModel
 from app.models.service_profiles import ServiceProfilesModel
-import app.services.firebase
-from app.services.firebase import Firebase
+from app.services.firebase import Firebase, identity_toolkit
 from config import app_config
 from config.constants import FirebaseRole
-
 from lib.db_utils import Serializable
 
 
 class AuthenticatedUser(Serializable):
-    def __init__(self, identity: app.services.firebase.FirebaseUserIdentity, user: app.services.firebase.FirebaseUser) -> None:
+    def __init__(self, identity: identity_toolkit.FirebaseUserIdentity, user: identity_toolkit.FirebaseUser) -> None:
         self.identity = identity
         self.user = user
 

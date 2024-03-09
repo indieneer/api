@@ -5,10 +5,7 @@ import firebase_admin
 import firebase_admin.auth
 import firebase_admin.credentials
 
-from .identity_toolkit_api import IdentityToolkitAPI
-from .secure_token_api import SecureTokenAPI
-from .user import (FirebaseRefreshedToken, FirebaseServiceIdentity,
-                   FirebaseUser, FirebaseUserIdentity)
+from . import identity_toolkit, secure_token
 
 # Firebase Admin SDK
 # https://firebase.google.com/docs/reference/admin/python
@@ -41,17 +38,15 @@ class Firebase:
 
     @property
     def identity_api(self):
-        return IdentityToolkitAPI(self._api_key)
+        return identity_toolkit.IdentityToolkitApiClient(self._api_key)
 
     @property
     def secure_token_api(self):
-        return SecureTokenAPI(self._api_key)
+        return secure_token.SecureTokenAPI(self._api_key)
 
 
 __all__: Tuple[str, ...] = (
-    "FirebaseUser",
-    "FirebaseUserIdentity",
-    "FirebaseRefreshedToken",
-    "FirebaseServiceIdentity",
-    "Firebase"
+    "Firebase",
+    "identity_toolkit",
+    "secure_token",
 )
