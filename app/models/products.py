@@ -247,12 +247,10 @@ class ProductsModel:
         :rtype: Optional[Product]
         """
         pipeline = self.get_aggregation_pipeline({"$match": {"_id": ObjectId(product_id)}})
+        product_data = next(self.db.connection[self.collection].aggregate(pipeline), None)
 
-        product_data = self.db.connection[self.collection].aggregate(pipeline).next()
         if product_data:
             return Product(**product_data)
-
-        return None
 
     def get_all(self):
         """
@@ -284,11 +282,9 @@ class ProductsModel:
 
         pipeline = self.get_aggregation_pipeline({"$match": {"slug": product_slug}})
 
-        product_data = self.db.connection[self.collection].aggregate(pipeline).next()
+        product_data = next(self.db.connection[self.collection].aggregate(pipeline), None)
         if product_data:
             return Product(**product_data)
-
-        return None
 
     def create(self, input_data: ProductCreate) -> Product:
         """
