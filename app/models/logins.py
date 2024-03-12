@@ -28,9 +28,9 @@ class LoginsModel:
 
     def login(self, email: str, password: str):
         identity = self.firebase.identity_api.sign_in(email, password)
-        claims = self.firebase.auth.verify_id_token(
-            identity.id_token, clock_skew_seconds=10)
+        claims = self.firebase.auth.verify_id_token(identity.id_token, clock_skew_seconds=10)
 
+        # TODO: improve data integrity validation before letting users sign in
         profile_id = claims.get(f"{app_config['FB_NAMESPACE']}/profile_id")
         profile = self.profiles.get(profile_id)
         if profile is None:

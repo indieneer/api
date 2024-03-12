@@ -20,3 +20,20 @@ class FirebaseRefreshedToken(Serializable):
         self.id_token = identity.get("id_token", "")
         self.user_id = identity.get("user_id", "")
         self.project_id = identity.get("project_id", "")
+
+
+class ExchangeRefreshTokenRequest:
+    grant_type: str
+    refresh_token: str
+
+    def __init__(self, grant_type: str, /, *, refresh_token: str) -> None:
+        super().__init__()
+
+        self.grant_type = grant_type
+        self.refresh_token = refresh_token
+
+    def to_json(self):
+        return {
+            "grant_type": self.grant_type,
+            "refresh_token": self.refresh_token
+        }

@@ -13,7 +13,7 @@ class ProviderUserInfo(Serializable):
 
 class FirebaseUser(Serializable):
 
-    def __init__(self, user: Dict) -> None:
+    def __init__(self, **user) -> None:
         self.local_id = user.get("localId")
         self.email = user.get("email")
         self.display_name = user.get("displayName")
@@ -38,7 +38,7 @@ class FirebaseUserIdentity(Serializable):
     local_id: str
     registered: bool
 
-    def __init__(self, identity: Dict) -> None:
+    def __init__(self, **identity) -> None:
         self.id_token = identity.get("idToken", "")
         self.email = identity.get("email", "")
         self.refresh_token = identity.get("refreshToken", "")
@@ -52,7 +52,65 @@ class FirebaseCustomIdentity(Serializable):
     refresh_token: str
     expires_in: str
 
-    def __init__(self, identity: Dict) -> None:
+    def __init__(self, **identity) -> None:
         self.id_token = identity.get("idToken", "")
         self.refresh_token = identity.get("refreshToken", "")
         self.expires_in = identity.get("expiresIn", "")
+
+
+class SignInWithPasswordRequest:
+    email: str
+    password: str
+    return_secure_token: bool
+
+    def __init__(self, email: str, password: str, /, *, return_secure_token: bool = True) -> None:
+        super().__init__()
+
+        self.email = email
+        self.password = password
+        self.return_secure_token = return_secure_token
+
+    def to_json(self):
+        return {
+            "email": self.email,
+            "password": self.password,
+            "returnSecureToken": self.return_secure_token,
+        }
+
+
+class SignInWithCustomTokenRequest:
+    token: str
+    return_secure_token: bool
+
+    def __init__(self, token: str, /, *, return_secure_token: bool = True) -> None:
+        super().__init__()
+
+        self.token = token
+        self.return_secure_token = return_secure_token
+
+    def to_json(self):
+        return {
+            "token": self.token,
+            "returnSecureToken": self.return_secure_token,
+        }
+
+
+class LookupRequest:
+    id_token: str
+
+    def __init__(self, id_token: str, /) -> None:
+        super().__init__()
+
+        self.id_token = id_token
+
+    def to_json(self):
+        return {
+            "idToken": self.id_token,
+        }
+
+
+class LookupResponse:
+    users: list[FirebaseUser]
+
+    def __init__(self, response: dict, /) -> None:
+        self.users = [FirebaseUser(**x) for x in response["users"]]

@@ -1,3 +1,7 @@
+class InvalidLoginCredentialsException(Exception):
+    pass
+
+
 class TokenExpiredException(Exception):
     pass
 
@@ -42,6 +46,7 @@ class ErrorDecodeException(Exception):
 
 
 exceptions_mapping: dict[str, type[Exception]] = {
+    # secure token
     "TOKEN_EXPIRED": TokenExpiredException,
     "USER_DISABLED": UserDisabledException,
     "USER_NOT_FOUND": NotFoundException,
@@ -50,4 +55,7 @@ exceptions_mapping: dict[str, type[Exception]] = {
     # "InvalidJsonPayloadReceivedException": InvalidJsonPayloadReceivedException,
     "INVALID_GRANT_TYPE": InvalidGrantTypeException,
     "MISSING_REFRESH_TOKEN": MissingRefreshTokenException,
+
+    # identity toolkit
+    "INVALID_LOGIN_CREDENTIALS": InvalidLoginCredentialsException,
 }

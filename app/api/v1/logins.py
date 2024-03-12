@@ -1,8 +1,9 @@
 
-from flask import Blueprint, request, current_app
+from flask import Blueprint, current_app, request
 
-from lib.http_utils import respond_success, respond_error
 from app.models import get_models
+from app.services.firebase.exceptions import InvalidLoginCredentialsException
+from lib.http_utils import respond_error, respond_success
 
 logins_controller = Blueprint('logins', __name__, url_prefix='/logins')
 
@@ -33,10 +34,9 @@ def logins():
         identity = logins_model.login(email, password)
 
         return respond_success(identity.to_json())
+    except InvalidLoginCredentialsException as error:
+        return respond_error('Wrong email or password.', 403)
     except Exception as error:
-        if str(error) == "Wrong email or password.":
-            return respond_error(str(error), 403)
-
         return respond_error(str(error), 500)
 
 

@@ -1,7 +1,8 @@
 import json
 from unittest.mock import patch
+
 from app.api.v1.logins import logins
-from app.services.firebase.user import FirebaseUserIdentity
+from app.services.firebase.identity_toolkit import FirebaseUserIdentity
 from tests import UnitTest
 
 

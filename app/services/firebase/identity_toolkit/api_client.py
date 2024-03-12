@@ -1,9 +1,10 @@
 import urllib3
 
-from .dto import FirebaseCustomIdentity, FirebaseUser, FirebaseUserIdentity
-from .exceptions import NotFoundException
-from .http import (LookupRequest, LookupResponse, SignInWithCustomTokenRequest,
-                   SignInWithPasswordRequest, inflate_response)
+from ..exceptions import NotFoundException
+from ..http import inflate_response
+from .dto import (FirebaseCustomIdentity, FirebaseUser, FirebaseUserIdentity,
+                  LookupRequest, LookupResponse, SignInWithCustomTokenRequest,
+                  SignInWithPasswordRequest)
 
 
 class IdentityToolkitApiClient:

@@ -1,7 +1,6 @@
 import urllib3
 
-from .dto import FirebaseRefreshedToken
-from .http import ExchangeRefreshTokenRequest
+from .dto import ExchangeRefreshTokenRequest, FirebaseRefreshedToken
 
 
 class SecureTokenAPI:

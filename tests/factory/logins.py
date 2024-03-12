@@ -1,16 +1,16 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, cast
 
-from dataclasses import dataclass
 from app.models import ModelsExtension
-
-from app.services.firebase import FirebaseUserIdentity, FirebaseServiceIdentity
+from app.services.firebase.identity_toolkit import (FirebaseCustomIdentity,
+                                                    FirebaseUserIdentity)
 
 
 @dataclass
 class CacheEntry:
     expires_at: float
-    identity: FirebaseUserIdentity | FirebaseServiceIdentity
+    identity: FirebaseUserIdentity | FirebaseCustomIdentity
 
 
 class LoginsFactory:
@@ -24,7 +24,7 @@ class LoginsFactory:
     def create_key(self, email: str, password: str):
         return f"{email}:{password}"
 
-    def cache(self, login: str, password: str, identity: FirebaseUserIdentity | FirebaseServiceIdentity):
+    def cache(self, login: str, password: str, identity: FirebaseUserIdentity | FirebaseCustomIdentity):
         try:
             key = self.create_key(login, password)
             self.tokens[key] = CacheEntry(
@@ -74,4 +74,4 @@ class LoginsFactory:
             if cache:
                 self.cache(client_id, client_secret, identity)
 
-        return cast(FirebaseServiceIdentity, identity)
+        return cast(FirebaseCustomIdentity, identity)
