@@ -74,7 +74,7 @@ class ProfilesModel:
         This function searches the database for a profile matching the provided user ID.
         If a profile is found, it is returned as a Profile object.
 
-        :param str user_id: The ID of the user whose profile is being retrieved.
+        :param str profile_id: The ID of the user whose profile is being retrieved.
         :return: A Profile object if the user profile is found, otherwise None.
         :rtype: Profile or None
         """
@@ -205,14 +205,14 @@ class ProfilesModel:
 
                 return profile
 
-    def patch(self, user_id: str, input_data: ProfilePatch):
+    def patch(self, profile_id: str, input_data: ProfilePatch):
         """
         Update an existing user profile with the provided data.
 
         This function finds a user profile by its unique ID and updates it with the given input data.
         It only updates the fields provided in the input_data, leaving other fields unchanged.
 
-        :param str user_id: The ID of the user whose profile is to be updated.
+        :param str profile_id: The ID of the user whose profile is to be updated.
         :param ProfilePatch input_data: The data to update in the user profile.
         :return: The updated Profile object or None.
         :rtype: Profile or None
@@ -222,7 +222,7 @@ class ProfilesModel:
         update_data = input_data.to_bson()
 
         profile = self.db.connection[self.collection].find_one_and_update(
-            {"_id": ObjectId(user_id)},
+            {"_id": ObjectId(profile_id)},
             {"$set": update_data},
             return_document=ReturnDocument.AFTER
         )

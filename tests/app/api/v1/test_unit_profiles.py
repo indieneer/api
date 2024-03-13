@@ -1,7 +1,8 @@
 from unittest.mock import patch, MagicMock
 import json
-from app.api.v1.profiles import create_profile, get_profile, update_profile
-from app.models.exceptions import NotFoundException
+from app.api.v1.profiles import create_profile, get_profile, update_profile, delete_profile, get_authenticated_profile
+from app.models.exceptions import NotFoundException, ForbiddenException
+from config.constants import FirebaseRole
 
 from tests import UnitTest
 from app.models.profiles import ProfileCreate, Profile, ProfilePatch
@@ -9,10 +10,9 @@ from tests.utils.jwt import create_test_token
 
 
 class ProfilesTestCase(UnitTest):
-
     @patch("app.api.v1.profiles.get_models")
     def test_create_profile(self, get_models: MagicMock):
-        self.skipTest("Fix when Firebase auth implemented")
+        # self.skipTest("Fix when Firebase auth implemented")
         endpoint = "/profiles"
         self.app.route(endpoint, methods=["POST"])(create_profile)
 
@@ -28,13 +28,16 @@ class ProfilesTestCase(UnitTest):
         def creates_and_returns_a_profile():
             # given
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="auth0|test")
+                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             create_profile_mock.return_value = mock_profile
 
             expected_input = ProfileCreate(
                 email=mock_profile.email,
-                password="123456789"
+                password="123456789",
+                nickname=mock_profile.nickname
             )
+
             expected_response = {
                 "status": "ok",
                 "data": mock_profile.to_json()
@@ -43,7 +46,8 @@ class ProfilesTestCase(UnitTest):
             # when
             response = call_api({
                 "email": expected_input.email,
-                "password": expected_input.password
+                "password": expected_input.password,
+                "nickname": expected_input.nickname
             })
 
             # then
@@ -53,20 +57,20 @@ class ProfilesTestCase(UnitTest):
 
         def fails_to_create_a_profile_and_returns_an_error():
             # given
-            mock_profile = Profile(
-                email="john.pork@test.com", idp_id="auth0|test")
             create_profile_mock.side_effect = Exception("BANG!")
 
             expected_input = ProfileCreate(
-                email=mock_profile.email,
-                password="123456789"
+                email="john.pork@test.com",
+                password="123456789",
+                nickname="johnny"
             )
 
             # when
             with self.assertRaises(Exception) as context:
                 call_api({
                     "email": expected_input.email,
-                    "password": expected_input.password
+                    "password": expected_input.password,
+                    "nickname": expected_input.nickname
                 })
 
             # then
@@ -104,7 +108,6 @@ class ProfilesTestCase(UnitTest):
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_profile(self, get_models: MagicMock):
-        self.skipTest("Fix when Firebase auth implemented")
         endpoint = "/profiles/<string:profile_id>"
         self.app.route(endpoint)(get_profile)
 
@@ -119,8 +122,10 @@ class ProfilesTestCase(UnitTest):
         def finds_and_returns_a_profile():
             # given
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="auth0|test")
+                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             get_profile_mock.return_value = mock_profile
+            mock_profile_id_str = str(mock_profile._id)
 
             expected_response = {
                 "status": "ok",
@@ -128,12 +133,12 @@ class ProfilesTestCase(UnitTest):
             }
 
             # when
-            response = call_api(mock_profile._id)
+            response = call_api(mock_profile_id_str)
 
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_profile_mock.assert_called_once_with(mock_profile._id)
+            get_profile_mock.assert_called_once_with(mock_profile_id_str)
 
         def does_not_find_a_profile_and_returns_an_error():
             # given
@@ -159,7 +164,7 @@ class ProfilesTestCase(UnitTest):
 
     @patch("app.api.v1.profiles.get_models")
     def test_patch_profile(self, get_models: MagicMock):
-        self.skipTest("Fix when Firebase auth implemented")
+        self.skipTest("Fix when patch handler & model implemented")
         endpoint = "/profiles/<string:profile_id>"
         self.app.route(endpoint, methods=["PATCH"])(update_profile)
 
@@ -178,8 +183,11 @@ class ProfilesTestCase(UnitTest):
         def patches_and_returns_the_profile():
             # given
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="auth0|test")
+                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             patch_profile_mock.return_value = mock_profile
+
+            mock_profile_id_str = str(mock_profile._id)
 
             expected_input = ProfilePatch(
                 email=mock_profile.email,
@@ -189,7 +197,7 @@ class ProfilesTestCase(UnitTest):
                 "data": mock_profile.to_json()
             }
 
-            response = call_api(mock_profile._id, {
+            response = call_api(mock_profile_id_str, {
                 "email": expected_input.email,
             })
 
@@ -197,7 +205,7 @@ class ProfilesTestCase(UnitTest):
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
             patch_profile_mock.assert_called_once_with(
-                str(mock_profile._id), expected_input)
+                mock_profile_id_str, expected_input)
 
         tests = [
             patches_and_returns_the_profile
@@ -208,10 +216,140 @@ class ProfilesTestCase(UnitTest):
                 test()
             patch_profile_mock.reset_mock()
 
-    def test_delete_profile(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        pass
+    @patch("app.api.v1.profiles.get_models")
+    def test_delete_profile(self, get_models: MagicMock):
+        endpoint = "/profiles/<string:profile_id>"
+        self.app.route(endpoint)(delete_profile)
 
-    def test_get_authenticated_profile(self):
-        self.skipTest("Fix when Firebase auth implemented")
-        pass
+        delete_profile_mock = get_models.return_value.profiles.delete
+
+        def call_api(profile_id, token=None):
+            if token is None:
+                token = create_test_token(profile_id)
+
+            return self.test_client.get(
+                endpoint.replace("<string:profile_id>", profile_id),
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+        def deletes_and_returns_the_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
+            delete_profile_mock.return_value = mock_profile
+
+            mock_profile_id_str = str(mock_profile._id)
+            expected_response = {
+                "status": "ok",
+                "data": {"acknowledged": True}
+            }
+
+            # when
+            response = call_api(mock_profile_id_str)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            delete_profile_mock.assert_called_once_with(mock_profile_id_str)
+
+        def does_not_find_a_profile_and_returns_an_error():
+            # given
+            mock_id = "1"
+            delete_profile_mock.return_value = None
+            delete_profile_mock.side_effect = NotFoundException(Profile.__name__)
+
+            # when
+            with self.assertRaises(NotFoundException) as context:
+                call_api(mock_id)
+
+            # then
+            delete_profile_mock.assert_called_once_with(mock_id)
+            self.assertEqual(str(context.exception), str(
+                delete_profile_mock.side_effect))
+
+        def fails_to_delete_a_profile_when_invoker_id_does_not_match():
+            # given
+            false_token = create_test_token("firebase_wrong_id|test")
+
+            # when
+            with self.assertRaises(ForbiddenException) as context:
+                call_api("1", false_token)
+
+            # then
+            self.assertEqual(str(context.exception), str(ForbiddenException()))
+
+        tests = [
+            deletes_and_returns_the_profile,
+            does_not_find_a_profile_and_returns_an_error,
+            fails_to_delete_a_profile_when_invoker_id_does_not_match
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+            delete_profile_mock.reset_mock()
+
+    @patch("app.api.v1.profiles.get_models")
+    def test_get_authenticated_profile(self, get_models: MagicMock):
+        endpoint = "/profiles/me"
+        self.app.route(endpoint)(get_authenticated_profile)
+
+        get_profile_mock = get_models.return_value.profiles.get
+
+        def call_api(profile_id, token=None):
+            if token is None:
+                token = create_test_token(profile_id)
+
+            return self.test_client.get(
+                endpoint,
+                headers={"Authorization": f"Bearer {token}"},
+                content_type='application/json'
+            )
+
+        def finds_and_returns_a_profile():
+            # given
+            mock_profile = Profile(
+                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
+            get_profile_mock.return_value = mock_profile
+            mock_profile_id_str = str(mock_profile._id)
+
+            expected_response = {
+                "status": "ok",
+                "data": mock_profile.to_json()
+            }
+
+            # when
+            response = call_api(mock_profile_id_str)
+
+            # then
+            get_profile_mock.assert_called_once_with(mock_profile_id_str)
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+
+        def fails_to_find_a_profile_and_returns_an_error():
+            # given
+            mock_id = "1"
+            get_profile_mock.return_value = None
+            get_profile_mock.side_effect = NotFoundException(Profile.__name__)
+
+            # when
+            with self.assertRaises(NotFoundException) as context:
+                call_api(mock_id)
+
+            # then
+            get_profile_mock.assert_called_once_with(mock_id)
+            self.assertEqual(str(context.exception), str(
+                get_profile_mock.side_effect))
+
+        tests = [
+            finds_and_returns_a_profile,
+            fails_to_find_a_profile_and_returns_an_error
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+            get_profile_mock.reset_mock()
