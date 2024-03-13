@@ -15,6 +15,22 @@ from tests.utils.comparators import ANY_DATE, ANY_OBJECTID, ANY_STR
 
 
 class ProfilesModelTestCase(IntegrationTest):
+    def test_get_all(self):
+        model = ProfilesModel(db=self.services.db, firebase=self.services.firebase)
+
+        def finds_all_profiles():
+            # when
+            result = model.get_all()
+
+            # then
+            self.assertIsNotNone(result)
+            self.assertGreater(len(result), 0)
+
+        tests = [
+            finds_all_profiles,
+        ]
+
+        self.run_subtests(tests)
 
     def test_get(self):
         model = ProfilesModel(db=self.services.db, firebase=self.services.firebase)

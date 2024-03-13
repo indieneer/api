@@ -3,13 +3,14 @@ from flask import Blueprint, request, current_app
 from pymongo import ReturnDocument
 
 from app.middlewares import requires_auth, requires_role
+from app.models import get_models
 from app.services import get_services
 from config.constants import FirebaseRole
+from lib import db_utils
 from lib.http_utils import respond_success, respond_error
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
 
-# Should we create the models folder of something?
 PROFILE_FIELDS = [
     "email",
     "password",
@@ -31,14 +32,10 @@ def get_profiles():
     :return: A JSON response containing either all profiles or an error message.
     :rtype: Response
     """
-    db = get_services(current_app).db.connection
+    profile_model = get_models(current_app).profiles
+    profiles = profile_model.get_all()
 
-    profiles = []
-    for profile in db["profiles"].find():
-        profile["_id"] = str(profile["_id"])
-        profiles.append(profile)
-
-    return respond_success(profiles)
+    return respond_success(db_utils.to_json(profiles))
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
@@ -55,6 +52,7 @@ def change_profile(profile_id):
     :return: A JSON response containing either the updated profile data or an error message.
     :rtype: Response
     """
+    # TODO Rework
     data = request.get_json()
 
     if len(data) == 0:

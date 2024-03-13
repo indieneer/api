@@ -22,14 +22,14 @@ class Profile(BaseDocument):
     roles: List[str]
 
     def __init__(
-        self,
-        email: str,
-        nickname: str,
-        display_name: str,
-        photo_url: str,
-        idp_id: str,
-        roles: List[str],
-        **kwargs
+            self,
+            email: str,
+            nickname: str,
+            display_name: str,
+            photo_url: str,
+            idp_id: str,
+            roles: List[str],
+            **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
@@ -83,6 +83,19 @@ class ProfilesModel:
 
         if profile is not None:
             return Profile(**profile)
+
+    def get_all(self):
+        """
+        Retrieve all user profiles from the database.
+
+        This function retrieves all user profiles from the database and returns them as a list of Profile objects.
+
+        :return: A list of all user profiles in the database.
+        :rtype: list[Profile]
+        """
+        products = [Profile(**item) for item in self.db.connection[self.collection].find()]
+
+        return products if products else []
 
     def find_by_email(self, email: str):
         """

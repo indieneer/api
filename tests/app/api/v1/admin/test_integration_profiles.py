@@ -1,7 +1,5 @@
-from config.constants import FirebaseRole
 from lib.constants import strong_password
 from tests import IntegrationTest
-from app.models.profiles import ProfileCreate
 
 
 class ProfilesTestCase(IntegrationTest):
@@ -12,18 +10,11 @@ class ProfilesTestCase(IntegrationTest):
 
         # when
         response = self.app.get(
-            "/v1/health", headers={"Authorization": f'Bearer {tokens.id_token}'}
+            "/v1/admin/profiles", headers={"Authorization": f'Bearer {tokens.id_token}'}
         )
 
         # then
-        expected = {
-            "status": "ok",
-            "data": {
-                "db": 1.0,
-                "env": "test",
-                "version": "0.0.1"
-            }
-        }
-
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json(), expected)
+        self.assertEqual(response.get_json()["status"], "ok")
+        self.assertIsInstance(response.get_json()["data"], list)
+        self.assertGreater(len(response.get_json()["data"]), 0)
