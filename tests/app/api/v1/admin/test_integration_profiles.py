@@ -1,32 +1,25 @@
+from config.constants import FirebaseRole
+from lib.constants import strong_password
 from tests import IntegrationTest
 from app.models.profiles import ProfileCreate
 
 
 class ProfilesTestCase(IntegrationTest):
-
     def test_get_profiles(self):
-        self.skipTest("Fix when Firebase auth is fixed")
         # given
-        profile, cleanup_profile = self.factory.profiles.create_admin(
-            input=ProfileCreate(
-                email=f"{self._testMethodName}@indieneer.com",
-                password="Test@234"
-            )
-        )
-        self.addCleanup(cleanup_profile)
-
-        tokens = self.factory.logins.login(profile.email, "Test@234")
+        profile = self.fixtures.admin_user
+        tokens = self.factory.logins.login(profile.email, strong_password)
 
         # when
         response = self.app.get(
-            "/v1/health", headers={"Authorization": f'Bearer {tokens["access_token"]}'}
+            "/v1/health", headers={"Authorization": f'Bearer {tokens.id_token}'}
         )
 
         # then
         expected = {
             "status": "ok",
             "data": {
-                "db": {"ok": 1},
+                "db": 1.0,
                 "env": "test",
                 "version": "0.0.1"
             }

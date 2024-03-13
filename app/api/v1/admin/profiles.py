@@ -4,6 +4,7 @@ from pymongo import ReturnDocument
 
 from app.middlewares import requires_auth, requires_role
 from app.services import get_services
+from config.constants import FirebaseRole
 from lib.http_utils import respond_success, respond_error
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
@@ -20,7 +21,7 @@ PROFILE_FIELDS = [
 
 @profiles_controller.route('/', methods=["GET"])
 @requires_auth
-@requires_role('admin')
+@requires_role(FirebaseRole.Admin.value)
 def get_profiles():
     """
     Fetch all profiles from the database.
@@ -42,7 +43,7 @@ def get_profiles():
 
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
 @requires_auth
-@requires_role('admin')
+@requires_role(FirebaseRole.Admin.value)
 def change_profile(profile_id):
     """
     Update a profile by its ID.
