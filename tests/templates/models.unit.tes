@@ -7,7 +7,7 @@ from pymongo.collection import Collection
 
 from app.models.{{entity_low}} import {{entity_cap}}Model
 
-from testicles.unit_test import UnitTest
+from tests.unit_test import UnitTest
 from tests.mocks.database import mock_collection_method
 
 

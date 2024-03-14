@@ -36,7 +36,7 @@ class ANY_DATE(ANY):
 
 
 class ANY_OBJECTID(ANY):
-    "A helper object that compares object id"
+    "A helper object that compares object ids"
 
     def __eq__(self, o: typing.Any):
         return isinstance(o, ObjectId)
@@ -49,7 +49,7 @@ class ANY_OBJECTID(ANY):
 
 
 class ANY_STR(ANY):
-    "A helper object that compares object id"
+    "A helper object that compares strings"
 
     def __eq__(self, o: typing.Any):
         return isinstance(o, str)
@@ -59,3 +59,31 @@ class ANY_STR(ANY):
 
     def __repr__(self):
         return '<ANY_STR>'
+
+
+class ANY_NUMBER(ANY):
+    "A helper object that compares numbers"
+
+    def __init__(self, gt: int | float | None = None, lt: int | float | None = None) -> None:
+        self.gt = gt
+        self.lt = lt
+
+    def __eq__(self, o: typing.Any):
+        if not (isinstance(o, int) or isinstance(o, float)):
+            return False
+
+        equal = True
+        other = typing.cast(float, o)
+
+        if self.lt is not None:
+            equal = other < self.lt
+        if self.gt is not None:
+            equal = other > self.gt
+
+        return equal
+
+    def __ne__(self, o: typing.Any):
+        return not self.__eq__(o)
+
+    def __repr__(self):
+        return '<ANY_NUMBER>'
