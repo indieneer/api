@@ -22,7 +22,7 @@ logins_model = LoginsModel(firebase=firebase_mock, profiles=profiles_model, serv
 
 class LoginsTestCase(UnitTest):
 
-    @patch("app.models.profiles.app_config")
+    @patch("app.models.logins.app_config")
     def test_login(self, app_config: MagicMock):
         sign_in_mock = cast(MagicMock, firebase_mock.identity_api.sign_in)
         verify_id_token_mock = cast(MagicMock, firebase_mock.auth.verify_id_token)
