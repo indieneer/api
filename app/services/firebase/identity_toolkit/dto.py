@@ -1,6 +1,7 @@
 
 import json
 from typing import Dict
+
 from lib.db_utils import Serializable
 
 
@@ -12,7 +13,7 @@ class ProviderUserInfo(Serializable):
 
 class FirebaseUser(Serializable):
 
-    def __init__(self, user: Dict) -> None:
+    def __init__(self, **user) -> None:
         self.local_id = user.get("localId")
         self.email = user.get("email")
         self.display_name = user.get("displayName")
@@ -29,23 +30,6 @@ class FirebaseUser(Serializable):
         self.custom_attributes = json.loads(user.get("customAttributes", "{}"))
 
 
-class FirebaseRefreshedToken(Serializable):
-    expires_in: str
-    token_type: str
-    refresh_token: str
-    id_token: str
-    user_id: str
-    project_id: str
-
-    def __init__(self, identity: Dict) -> None:
-        self.expires_in = identity.get("expires_in", "")
-        self.token_type = identity.get("token_type", "")
-        self.refresh_token = identity.get("refresh_token", "")
-        self.id_token = identity.get("id_token", "")
-        self.user_id = identity.get("user_id", "")
-        self.project_id = identity.get("project_id", "")
-
-
 class FirebaseUserIdentity(Serializable):
     id_token: str
     email: str
@@ -54,7 +38,7 @@ class FirebaseUserIdentity(Serializable):
     local_id: str
     registered: bool
 
-    def __init__(self, identity: Dict) -> None:
+    def __init__(self, **identity) -> None:
         self.id_token = identity.get("idToken", "")
         self.email = identity.get("email", "")
         self.refresh_token = identity.get("refreshToken", "")
@@ -63,12 +47,70 @@ class FirebaseUserIdentity(Serializable):
         self.registered = identity.get("registered", False)
 
 
-class FirebaseServiceIdentity(Serializable):
+class FirebaseCustomIdentity(Serializable):
     id_token: str
     refresh_token: str
     expires_in: str
 
-    def __init__(self, identity: Dict) -> None:
+    def __init__(self, **identity) -> None:
         self.id_token = identity.get("idToken", "")
         self.refresh_token = identity.get("refreshToken", "")
         self.expires_in = identity.get("expiresIn", "")
+
+
+class SignInWithPasswordRequest:
+    email: str
+    password: str
+    return_secure_token: bool
+
+    def __init__(self, email: str, password: str, /, *, return_secure_token: bool = True) -> None:
+        super().__init__()
+
+        self.email = email
+        self.password = password
+        self.return_secure_token = return_secure_token
+
+    def to_json(self):
+        return {
+            "email": self.email,
+            "password": self.password,
+            "returnSecureToken": self.return_secure_token,
+        }
+
+
+class SignInWithCustomTokenRequest:
+    token: str
+    return_secure_token: bool
+
+    def __init__(self, token: str, /, *, return_secure_token: bool = True) -> None:
+        super().__init__()
+
+        self.token = token
+        self.return_secure_token = return_secure_token
+
+    def to_json(self):
+        return {
+            "token": self.token,
+            "returnSecureToken": self.return_secure_token,
+        }
+
+
+class LookupRequest:
+    id_token: str
+
+    def __init__(self, id_token: str, /) -> None:
+        super().__init__()
+
+        self.id_token = id_token
+
+    def to_json(self):
+        return {
+            "idToken": self.id_token,
+        }
+
+
+class LookupResponse:
+    users: list[FirebaseUser]
+
+    def __init__(self, response: dict, /) -> None:
+        self.users = [FirebaseUser(**x) for x in response["users"]]

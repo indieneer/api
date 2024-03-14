@@ -1,16 +1,15 @@
 from typing import cast
+
 from app.models.profiles import ProfilesModel
 from app.models.service_profiles import ServiceProfilesModel
-import app.services.firebase
-from app.services.firebase import Firebase
+from app.services.firebase import Firebase, identity_toolkit
 from config import app_config
 from config.constants import FirebaseRole
-
 from lib.db_utils import Serializable
 
 
 class AuthenticatedUser(Serializable):
-    def __init__(self, identity: app.services.firebase.FirebaseUserIdentity, user: app.services.firebase.FirebaseUser) -> None:
+    def __init__(self, identity: identity_toolkit.FirebaseUserIdentity, user: identity_toolkit.FirebaseUser) -> None:
         self.identity = identity
         self.user = user
 
@@ -29,9 +28,9 @@ class LoginsModel:
 
     def login(self, email: str, password: str):
         identity = self.firebase.identity_api.sign_in(email, password)
-        claims = self.firebase.auth.verify_id_token(
-            identity.id_token, clock_skew_seconds=10)
+        claims = self.firebase.auth.verify_id_token(identity.id_token, clock_skew_seconds=10)
 
+        # TODO: improve data integrity validation before letting users sign in
         profile_id = claims.get(f"{app_config['FB_NAMESPACE']}/profile_id")
         profile = self.profiles.get(profile_id)
         if profile is None:

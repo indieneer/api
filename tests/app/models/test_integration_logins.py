@@ -1,9 +1,8 @@
 import jwt
-from config.constants import FirebaseRole
-
-from lib import constants
 
 from app.models.logins import LoginsModel
+from config.constants import FirebaseRole
+from lib import constants
 from tests.integration_test import IntegrationTest
 
 
@@ -18,8 +17,7 @@ class LoginsModelTestCase(IntegrationTest):
         )
 
         # when
-        result = logins_model.login(
-            self.fixtures.regular_user.email, constants.strong_password)
+        result = logins_model.login(self.fixtures.regular_user.email, constants.strong_password)
 
         access_token = result.id_token
         # TODO: replace with firebase token validator

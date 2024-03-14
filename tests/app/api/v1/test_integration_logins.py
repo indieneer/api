@@ -1,4 +1,5 @@
 import json
+
 from tests import IntegrationTest
 
 
@@ -38,6 +39,5 @@ class LoginsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(
-            response_json, {'status': 'error', 'error': 'Wrong email or password.'})
+        self.assertEqual(response_json, {'status': 'error', 'error': 'Wrong email or password.'})
         self.assertEqual(response.status_code, 403)
