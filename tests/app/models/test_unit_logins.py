@@ -1,19 +1,15 @@
 from typing import cast
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
-import pymongo.errors
 from bson import ObjectId
-from pymongo import ReturnDocument
-from pymongo.collection import Collection
 
 from app.models.logins import LoginsModel
-from app.models.profiles import Profile, ProfilesModel
-from app.models.service_profiles import ServiceProfilesModel
+from app.models.profiles import Profile
+from app.services.firebase.exceptions import InvalidLoginCredentialsException
 from app.services.firebase.identity_toolkit.dto import FirebaseUserIdentity
 from config.constants import FirebaseRole
 from tests import UnitTest
 from tests.mocks.app_config import mock_app_config
-from tests.mocks.database import mock_collection_method
 from tests.utils.comparators import ANY_NUMBER
 
 # Reuse mock
@@ -36,15 +32,15 @@ class LoginsTestCase(UnitTest):
         })
 
         def after_test():
-            # reset mocks here
             self.reset_mock(db_mock)
+            self.reset_mock(sign_in_mock)
 
         def logins():
             # given
             profile_id = ObjectId()
             email = "john.doe@gmail.com"
             password = "john.doe@2"
-            mock_identity = FirebaseUserIdentity(idToken="abcdefghijklmnop")
+            mock_identity = FirebaseUserIdentity(idToken="abcd.efghijklmnop.qrstuv")
             claims = dict([(f"{app_config_mock['FB_NAMESPACE']}/profile_id", str(profile_id))])
 
             sign_in_mock.return_value = mock_identity
@@ -68,8 +64,17 @@ class LoginsTestCase(UnitTest):
             self.assertEqual(result, mock_identity)
 
         def fails_to_login_with_wrong_credentials():
-            # TODO: add test
-            pass
+            # given
+            email = "john.doe@gmail.com"
+            password = "john.doe@2"
+            sign_in_mock.side_effect = InvalidLoginCredentialsException()
+
+            # when
+            with self.assertRaises(InvalidLoginCredentialsException):
+                logins_model.login(email, password)
+
+            # then
+            sign_in_mock.assert_called_once_with(email, password)
 
         tests = [
             logins,
@@ -77,3 +82,9 @@ class LoginsTestCase(UnitTest):
         ]
 
         self.run_subtests(tests, after_each=after_test)
+
+    def test_login_m2m(self):
+        self.skipTest("Implement later.")
+
+    def test_exchange_refresh_token(self):
+        self.skipTest("Implement later.")
