@@ -1,5 +1,6 @@
 from flask import Flask
 
+from app.models import AffiliatesModel, AffiliateReviewsModel
 from config import app_config
 
 app = Flask(__name__)
@@ -50,6 +51,8 @@ def main(app: Flask):
     profiles_model = ProfilesModel(db=db, firebase=firebase)
     service_profiles_model = ServiceProfilesModel(db=db, firebase=firebase)
     models = ModelsExtension(
+        affiliates=AffiliatesModel(db=db),
+        affiliate_reviews=AffiliateReviewsModel(db=db),
         profiles=profiles_model,
         products=ProductsModel(db=db),
         platforms=PlatformsModel(db=db),
@@ -72,8 +75,8 @@ def main(app: Flask):
     role_extension.init_app(app)
 
     # run initializers
-    if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
-        initializers.run(services, models)
+    # if app_config.get("ENVIRONMENT", "") in ["staging", "production"]:
+    initializers.run(services, models)
 
 
 if __name__ == "__main__":
