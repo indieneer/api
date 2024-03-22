@@ -9,21 +9,24 @@ from app.models.base import BaseDocument, Serializable
 
 
 class AffiliateReview(BaseDocument):
-    user: ObjectId
+    profile_id: ObjectId
+    affiliate_id: ObjectId
     affiliate_platform_product_id: ObjectId
     text: Optional[str]
     rating: int
 
     def __init__(
         self,
-        user: ObjectId,
+        profile_id: ObjectId,
+        affiliate_id: ObjectId,
         affiliate_platform_product_id: ObjectId,
         rating: int,
         text: Optional[str] = None,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
-        self.user = user
+        self.profile_id = profile_id
+        self.affiliate_id = affiliate_id
         self.affiliate_platform_product_id = affiliate_platform_product_id
         self.text = text
         self.rating = rating
@@ -31,7 +34,8 @@ class AffiliateReview(BaseDocument):
 
 @dataclass
 class AffiliateReviewCreate(Serializable):
-    user: ObjectId
+    profile_id: ObjectId
+    affiliate_id: ObjectId
     affiliate_platform_product_id: ObjectId
     rating: int
     text: Optional[str] = None
@@ -39,7 +43,8 @@ class AffiliateReviewCreate(Serializable):
 
 @dataclass
 class AffiliateReviewPatch(Serializable):
-    user: Optional[ObjectId] = None
+    profile_id: Optional[ObjectId] = None
+    affiliate_id: Optional[ObjectId] = None
     affiliate_platform_product_id: Optional[ObjectId] = None
     text: Optional[str] = None
     rating: Optional[int] = None

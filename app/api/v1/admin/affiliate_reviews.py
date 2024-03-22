@@ -7,7 +7,8 @@ from lib.http_utils import respond_success, respond_error
 affiliate_reviews_controller = Blueprint('affiliate_reviews', __name__, url_prefix='/affiliate_reviews')
 
 AFFILIATE_REVIEW_FIELDS = [
-    "user",
+    "profile_id",
+    "affiliate_id",
     "affiliate_platform_product_id",
     "text",
     "rating"

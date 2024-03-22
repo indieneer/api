@@ -3,7 +3,7 @@ from app.services import Database
 from .exceptions import NotFoundException
 
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, List
 from bson import ObjectId
 from app.models.base import BaseDocument, Serializable
@@ -24,7 +24,6 @@ class Affiliate(BaseDocument):
         bio: str,
         enabled: bool,
         logo_url: str,
-        reviews: Optional[List[ObjectId]] = None,
         **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -33,7 +32,6 @@ class Affiliate(BaseDocument):
         self.bio = bio
         self.enabled = enabled
         self.logo_url = logo_url
-        self.reviews = reviews if reviews is not None else []
 
 
 @dataclass
@@ -43,7 +41,6 @@ class AffiliateCreate(Serializable):
     bio: str
     enabled: bool
     logo_url: str
-    reviews: List[ObjectId] = field(default_factory=list)
 
 
 @dataclass
@@ -53,7 +50,6 @@ class AffiliatePatch(Serializable):
     bio: Optional[str] = None
     enabled: Optional[bool] = None
     logo_url: Optional[str] = None
-    reviews: Optional[List[ObjectId]] = field(default_factory=list)
 
 
 class AffiliatesModel:
