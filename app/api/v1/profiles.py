@@ -1,6 +1,7 @@
 from flask import Blueprint, request, g, current_app
 
 from app.middlewares import requires_auth
+from config import app_config
 from lib.http_utils import respond_error, respond_success
 
 from app.models import get_models, exceptions as models_exceptions
@@ -85,7 +86,7 @@ def delete_profile(profile_id: str):
     :return: A success response with acknowledgment if the profile is deleted successfully.
     :rtype: dict
     """
-    invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
+    invoker_id = g.get("payload").get(f'{app_config["FB_NAMESPACE"]}/profile_id')
 
     if invoker_id != profile_id:
         raise models_exceptions.ForbiddenException

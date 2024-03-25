@@ -1,5 +1,8 @@
 from unittest.mock import patch, MagicMock
 import json
+
+from bson import ObjectId
+
 from app.api.v1.profiles import create_profile, get_profile, update_profile, delete_profile, get_authenticated_profile
 from app.models.exceptions import NotFoundException, ForbiddenException
 from config.constants import FirebaseRole
@@ -12,7 +15,6 @@ from tests.utils.jwt import create_test_token
 class ProfilesTestCase(UnitTest):
     @patch("app.api.v1.profiles.get_models")
     def test_create_profile(self, get_models: MagicMock):
-        # self.skipTest("Fix when Firebase auth implemented")
         endpoint = "/profiles"
         self.app.route(endpoint, methods=["POST"])(create_profile)
 
@@ -27,8 +29,10 @@ class ProfilesTestCase(UnitTest):
 
         def creates_and_returns_a_profile():
             # given
+            mock_id = ObjectId()
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                _id=mock_id, idp_id=str(mock_id), email="john.pork@test.com", nickname="johnny",
+                display_name="John Pork",
                 photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             create_profile_mock.return_value = mock_profile
 
@@ -101,10 +105,10 @@ class ProfilesTestCase(UnitTest):
             fails_to_create_a_profile_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def after_each():
             create_profile_mock.reset_mock()
+
+        self.run_subtests(tests, after_each=after_each)
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_profile(self, get_models: MagicMock):
@@ -121,8 +125,10 @@ class ProfilesTestCase(UnitTest):
 
         def finds_and_returns_a_profile():
             # given
+            mock_id = ObjectId()
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                _id=mock_id, idp_id=str(mock_id), email="john.pork@test.com", nickname="johnny",
+                display_name="John Pork",
                 photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             get_profile_mock.return_value = mock_profile
             mock_profile_id_str = str(mock_profile._id)
@@ -157,10 +163,10 @@ class ProfilesTestCase(UnitTest):
             does_not_find_a_profile_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def after_each():
             get_profile_mock.reset_mock()
+
+        self.run_subtests(tests, after_each=after_each)
 
     @patch("app.api.v1.profiles.get_models")
     def test_patch_profile(self, get_models: MagicMock):
@@ -182,9 +188,10 @@ class ProfilesTestCase(UnitTest):
 
         def patches_and_returns_the_profile():
             # given
+            mock_id = ObjectId()
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
-                photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
+                _id=mock_id, idp_id=str(mock_id), email="john.pork@test.com", nickname="johnny",
+                display_name="John Pork", photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             patch_profile_mock.return_value = mock_profile
 
             mock_profile_id_str = str(mock_profile._id)
@@ -211,10 +218,10 @@ class ProfilesTestCase(UnitTest):
             patches_and_returns_the_profile
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def after_each():
             patch_profile_mock.reset_mock()
+
+        self.run_subtests(tests, after_each=after_each)
 
     @patch("app.api.v1.profiles.get_models")
     def test_delete_profile(self, get_models: MagicMock):
@@ -235,8 +242,10 @@ class ProfilesTestCase(UnitTest):
 
         def deletes_and_returns_the_profile():
             # given
+            mock_id = ObjectId()
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                _id=mock_id, idp_id=str(mock_id), email="john.pork@test.com", nickname="johnny",
+                display_name="John Pork",
                 photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             delete_profile_mock.return_value = mock_profile
 
@@ -286,10 +295,10 @@ class ProfilesTestCase(UnitTest):
             fails_to_delete_a_profile_when_invoker_id_does_not_match
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def after_each():
             delete_profile_mock.reset_mock()
+
+        self.run_subtests(tests, after_each=after_each)
 
     @patch("app.api.v1.profiles.get_models")
     def test_get_authenticated_profile(self, get_models: MagicMock):
@@ -310,8 +319,10 @@ class ProfilesTestCase(UnitTest):
 
         def finds_and_returns_a_profile():
             # given
+            mock_id = ObjectId()
             mock_profile = Profile(
-                email="john.pork@test.com", idp_id="firebase|test", nickname="johnny", display_name="John Pork",
+                _id=mock_id, idp_id=str(mock_id), email="john.pork@test.com", nickname="johnny",
+                display_name="John Pork",
                 photo_url="http://porkphoto.com", roles=[FirebaseRole.User.value])
             get_profile_mock.return_value = mock_profile
             mock_profile_id_str = str(mock_profile._id)
@@ -349,7 +360,7 @@ class ProfilesTestCase(UnitTest):
             fails_to_find_a_profile_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def after_each():
             get_profile_mock.reset_mock()
+
+        self.run_subtests(tests, after_each=after_each)
