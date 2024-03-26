@@ -47,17 +47,47 @@ def search():
                     {
                         '$lookup': {
                             'from': 'tags',
-                            'localField': 'genres',
-                            'foreignField': '_id',
+                            'let': {'genreIds': '$genres'},
+                            'pipeline': [
+                                {'$match': {'$expr': {'$in': ['$_id', '$$genreIds']}}},
+                                {'$project': {'name': 1, '_id': 0}}
+                            ],
                             'as': 'genres'
                         }
                     },
-                    {'$unset': 'genres._id'}
+                    {
+                        '$lookup': {
+                            'from': 'tags',
+                            'let': {'categoryIds': '$categories'},
+                            'pipeline': [
+                                {'$match': {'$expr': {'$in': ['$_id', '$$categoryIds']}}},
+                                {'$project': {'name': 1, '_id': 0}}
+                            ],
+                            'as': 'categories'
+                        }
+                    },
+                    {
+                        '$addFields': {
+                            'genres': {
+                                '$reduce': {
+                                    'input': '$genres',
+                                    'initialValue': [],
+                                    'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                                }
+                            },
+                            'categories': {
+                                '$reduce': {
+                                    'input': '$categories',
+                                    'initialValue': [],
+                                    'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                                }
+                            }
+                        }
+                    }
                 ],
-                # Take out of facet when problems start
                 'count': [{'$count': "count"}]
             }
-        },
+        }
     ]
 
     result = (*products.aggregate(aggregation_pipeline),)
