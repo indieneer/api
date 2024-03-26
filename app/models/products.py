@@ -2,172 +2,112 @@ from __future__ import annotations
 from typing import Optional, List, Dict, Union
 from bson import ObjectId
 from dataclasses import dataclass, field
+from .utils import slugify
 
 from app.services import Database
 from app.models.base import BaseDocument, Serializable
 
 
-@dataclass
-class Screenshot:
-    thumbnail_url: str
-    full_url: str
-
-
-@dataclass
-class Resolution:
-    px480: Optional[str]
-    max: str
-
-
-@dataclass
-class Movie:
-    name: str
-    thumbnail_url: str
-    formats: Dict[str, Union[Resolution, Dict[str, str]]]
-
-
-@dataclass
-class Media:
-    header_url: str
-    background_url: str
-    screenshots: List[Screenshot]
-    movies: List[Movie]
-
-
-@dataclass
-class PlatformOsRequirements:
-    minimum: Optional[Dict[str, str]]
-    recommended: Optional[Dict[str, str]]
-
-
-@dataclass
-class Requirements:
-    windows: Optional[PlatformOsRequirements]
-    mac: Optional[PlatformOsRequirements]
-    linux: Optional[PlatformOsRequirements]
-
-
-@dataclass
-class Price:
-    currency: str
-    initial: int
-    final: int
-    final_formatted: str
-
-
-@dataclass
-class ReleaseDate:
-    date: Optional[str]
-    coming_soon: bool
-
-
 class Product(BaseDocument):
     type: str
     name: str
-    slug: str
     required_age: int
-    short_description: str
     detailed_description: str
-    is_free: bool
-    platforms: Dict[str, str]
-    price: Dict[str, Optional[Price]]
+    short_description: str
     supported_languages: List[str]
-    media: Media
-    requirements: Requirements
+    media: Dict[str, Union[str, List[Dict[str, str]]]]
+    requirements: Dict[str, Dict[str, str]]
     developers: List[str]
     publishers: List[str]
-    platforms_os: List[str]
-    categories: List[ObjectId]
+    platforms: List[str]
     genres: List[ObjectId]
-    release_date: ReleaseDate
+    release_date: str
+    slug: str
 
     def __init__(
             self,
             type: str,
             name: str,
-            slug: str,
             required_age: int,
-            short_description: str,
             detailed_description: str,
-            is_free: bool,
-            platforms: Dict[str, str],
-            price: Dict[str, Optional[Price]],
+            short_description: str,
             supported_languages: List[str],
-            media: Media,
-            requirements: Requirements,
+            media: Dict[str, Union[str, List[Dict[str, str]]]],
+            requirements: Dict[str, Dict[str, str]],
             developers: List[str],
             publishers: List[str],
-            platforms_os: List[str],
-            categories: List[ObjectId],
+            platforms: List[str],
             genres: List[ObjectId],
-            release_date: ReleaseDate,
+            release_date: str,
+            slug: Optional[str] = None,
             **kwargs
     ) -> None:
         super().__init__(**kwargs)
 
         self.type = type
         self.name = name
-        self.slug = slug
         self.required_age = required_age
-        self.short_description = short_description
         self.detailed_description = detailed_description
-        self.is_free = is_free
-        self.platforms = platforms
-        self.price = price
+        self.short_description = short_description
         self.supported_languages = supported_languages
         self.media = media
         self.requirements = requirements
         self.developers = developers
         self.publishers = publishers
-        self.platforms_os = platforms_os
+        self.platforms = platforms
         self.genres = genres
-        self.categories = categories
         self.release_date = release_date
+        self.slug = slug if slug is not None else slugify(name)
+
+
+@dataclass
+class Media(Serializable):
+    header_url: str
+    background_url: str
+    screenshots: List[Dict[str, str]]
+    movies: List[Dict[str, Union[str, Dict[str, Dict[str, str]]]]]
+
+
+@dataclass
+class Requirements(Serializable):
+    pc: Optional[Dict[str, str]] = None
+    mac: Optional[Dict[str, str]] = None
+    linux: Optional[Dict[str, str]] = None
 
 
 @dataclass
 class ProductCreate(Serializable):
     type: str
     name: str
-    slug: str
     required_age: int
-    short_description: str
     detailed_description: str
-    is_free: bool
-    platforms: Dict[str, str]
-    price: Dict[str, Optional[Price]]
+    short_description: str
     supported_languages: List[str]
     media: Media
     requirements: Requirements
     developers: List[str]
     publishers: List[str]
-    platforms_os: List[str]
-    categories: List[ObjectId]
+    platforms: List[str]
     genres: List[ObjectId]
-    release_date: ReleaseDate
+    release_date: str
 
 
 @dataclass
 class ProductPatch(Serializable):
     type: Optional[str] = None
     name: Optional[str] = None
-    slug: Optional[str] = None
     required_age: Optional[int] = None
-    short_description: Optional[str] = None
     detailed_description: Optional[str] = None
-    is_free: Optional[bool] = None
+    short_description: Optional[str] = None
     # A necessary measure to prevent mutability pitfall
-    platforms: Optional[Dict[str, str]] = field(default_factory=dict)
-    price: Optional[Dict[str, Optional[Price]]] = field(default_factory=dict)
     supported_languages: Optional[List[str]] = field(default_factory=list)
     media: Optional[Media] = None
     requirements: Optional[Requirements] = None
     developers: Optional[List[str]] = field(default_factory=list)
     publishers: Optional[List[str]] = field(default_factory=list)
-    platforms_os: Optional[List[str]] = field(default_factory=list)
-    categories: Optional[List[ObjectId]] = field(default_factory=list)
-    genres: Optional[ObjectId] = field(default_factory=list)
-    release_date: Optional[ReleaseDate] = field(default_factory=dict)
+    platforms: Optional[List[str]] = field(default_factory=list)
+    genres: Optional[List[ObjectId]] = field(default_factory=list)
+    release_date: Optional[str] = None
 
 
 class ProductsModel:
@@ -180,54 +120,6 @@ class ProductsModel:
 
     db: Database
     collection: str = "products"
-
-    def get_aggregation_pipeline(self, query: dict = None):
-        if query is None:
-            query = {}
-
-        return [
-            query,
-            {
-                '$lookup': {
-                    'from': 'tags',
-                    'let': {'genreIds': '$genres'},
-                    'pipeline': [
-                        {'$match': {'$expr': {'$in': ['$_id', '$$genreIds']}}},
-                        {'$project': {'name': 1, '_id': 0}}
-                    ],
-                    'as': 'genres'
-                }
-            },
-            {
-                '$lookup': {
-                    'from': 'tags',
-                    'let': {'categoryIds': '$categories'},
-                    'pipeline': [
-                        {'$match': {'$expr': {'$in': ['$_id', '$$categoryIds']}}},
-                        {'$project': {'name': 1, '_id': 0}}
-                    ],
-                    'as': 'categories'
-                }
-            },
-            {
-                '$addFields': {
-                    'genres': {
-                        '$reduce': {
-                            'input': '$genres',
-                            'initialValue': [],
-                            'in': {'$concatArrays': ['$$value', ['$$this.name']]}
-                        }
-                    },
-                    'categories': {
-                        '$reduce': {
-                            'input': '$categories',
-                            'initialValue': [],
-                            'in': {'$concatArrays': ['$$value', ['$$this.name']]}
-                        }
-                    }
-                }
-            }
-        ]
 
     def __init__(self, db: Database) -> None:
         """
@@ -246,11 +138,12 @@ class ProductsModel:
         :return: The product data if found.
         :rtype: Optional[Product]
         """
-        pipeline = self.get_aggregation_pipeline({"$match": {"_id": ObjectId(product_id)}})
-        product_data = next(self.db.connection[self.collection].aggregate(pipeline), None)
+        product_data = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(product_id)})
 
         if product_data:
             return Product(**product_data)
+        return None
 
     def get_all(self):
         """
@@ -262,9 +155,7 @@ class ProductsModel:
         :return: A list of Product objects representing all the products in the database.
         :rtype: list[Product]
         """
-
-        pipeline = self.get_aggregation_pipeline()
-        products = [Product(**item) for item in self.db.connection[self.collection].aggregate(pipeline)]
+        products = [Product(**item) for item in self.db.connection[self.collection].find()]
 
         return products if products else []
 
@@ -279,12 +170,12 @@ class ProductsModel:
         :return: The product data if found, otherwise None.
         :rtype: Optional[Product]
         """
+        product_data = self.db.connection[self.collection].find_one(
+            {"slug": product_slug})
 
-        pipeline = self.get_aggregation_pipeline({"$match": {"slug": product_slug}})
-
-        product_data = next(self.db.connection[self.collection].aggregate(pipeline), None)
         if product_data:
             return Product(**product_data)
+        return None
 
     def create(self, input_data: ProductCreate) -> Product:
         """
