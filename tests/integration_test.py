@@ -15,7 +15,8 @@ from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
-from app.models.products import Media, ProductCreate, Requirements
+from app.models.products import Media, ProductCreate, Requirements, Price, Movie, Resolution, Screenshot, \
+    PlatformOsRequirements, ReleaseDate
 from app.models.profiles import ProfileCreate
 from app.models.service_profiles import ServiceProfileCreate
 from app.models.tags import TagCreate
@@ -193,53 +194,49 @@ class IntegrationTest(testicles.IntegrationTest):
                 ProductCreate(
                     name="Geometry Dash",
                     type="Game",
-                    platforms=[
-                        "windows",
-                        "mac",
-                    ],
+                    slug="geometry-dash",
+                    required_age=0,
                     short_description="GD",
                     detailed_description="Geometry dash cool game real",
+                    is_free=False,
+                    platforms={"steam": "https://store.steampowered.com/app/322170/Geometry_Dash/"},
+                    price={
+                        "USD": Price(currency="USD", initial=199, final=199, final_formatted="$1.99")
+                    },
                     supported_languages=["English"],
-                    developers=["RobTop Games"],
-                    publishers=["RobTop Games"],
-                    genres=[ObjectId("65022c86878d0eb09c1b7dae")],
                     media=Media(
                         background_url="https://example.com",
                         header_url="https://example.com",
                         movies=[
-                            {
-                                "name": "Trailer",
-                                "thumbnail_url": "https://example.com",
-                                "formats": {
-                                    "webm": {
-                                        "480": "https://example.com",
-                                        "max": "https://example.com"
-                                    },
-                                    "mp4": {
-                                        "480": "https://example.com",
-                                        "max": "https://example.com"
-                                    }
+                            Movie(
+                                name="Trailer",
+                                thumbnail_url="https://example.com",
+                                formats={
+                                    "webm": Resolution(px480="https://example.com/480.webm",
+                                                       max="https://example.com/max.webm"),
+                                    "mp4": Resolution(px480="https://example.com/480.mp4",
+                                                      max="https://example.com/max.mp4"),
                                 }
-                            }
+                            )
                         ],
                         screenshots=[
-                            {
-                                "thumbnail_url": "https://example.com",
-                                "full_url": "https://example.com"
-                            },
-                            {
-                                "thumbnail_url": "https://example.com",
-                                "full_url": "https://example.com"
-                            },
+                            Screenshot(thumbnail_url="https://example.com/thumbnail1.jpg",
+                                       full_url="https://example.com/full1.jpg"),
+                            Screenshot(thumbnail_url="https://example.com/thumbnail2.jpg",
+                                       full_url="https://example.com/full2.jpg"),
                         ]
                     ),
-                    release_date="2014-12-22T00:00:00",
-                    required_age=0,
                     requirements=Requirements(
-                        pc={
-                            "minimum": "Avg PC"
-                        }
-                    )
+                        windows=PlatformOsRequirements(minimum={"minimum": "Avg PC"}, recommended=None),
+                        mac=PlatformOsRequirements(minimum={"minimum": "Avg Mac"}, recommended=None),
+                        linux=None
+                    ),
+                    developers=["RobTop Games"],
+                    publishers=["RobTop Games"],
+                    platforms_os=["windows", "mac"],
+                    categories=[ObjectId("5f760d432f6812a3d2aabcde")],
+                    genres=[ObjectId("65022c86878d0eb09c1b7dae")],
+                    release_date=ReleaseDate(date="2014-12-22", coming_soon=False)
                 )
             )
             cleanups.append(cleanup)
