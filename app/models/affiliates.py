@@ -7,19 +7,25 @@ from dataclasses import dataclass
 from typing import Optional, List
 from bson import ObjectId
 from app.models.base import BaseDocument, Serializable
+from datetime import datetime
 
 
 class Affiliate(BaseDocument):
     name: str
+    slug: str
+    code: str
+    became_seller_at: datetime
     sales: int
     bio: str
     enabled: bool
     logo_url: str
-    reviews: List[ObjectId]
 
     def __init__(
         self,
         name: str,
+        slug: str,
+        code: str,
+        became_seller_at: datetime,
         sales: int,
         bio: str,
         enabled: bool,
@@ -28,6 +34,9 @@ class Affiliate(BaseDocument):
     ) -> None:
         super().__init__(**kwargs)
         self.name = name
+        self.slug = slug
+        self.code = code
+        self.became_seller_at = became_seller_at
         self.sales = sales
         self.bio = bio
         self.enabled = enabled
@@ -37,6 +46,9 @@ class Affiliate(BaseDocument):
 @dataclass
 class AffiliateCreate(Serializable):
     name: str
+    slug: str
+    code: str
+    became_seller_at: datetime
     sales: int
     bio: str
     enabled: bool
@@ -46,6 +58,9 @@ class AffiliateCreate(Serializable):
 @dataclass
 class AffiliatePatch(Serializable):
     name: Optional[str] = None
+    slug: Optional[str] = None
+    code: Optional[str] = None
+    became_seller_at: Optional[datetime] = None
     sales: Optional[int] = None
     bio: Optional[str] = None
     enabled: Optional[bool] = None
@@ -109,6 +124,19 @@ class AffiliatesModel:
         affiliate_data = Affiliate(**input_data.to_json()).to_bson()
         self.db.connection[self.collection].insert_one(affiliate_data)
         return Affiliate(**affiliate_data)
+
+    def put(self, affiliate: Affiliate) -> Affiliate:
+        """
+        Update an affiliate in the database.
+
+        :param affiliate: The affiliate data to be updated.
+        :type affiliate: Affiliate
+        :return: The updated affiliate data.
+        :rtype: Affiliate
+        """
+
+        self.db.connection[self.collection].insert_one(affiliate.to_bson())
+        return affiliate
 
     def patch(self, affiliate_id: str, input_data: AffiliatePatch) -> Affiliate:
         """

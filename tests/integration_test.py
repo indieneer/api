@@ -1,5 +1,6 @@
 import traceback
 import typing
+from datetime import datetime
 
 from bson import ObjectId
 
@@ -11,7 +12,9 @@ from app.middlewares.requires_auth import RequiresAuthExtension
 from app.middlewares.requires_role import RequiresRoleExtension
 from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
                         PlatformsModel, ProductsModel, ProfilesModel,
-                        ServiceProfilesModel, TagsModel)
+                        ServiceProfilesModel, TagsModel, AffiliatesModel, AffiliateReviewsModel)
+from app.models.affiliate_reviews import AffiliateReviewCreate
+from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platforms import PlatformCreate
@@ -27,7 +30,7 @@ from config.constants import FirebaseRole
 from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
                            ProductsFactory, ProfilesFactory,
-                           ServiceProfilesFactory, TagsFactory)
+                           ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory)
 from tests.fixtures import Fixtures
 
 
@@ -120,6 +123,8 @@ class IntegrationTest(testicles.IntegrationTest):
             service_profiles_model = ServiceProfilesModel(
                 firebase=firebase, db=db)
             models = ModelsExtension(
+                affiliates=AffiliatesModel(db=db),
+                affiliate_reviews=AffiliateReviewsModel(db=db),
                 profiles=profiles_model,
                 platforms=PlatformsModel(db=db),
                 operating_systems=OperatingSystemsModel(db=db),
@@ -166,6 +171,14 @@ class IntegrationTest(testicles.IntegrationTest):
                 service_profiles=ServiceProfilesFactory(
                     models=models,
                     services=services
+                ),
+                affiliates=AffiliatesFactory(
+                    db=db,
+                    models=models,
+                ),
+                affiliate_reviews=AffiliateReviewsFactory(
+                    db=db,
+                    models=models,
                 )
             )
 
@@ -173,6 +186,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 email="test_integration+regular@pork.com",
                 password=strong_password,
                 nickname="test_integration_regular",
+                role=FirebaseRole.User
             ))
             cleanups.append(cleanup)
 
@@ -273,6 +287,31 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            affiliate, cleanup = factory.affiliates.create(
+                AffiliateCreate(
+                    name="John Pork",
+                    slug="john-pork",
+                    code="JP",
+                    became_seller_at=datetime.strptime("2023-01-01", "%Y-%m-%d"),
+                    sales=302,
+                    bio="I'm a game seller",
+                    enabled=True,
+                    logo_url="www.example.com/"
+                )
+            )
+            cleanups.append(cleanup)
+
+            affiliate_review, cleanup = factory.affiliate_reviews.create(
+                AffiliateReviewCreate(
+                    affiliate_id=ObjectId("65f9d1648194a472c9f835ca"),
+                    affiliate_platform_product_id=ObjectId("65f9d1648194a472c9f835cb"),
+                    profile_id=ObjectId("65f9d1648194a472c9f835cc"),
+                    rating=5,
+                    text="Cool"
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
@@ -281,7 +320,9 @@ class IntegrationTest(testicles.IntegrationTest):
                 operating_system=operating_system,
                 tag=tag,
                 background_job=background_job,
-                service_profile=service_profile
+                service_profile=service_profile,
+                affiliate=affiliate,
+                affiliate_review=affiliate_review,
             )
 
             # Inject dependencies and trigger before all

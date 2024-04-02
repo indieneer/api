@@ -101,6 +101,19 @@ class AffiliateReviewsModel:
         self.db.connection[self.collection].insert_one(review_data)
         return AffiliateReview(**review_data)
 
+    def put(self, affiliate_review: AffiliateReview) -> AffiliateReview:
+        """
+        Update an affiliate review in the database.
+
+        :param affiliate_review: The affiliate review data to be updated.
+        :type affiliate_review: AffiliateReview
+        :return: The updated affiliate review data.
+        :rtype: AffiliateReview
+        """
+
+        self.db.connection[self.collection].insert_one(affiliate_review.to_bson())
+        return affiliate_review
+
     def patch(self, review_id: str, input_data: AffiliateReviewPatch) -> AffiliateReview:
         """
         Update an affiliate review in the database based on its ID.

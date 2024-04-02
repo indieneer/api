@@ -7,10 +7,15 @@ from app.models.service_profiles import ServiceProfile
 from app.models.tags import Tag
 from app.models.platforms import Platform
 from app.models.operating_systems import OperatingSystem
+from app.models.affiliates import Affiliate
+from app.models.affiliate_reviews import AffiliateReview
 
 
 @dataclass
 class Fixtures:
+
+    affiliate: Affiliate
+    affiliate_review: AffiliateReview
     regular_user: Profile
     admin_user: Profile
     product: Product
