@@ -1,11 +1,12 @@
 import dataclasses
 
-from flask import Blueprint, request, current_app
+from flask import Blueprint, current_app, request
 
 from app.api import exceptions
 from app.middlewares import requires_auth, requires_role
-from app.models import get_models, exceptions as models_exceptions
-from app.models.products import ProductCreate, Product, ProductPatch
+from app.models import exceptions as models_exceptions
+from app.models import get_models
+from app.models.products import Product, ProductCreate, ProductPatch
 from lib.http_utils import respond_error, respond_success
 
 products_controller = Blueprint('products', __name__, url_prefix='/products')
@@ -82,7 +83,7 @@ def update_product(product_id):
     # convert categories and genres to tags
 
     if data is None:
-        return exceptions.BadRequestException("The request body is empty.")
+        raise exceptions.BadRequestException("The request body is empty.")
     for key in data:
         if key not in product_update_fields:
             return respond_error(f'The key "{key}" is not allowed.', 422)

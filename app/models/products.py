@@ -1,10 +1,12 @@
 from __future__ import annotations
-from typing import Optional, List, Dict, Union
-from bson import ObjectId
-from dataclasses import dataclass, field
 
-from app.services import Database
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Union
+
+from bson import ObjectId
+
 from app.models.base import BaseDocument, Serializable
+from app.services import Database
 
 
 @dataclass
@@ -56,7 +58,7 @@ class Price:
 
 
 @dataclass
-class ReleaseDate:
+class ReleaseDate(Serializable):
     date: Optional[str]
     coming_soon: bool
 
@@ -100,7 +102,7 @@ class Product(BaseDocument):
             platforms_os: List[str],
             categories: List[ObjectId],
             genres: List[ObjectId],
-            release_date: ReleaseDate,
+            release_date: Dict,
             **kwargs
     ) -> None:
         super().__init__(**kwargs)
@@ -122,7 +124,7 @@ class Product(BaseDocument):
         self.platforms_os = platforms_os
         self.genres = genres
         self.categories = categories
-        self.release_date = release_date
+        self.release_date = ReleaseDate(**release_date)
 
 
 @dataclass
@@ -157,17 +159,17 @@ class ProductPatch(Serializable):
     detailed_description: Optional[str] = None
     is_free: Optional[bool] = None
     # A necessary measure to prevent mutability pitfall
-    platforms: Optional[Dict[str, str]] = field(default_factory=dict)
-    price: Optional[Dict[str, Optional[Price]]] = field(default_factory=dict)
-    supported_languages: Optional[List[str]] = field(default_factory=list)
+    platforms: Optional[Dict[str, str]] = None
+    price: Optional[Dict[str, Optional[Price]]] = None
+    supported_languages: Optional[List[str]] = None
     media: Optional[Media] = None
     requirements: Optional[Requirements] = None
-    developers: Optional[List[str]] = field(default_factory=list)
-    publishers: Optional[List[str]] = field(default_factory=list)
-    platforms_os: Optional[List[str]] = field(default_factory=list)
-    categories: Optional[List[ObjectId]] = field(default_factory=list)
-    genres: Optional[ObjectId] = field(default_factory=list)
-    release_date: Optional[ReleaseDate] = field(default_factory=dict)
+    developers: Optional[List[str]] = None
+    publishers: Optional[List[str]] = None
+    platforms_os: Optional[List[str]] = None
+    categories: Optional[List[ObjectId]] = None
+    genres: Optional[List[ObjectId]] = None
+    release_date: Optional[dict] = None
 
 
 class ProductsModel:
@@ -181,7 +183,7 @@ class ProductsModel:
     db: Database
     collection: str = "products"
 
-    def get_aggregation_pipeline(self, query: dict = None):
+    def get_aggregation_pipeline(self, query: dict | None = None):
         if query is None:
             query = {}
 
@@ -190,22 +192,16 @@ class ProductsModel:
             {
                 '$lookup': {
                     'from': 'tags',
-                    'let': {'genreIds': '$genres'},
-                    'pipeline': [
-                        {'$match': {'$expr': {'$in': ['$_id', '$$genreIds']}}},
-                        {'$project': {'name': 1, '_id': 0}}
-                    ],
+                    'localField': 'genres',
+                    'foreignField': '_id',
                     'as': 'genres'
                 }
             },
             {
                 '$lookup': {
                     'from': 'tags',
-                    'let': {'categoryIds': '$categories'},
-                    'pipeline': [
-                        {'$match': {'$expr': {'$in': ['$_id', '$$categoryIds']}}},
-                        {'$project': {'name': 1, '_id': 0}}
-                    ],
+                    'localField': 'categories',
+                    'foreignField': '_id',
                     'as': 'categories'
                 }
             },
@@ -279,7 +275,6 @@ class ProductsModel:
         :return: The product data if found, otherwise None.
         :rtype: Optional[Product]
         """
-
         pipeline = self.get_aggregation_pipeline({"$match": {"slug": product_slug}})
 
         product_data = next(self.db.connection[self.collection].aggregate(pipeline), None)
