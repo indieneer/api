@@ -1,4 +1,6 @@
 from bson import ObjectId
+
+from lib import constants
 from tests import IntegrationTest
 from app.models.affiliate_reviews import AffiliateReviewCreate
 
@@ -6,7 +8,8 @@ from app.models.affiliate_reviews import AffiliateReviewCreate
 class AffiliateReviewTestCase(IntegrationTest):
     @property
     def token(self):
-        return self.factory.logins.login(email="test_integration+admin@indieneer.com", password="securepassword").id_token
+        admin_user = self.fixtures.admin_user
+        return self.factory.logins.login(admin_user.email, constants.strong_password).id_token
 
     def test_create_affiliate_review(self):
         # given

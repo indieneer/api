@@ -130,6 +130,7 @@ class AffiliateReviewsModel:
             {"$set": update_data},
             return_document=ReturnDocument.AFTER
         )
+        print(updated_review)
         if updated_review:
             return AffiliateReview(**updated_review)
         else:

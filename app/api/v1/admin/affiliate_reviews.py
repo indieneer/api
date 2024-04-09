@@ -3,6 +3,7 @@ from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.affiliate_reviews import AffiliateReviewPatch, AffiliateReviewCreate
 from lib.http_utils import respond_success, respond_error
+from app.api.exceptions import UnprocessableEntityException
 
 affiliate_reviews_controller = Blueprint('affiliate_reviews', __name__, url_prefix='/affiliate_reviews')
 
@@ -33,7 +34,7 @@ def get_affiliate_reviews():
 @affiliate_reviews_controller.route('/<string:review_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_affiliate_review(review_id):
+def get_affiliate_review_by_id(review_id):
     """
     Retrieve a single affiliate review by ID.
 
@@ -61,7 +62,7 @@ def create_affiliate_review():
     data = request.get_json()
 
     if not data or not all(key in data for key in AFFILIATE_REVIEW_FIELDS):
-        return respond_error("Invalid data provided.", 400)
+        raise UnprocessableEntityException
     if not 1 <= data.get("rating", 0) <= 5:
         return respond_error("Rating must be between 1 and 5.", 400)
 

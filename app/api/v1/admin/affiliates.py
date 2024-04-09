@@ -1,4 +1,6 @@
 from flask import Blueprint, request, current_app
+
+from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.affiliates import AffiliatePatch, AffiliateCreate
@@ -25,7 +27,7 @@ def get_affiliates():
 @affiliates_controller.route('/<string:affiliate_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_affiliate(affiliate_id):
+def get_affiliate_by_id(affiliate_id):
     """
     Retrieve a single affiliate by ID.
 
@@ -51,9 +53,12 @@ def create_affiliate():
     Requires authentication and admin privileges.
     """
     data = request.get_json()
-    affiliate_data = AffiliateCreate(**data)
     affiliates_model = get_models(current_app).affiliates
-    new_affiliate = affiliates_model.create(affiliate_data)
+    try:
+        affiliate_data = AffiliateCreate(**data)
+        new_affiliate = affiliates_model.create(affiliate_data)
+    except TypeError:
+        raise UnprocessableEntityException("Invalid data provided.")
     return respond_success(new_affiliate.to_json(), status_code=201)
 
 
@@ -71,6 +76,7 @@ def update_affiliate(affiliate_id):
     affiliate_patch_data = AffiliatePatch(**data)
     affiliates_model = get_models(current_app).affiliates
     updated_affiliate = affiliates_model.patch(affiliate_id, affiliate_patch_data)
+
     if updated_affiliate:
         return respond_success(updated_affiliate.to_json())
     else:

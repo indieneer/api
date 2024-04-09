@@ -4,7 +4,7 @@ from .exceptions import NotFoundException
 
 
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Union
 from bson import ObjectId
 from app.models.base import BaseDocument, Serializable
 from datetime import datetime
@@ -14,7 +14,7 @@ class Affiliate(BaseDocument):
     name: str
     slug: str
     code: str
-    became_seller_at: datetime
+    became_seller_at: Union[datetime, str]
     sales: int
     bio: str
     enabled: bool
@@ -25,7 +25,7 @@ class Affiliate(BaseDocument):
         name: str,
         slug: str,
         code: str,
-        became_seller_at: datetime,
+        became_seller_at: Union[datetime, str],
         sales: int,
         bio: str,
         enabled: bool,
@@ -48,7 +48,7 @@ class AffiliateCreate(Serializable):
     name: str
     slug: str
     code: str
-    became_seller_at: datetime
+    became_seller_at: Union[datetime, str]
     sales: int
     bio: str
     enabled: bool
@@ -60,7 +60,7 @@ class AffiliatePatch(Serializable):
     name: Optional[str] = None
     slug: Optional[str] = None
     code: Optional[str] = None
-    became_seller_at: Optional[datetime] = None
+    became_seller_at: Optional[Union[datetime, str]] = None
     sales: Optional[int] = None
     bio: Optional[str] = None
     enabled: Optional[bool] = None
