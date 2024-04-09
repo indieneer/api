@@ -8,10 +8,14 @@ from .tags import TagsFactory
 from .platforms import PlatformsFactory
 from .logins import LoginsFactory
 from .service_profiles import ServiceProfilesFactory
+from .affiliates import AffiliatesFactory
+from .affiliate_reviews import AffiliateReviewsFactory
 
 
 @dataclass
 class Factory:
+    affiliates: AffiliatesFactory
+    affiliate_reviews: AffiliateReviewsFactory
     profiles: ProfilesFactory
     products: ProductsFactory
     platforms: PlatformsFactory
