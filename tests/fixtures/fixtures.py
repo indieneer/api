@@ -6,6 +6,7 @@ from app.models.products import Product
 from app.models.service_profiles import ServiceProfile
 from app.models.tags import Tag
 from app.models.platforms import Platform
+from app.models.platform_products import PlatformProduct
 from app.models.operating_systems import OperatingSystem
 from app.models.affiliates import Affiliate
 from app.models.affiliate_reviews import AffiliateReview
@@ -20,6 +21,7 @@ class Fixtures:
     admin_user: Profile
     product: Product
     platform: Platform
+    platform_product: PlatformProduct
     operating_system: OperatingSystem
     tag: Tag
     background_job: BackgroundJob

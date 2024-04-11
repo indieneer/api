@@ -17,6 +17,7 @@ from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.operating_systems import OperatingSystemCreate
+from app.models.platform_products import PlatformProductCreate, PlatformProductsModel
 from app.models.platforms import PlatformCreate
 from app.models.products import Media, ProductCreate, Requirements, Price, Movie, Resolution, Screenshot, \
     PlatformOsRequirements, ReleaseDate
@@ -31,7 +32,8 @@ from config.constants import FirebaseRole
 from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
                            ProductsFactory, ProfilesFactory,
-                           ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory)
+                           ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
+                           PlatformProductsFactory)
 from tests.fixtures import Fixtures
 
 
@@ -135,6 +137,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     service_profiles=service_profiles_model
                 ),
                 products=ProductsModel(db=db),
+                platform_products=PlatformProductsModel(db=db),
                 tags=TagsModel(db=db),
                 background_jobs=BackgroundJobsModel(db=db),
                 service_profiles=service_profiles_model
@@ -160,6 +163,9 @@ class IntegrationTest(testicles.IntegrationTest):
                 platforms=PlatformsFactory(
                     db=db, models=models
                 ),
+                platform_products=PlatformProductsFactory(
+                    db=db, models=models
+                ),
                 operating_systems=OperatingSystemsFactory(
                     db=db, models=models
                 ),
@@ -182,6 +188,8 @@ class IntegrationTest(testicles.IntegrationTest):
                     models=models,
                 )
             )
+
+            # Register new fixtures in this section
 
             regular_user, cleanup = factory.profiles.create(ProfileCreate(
                 email="test_integration+regular@pork.com",
@@ -309,11 +317,21 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            platform_product, cleanup = factory.platform_products.create(
+                PlatformProductCreate(
+                    platform_id=1,
+                    prices=[],
+                    product_page_url="https://www.example.com/product"
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
                 platform=platform,
+                platform_product=platform_product,
                 operating_system=operating_system,
                 tag=tag,
                 background_job=background_job,

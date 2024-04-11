@@ -5,6 +5,7 @@ from flask import Flask
 from .affiliate_reviews import AffiliateReviewsModel
 from .affiliates import AffiliatesModel
 from .platforms import PlatformsModel
+from .platform_products import PlatformProductsModel
 from .operating_systems import OperatingSystemsModel
 from .profiles import ProfilesModel
 from .logins import LoginsModel
@@ -24,6 +25,7 @@ class ModelsExtension:
     profiles: ProfilesModel
     products: ProductsModel
     platforms: PlatformsModel
+    platform_products: PlatformProductsModel
     platforms_os: OperatingSystemsModel
     logins: LoginsModel
     tags: TagsModel
@@ -37,6 +39,7 @@ class ModelsExtension:
         products: ProductsModel,
         profiles: ProfilesModel,
         platforms: PlatformsModel,
+        platform_products: PlatformProductsModel,
         operating_systems: OperatingSystemsModel,
         logins: LoginsModel,
         tags: TagsModel,
@@ -48,6 +51,7 @@ class ModelsExtension:
         self.products = products
         self.profiles = profiles
         self.platforms = platforms
+        self.platform_products = platform_products
         self.operating_systems = operating_systems
         self.logins = logins
         self.tags = tags
