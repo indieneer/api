@@ -122,7 +122,7 @@ def get_authenticated_profile():
         raise
 
     # Extracting the profile ID from the payload
-    profile_id = payload.get('https://indieneer.com/profile_id')
+    profile_id = g.get("payload").get(f'{app_config["FB_NAMESPACE"]}/profile_id')
 
     if profile_id is None:
         raise models_exceptions.NotFoundException(Profile.__name__)

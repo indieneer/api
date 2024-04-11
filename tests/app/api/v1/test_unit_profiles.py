@@ -9,7 +9,8 @@ from config.constants import FirebaseRole
 
 from tests import UnitTest
 from app.models.profiles import ProfileCreate, Profile, ProfilePatch
-from tests.utils.jwt import create_test_token
+from tests.mocks.app_config import mock_app_config
+from tests.utils.jwt import create_test_token, TEST_AUTH_NAMESPACE
 
 
 class ProfilesTestCase(UnitTest):
@@ -223,12 +224,16 @@ class ProfilesTestCase(UnitTest):
 
         self.run_subtests(tests, after_each=after_each)
 
+    @patch("app.api.v1.profiles.app_config")
     @patch("app.api.v1.profiles.get_models")
-    def test_delete_profile(self, get_models: MagicMock):
+    def test_delete_profile(self, get_models: MagicMock, app_config_mock: MagicMock):
         endpoint = "/profiles/<string:profile_id>"
         self.app.route(endpoint)(delete_profile)
 
         delete_profile_mock = get_models.return_value.profiles.delete
+        mock_app_config(app_config_mock, {
+            "FB_NAMESPACE": TEST_AUTH_NAMESPACE
+        })
 
         def call_api(profile_id, token=None):
             if token is None:
@@ -300,12 +305,16 @@ class ProfilesTestCase(UnitTest):
 
         self.run_subtests(tests, after_each=after_each)
 
+    @patch("app.api.v1.profiles.app_config")
     @patch("app.api.v1.profiles.get_models")
-    def test_get_authenticated_profile(self, get_models: MagicMock):
+    def test_get_authenticated_profile(self, get_models: MagicMock, app_config_mock: MagicMock):
         endpoint = "/profiles/me"
         self.app.route(endpoint)(get_authenticated_profile)
 
         get_profile_mock = get_models.return_value.profiles.get
+        mock_app_config(app_config_mock, {
+            "FB_NAMESPACE": TEST_AUTH_NAMESPACE
+        })
 
         def call_api(profile_id, token=None):
             if token is None:
