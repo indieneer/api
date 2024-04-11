@@ -10,8 +10,6 @@ from app.models.platforms import PlatformsModel, PlatformCreate, Platform, Platf
 
 from tests import UnitTest
 
-Price()
-
 # TODO: Create a separate fixtures entity for unit tests
 platform_fixture = Platform(
     name="Test platform",
