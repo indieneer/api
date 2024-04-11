@@ -34,6 +34,44 @@ mock_profile = Profile(
 
 
 class ProfilesTestCase(UnitTest):
+    def test_get_all(self):
+        model = ProfilesModel(db=db_mock, firebase=firebase_mock)
+
+        def finds_all_profiles():
+            # given
+            find_mock = mock_collection_method(db_mock, ProfilesModel.collection, Collection.find.__name__)
+            find_mock.return_value = [mock_profile.to_json()]
+
+            # when
+            result = model.get_all()
+
+            # then
+            find_mock.assert_called_once_with()
+            self.assertIsInstance(result, list)
+            self.assertGreater(len(result), 0)
+
+        def does_not_find_any_profile():
+            # given
+            find_mock = mock_collection_method(db_mock, ProfilesModel.collection, Collection.find.__name__)
+            find_mock.return_value = []
+
+            # when
+            result = model.get_all()
+
+            # then
+            self.assertEqual(result, [])
+            find_mock.assert_called_once_with()
+
+        tests = [
+            finds_all_profiles,
+            does_not_find_any_profile
+        ]
+
+        for test in tests:
+            with self.subTest(test.__name__):
+                test()
+            self.reset_mock(db_mock)
+
 
     def test_get(self):
         model = ProfilesModel(db=db_mock, firebase=firebase_mock)
