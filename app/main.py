@@ -1,6 +1,6 @@
 from flask import Flask
 
-from app.models import AffiliatesModel, AffiliateReviewsModel, PlatformProductsModel
+from app.models import AffiliatesModel, AffiliateReviewsModel, PlatformProductsModel, AffiliatePlatformProductsModel
 from config import app_config
 
 app = Flask(__name__)
@@ -57,6 +57,7 @@ def main(app: Flask):
         products=ProductsModel(db=db),
         platforms=PlatformsModel(db=db),
         platform_products=PlatformProductsModel(db=db),
+        affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
         operating_systems=OperatingSystemsModel(db=db),
         logins=LoginsModel(
             firebase=firebase,

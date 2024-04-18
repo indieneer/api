@@ -6,6 +6,7 @@ from .affiliate_reviews import AffiliateReviewsModel
 from .affiliates import AffiliatesModel
 from .platforms import PlatformsModel
 from .platform_products import PlatformProductsModel
+from .affiliate_platform_products import AffiliatePlatformProductsModel
 from .operating_systems import OperatingSystemsModel
 from .profiles import ProfilesModel
 from .logins import LoginsModel
@@ -26,6 +27,7 @@ class ModelsExtension:
     products: ProductsModel
     platforms: PlatformsModel
     platform_products: PlatformProductsModel
+    affiliate_platform_products: AffiliatePlatformProductsModel
     platforms_os: OperatingSystemsModel
     logins: LoginsModel
     tags: TagsModel
@@ -40,6 +42,7 @@ class ModelsExtension:
         profiles: ProfilesModel,
         platforms: PlatformsModel,
         platform_products: PlatformProductsModel,
+        affiliate_platform_products: AffiliatePlatformProductsModel,
         operating_systems: OperatingSystemsModel,
         logins: LoginsModel,
         tags: TagsModel,
@@ -52,6 +55,7 @@ class ModelsExtension:
         self.profiles = profiles
         self.platforms = platforms
         self.platform_products = platform_products
+        self.affiliate_platform_products = affiliate_platform_products
         self.operating_systems = operating_systems
         self.logins = logins
         self.tags = tags

@@ -18,6 +18,7 @@ from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platform_products import PlatformProductCreate, PlatformProductsModel
+from app.models.affiliate_platform_products import AffiliatePlatformProductCreate, AffiliatePlatformProductsModel
 from app.models.platforms import PlatformCreate
 from app.models.products import Media, ProductCreate, Requirements, Price, Movie, Resolution, Screenshot, \
     PlatformOsRequirements, ReleaseDate
@@ -33,7 +34,7 @@ from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
                            ProductsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
-                           PlatformProductsFactory)
+                           PlatformProductsFactory, AffiliatePlatformProductsFactory)
 from tests.fixtures import Fixtures
 
 
@@ -138,6 +139,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 products=ProductsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
+                affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
                 tags=TagsModel(db=db),
                 background_jobs=BackgroundJobsModel(db=db),
                 service_profiles=service_profiles_model
@@ -164,6 +166,9 @@ class IntegrationTest(testicles.IntegrationTest):
                     db=db, models=models
                 ),
                 platform_products=PlatformProductsFactory(
+                    db=db, models=models
+                ),
+                affiliate_platform_products=AffiliatePlatformProductsFactory(
                     db=db, models=models
                 ),
                 operating_systems=OperatingSystemsFactory(
@@ -301,7 +306,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     sales=302,
                     bio="I'm a game seller",
                     enabled=True,
-                    logo_url="www.example.com/"
+                    logo_url="https://www.example.com/"
                 )
             )
             cleanups.append(cleanup)
@@ -326,12 +331,27 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            affiliate_platform_product, cleanup = factory.affiliate_platform_products.create(
+                AffiliatePlatformProductCreate(
+                    affiliate_id=ObjectId("65f9d1648194a472c9f835cd"),
+                    buy_page_url="https://www.example.com",
+                    prices=[],
+                    promotions=[],
+                    affiliate=affiliate.clone(),
+                    platform_product_id=ObjectId("65f9d1648194a472c9f835ce"),
+                    product=product.clone(),
+                    product_id=ObjectId("65f9d1648194a472c9f835cd")
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
                 platform=platform,
                 platform_product=platform_product,
+                affiliate_platform_product=affiliate_platform_product,
                 operating_system=operating_system,
                 tag=tag,
                 background_job=background_job,
