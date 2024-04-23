@@ -10,6 +10,7 @@ class AffiliatePlatformProductsModelTestCase(IntegrationTest):
         affiliate_platform_product = self.fixtures.affiliate_platform_product
 
         # when
+        print(str(affiliate_platform_product._id))
         retrieved_affiliate_platform_product = affiliate_platform_products_model.get(str(affiliate_platform_product._id))
 
         # then

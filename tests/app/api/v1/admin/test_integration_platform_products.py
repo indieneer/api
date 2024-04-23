@@ -1,3 +1,5 @@
+from bson import ObjectId
+
 from lib import constants
 from tests import IntegrationTest
 from app.models.platform_products import PlatformProductCreate
@@ -46,6 +48,8 @@ class PlatformProductTestCase(IntegrationTest):
         # when
         response = self.app.post("/v1/admin/platform_products", headers={"Authorization": f'Bearer {self.token}'}, json=payload)
         response_json = response.get_json()
+        self.addCleanup(
+            lambda: self.factory.platform_products.cleanup(ObjectId(response_json["data"]["_id"])))
 
         # then
         self.assertEqual(response.status_code, 201)

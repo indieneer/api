@@ -54,6 +54,8 @@ class AffiliateTestCase(IntegrationTest):
         # when
         response = self.app.post("/v1/admin/affiliates", headers={"Authorization": f'Bearer {self.token}'}, json=payload)
         response_json = response.get_json()
+        self.addCleanup(
+            lambda: self.factory.affiliates.cleanup(ObjectId(response_json["data"]["_id"])))
 
         # then
         self.assertEqual(response.status_code, 201)

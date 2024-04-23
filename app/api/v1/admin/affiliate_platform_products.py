@@ -57,9 +57,10 @@ def create_affiliate_platform_product():
     try:
         affiliate_platform_product_data = AffiliatePlatformProductCreate(**data)
         new_affiliate_platform_product = affiliate_platform_products_model.create(affiliate_platform_product_data)
-    except TypeError:
+        return respond_success(new_affiliate_platform_product.to_json(), status_code=201)
+    except TypeError as e:
+        print(e)
         raise UnprocessableEntityException("Invalid data provided.")
-    return respond_success(new_affiliate_platform_product.to_json(), status_code=201)
 
 
 @affiliate_platform_products_controller.route('/<string:affiliate_platform_product_id>', methods=["PATCH"])

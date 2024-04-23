@@ -12,13 +12,9 @@ from app.models.products import Product, Price, Media, Movie, Resolution, Screen
     PlatformOsRequirements, ReleaseDate
 from tests import UnitTest
 
+
 # TODO: Create a separate fixtures entity for unit tests
-affiliate_platform_product_fixture = AffiliatePlatformProduct(
-    affiliate_id=ObjectId("65f9d1648194a472c9f835cd"),
-    buy_page_url="https://www.example.com",
-    prices=[],
-    promotions=[],
-    affiliate=Affiliate(
+affiliate_fixture = Affiliate(
         name="John Doe Affiliate",
         slug="john-doe-affiliate",
         became_seller_at=datetime.datetime(2020, 1, 1),
@@ -27,58 +23,45 @@ affiliate_platform_product_fixture = AffiliatePlatformProduct(
         code="DOE100",
         bio="A top selling affiliate.",
         logo_url="https://example.com/john_doe_logo.png"
-    ).clone(),
-    platform_product_id=ObjectId("65f9d1648194a472c9f835ce"),
-    product=Product(
-        name="Geometry Dash",
-        type="Game",
-        slug="geometry-dash",
-        required_age=0,
-        short_description="GD",
-        detailed_description="Geometry dash cool game real",
-        is_free=False,
-        platforms={"steam": "https://store.steampowered.com/app/322170/Geometry_Dash/"},
-        price={
-            "USD": Price(currency="USD", initial=199, final=199, final_formatted="$1.99")
-        },
-        supported_languages=["English"],
-        media=Media(
-            background_url="https://example.com",
-            header_url="https://example.com",
-            movies=[
-                Movie(
-                    name="Trailer",
-                    thumbnail_url="https://example.com",
-                    formats={
-                        "webm": Resolution(px480="https://example.com/480.webm",
-                                           max="https://example.com/max.webm"),
-                        "mp4": Resolution(px480="https://example.com/480.mp4",
-                                          max="https://example.com/max.mp4"),
-                    }
-                )
-            ],
-            screenshots=[
-                Screenshot(thumbnail_url="https://example.com/thumbnail1.jpg",
-                           full_url="https://example.com/full1.jpg"),
-                Screenshot(thumbnail_url="https://example.com/thumbnail2.jpg",
-                           full_url="https://example.com/full2.jpg"),
-            ]
-        ),
-        requirements=Requirements(
-            windows=PlatformOsRequirements(minimum={"minimum": "Avg PC"}, recommended=None),
-            mac=PlatformOsRequirements(minimum={"minimum": "Avg Mac"}, recommended=None),
-            linux=None
-        ),
-        developers=["RobTop Games"],
-        publishers=["RobTop Games"],
-        platforms_os=["windows", "mac"],
-        categories=[ObjectId("5f760d432f6812a3d2aabcde")],
-        genres=[ObjectId("65022c86878d0eb09c1b7dae")],
-        release_date={"date": "2014-12-22", "coming_soon": False}
-    ),
-    product_id=ObjectId("65f9d1648194a472c9f835cd")
 )
 
+product_fixture = Product(
+    categories=[],
+    detailed_description="",
+    developers=[],
+    genres=[],
+    is_free=False,
+    media=Media(background_url="", header_url="", movies=[], screenshots=[]),
+    name="",
+    platforms={},
+    platforms_os=[],
+    price={},
+    publishers=[],
+    release_date=ReleaseDate(date=None, coming_soon=False).to_json(),
+    required_age=0,
+    requirements=Requirements(
+        None,
+        None,
+        None,
+    ),
+    short_description="",
+    slug="",
+    type="",
+    supported_languages=[]
+)
+
+affiliate_platform_product_fixture = AffiliatePlatformProduct(
+    affiliate_id=str(affiliate_fixture._id),
+    affiliate=affiliate_fixture.to_dict(),
+    buy_page_url="https://www.example.com",
+    prices=[],
+    promotions=[],
+    platform_product_id="65f9d1648194a472c9f835ce",
+    product_id=str(product_fixture._id)
+)
+
+affiliate_platform_product_fixture.affiliate = affiliate_fixture
+affiliate_platform_product_fixture.product = product_fixture
 
 class AffiliatePlatformProductTestCase(UnitTest):
 
@@ -98,9 +81,7 @@ class AffiliatePlatformProductTestCase(UnitTest):
                 buy_page_url=mock_affiliate_platform_product.buy_page_url,
                 prices=mock_affiliate_platform_product.prices,
                 promotions=mock_affiliate_platform_product.promotions,
-                affiliate=mock_affiliate_platform_product.affiliate,
                 platform_product_id=mock_affiliate_platform_product.platform_product_id,
-                product=mock_affiliate_platform_product.product,
                 product_id=mock_affiliate_platform_product.product_id
             )
 
@@ -133,14 +114,14 @@ class AffiliatePlatformProductTestCase(UnitTest):
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
             collection_mock = MagicMock()
             db_connection_mock.__getitem__.return_value = collection_mock
-            collection_mock.find_one.return_value = mock_affiliate_platform_product.to_json()
+            collection_mock.aggregate.return_value = [mock_affiliate_platform_product.to_json()]
 
             # when
             result = model.get(str(affiliate_platform_product_id))
 
             # then
             self.assertEqual(result.buy_page_url, mock_affiliate_platform_product.buy_page_url)
-            collection_mock.find_one.assert_called_once_with({'_id': affiliate_platform_product_id})
+            collection_mock.aggregate.assert_called_once()
 
         def fails_to_get_affiliate_platform_product_because_id_is_invalid():
             # given
@@ -157,14 +138,14 @@ class AffiliatePlatformProductTestCase(UnitTest):
             nonexistent_affiliate_platform_product_id = ObjectId()
             collection_mock = MagicMock()
             db_connection_mock.__getitem__.return_value = collection_mock
-            collection_mock.find_one.return_value = None
+            collection_mock.aggregate.return_value = None
 
             # when
             result = model.get(str(nonexistent_affiliate_platform_product_id))
 
             # then
             self.assertIsNone(result)
-            collection_mock.find_one.assert_called_once_with({'_id': nonexistent_affiliate_platform_product_id})
+            collection_mock.aggregate.assert_called_once()
 
         tests = [
             gets_and_returns_affiliate_platform_product,

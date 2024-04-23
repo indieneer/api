@@ -333,14 +333,12 @@ class IntegrationTest(testicles.IntegrationTest):
 
             affiliate_platform_product, cleanup = factory.affiliate_platform_products.create(
                 AffiliatePlatformProductCreate(
-                    affiliate_id=ObjectId("65f9d1648194a472c9f835cd"),
+                    affiliate_id=affiliate._id,
                     buy_page_url="https://www.example.com",
                     prices=[],
                     promotions=[],
-                    affiliate=affiliate.clone(),
                     platform_product_id=ObjectId("65f9d1648194a472c9f835ce"),
-                    product=product.clone(),
-                    product_id=ObjectId("65f9d1648194a472c9f835cd")
+                    product_id=product._id
                 )
             )
             cleanups.append(cleanup)

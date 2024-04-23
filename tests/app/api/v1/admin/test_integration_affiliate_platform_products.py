@@ -1,4 +1,6 @@
 from datetime import datetime
+from pprint import pprint
+
 from bson import ObjectId
 
 from lib import constants
@@ -24,7 +26,7 @@ class AffiliatePlatformProductTestCase(IntegrationTest):
 
         # then
         self.assertEqual(response.status_code, 200)
-        self.assertIn(affiliate_platform_product.to_json(), response_json["data"])
+        self.assertIn(affiliate_platform_product.to_json()["_id"], [item["_id"] for item in response_json["data"]])
 
     def test_get_affiliate_platform_product_by_id(self):
         # given
@@ -53,8 +55,7 @@ class AffiliatePlatformProductTestCase(IntegrationTest):
         # when
         response = self.app.post("/v1/admin/affiliate_platform_products", headers={"Authorization": f'Bearer {self.token}'}, json=AffiliatePlatformProductCreate(**payload).to_json())
         response_json = response.get_json()
-
-        print(response_json)
+        self.addCleanup(lambda: self.factory.affiliate_platform_products.cleanup(ObjectId(response_json["data"]["_id"])))
 
         # then
         self.assertEqual(response.status_code, 201)
