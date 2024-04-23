@@ -185,7 +185,7 @@ class ProductsModel:
 
     def get_aggregation_pipeline(self, query: dict | None = None):
         if query is None:
-            query = {}
+            query = {'$match': {}}
 
         return [
             query,
