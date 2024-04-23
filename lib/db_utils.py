@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, cast
+from typing import Any, Dict, cast, Optional, List
 
 from bson import ObjectId
 
@@ -23,13 +23,14 @@ class Serializable(object):
         """
         return cast(Dict[str, Any], to_dict(self))
 
-    def to_bson(self):
+    def to_bson(self, ignore: Optional[List[str]] = None):
         """Recursively converts types into BSON compatible
 
         Returns:
             Dict[str, Any]:  A dict containing all of the fields from the original class
         """
-        return cast(Dict[str, Any], to_bson(self))
+
+        return cast(Dict[str, Any], to_bson(self, ignore=ignore))
 
     def __eq__(self, other: Serializable) -> bool:
         return self.to_json() == other.to_json()
@@ -85,13 +86,15 @@ def to_dict(thing: Any):
         return thing
 
 
-def to_bson(thing: Any):
+def to_bson(thing: Any, ignore: Optional[List[str]] = None):
     if isinstance(thing, ObjectId):
         return thing
     elif isinstance(thing, dict):
         out = {}
 
         for key, value in thing.items():
+            if ignore is not None and key in ignore:
+                continue
             out[key] = to_bson(value)
 
         return out
@@ -107,6 +110,14 @@ def to_bson(thing: Any):
     elif isinstance(thing, (int, float, bool, str, datetime)) or thing is None:
         return thing
     elif isinstance(thing, Serializable):
-        return to_bson(vars(thing))
+        if ignore is None:
+            return to_bson(vars(thing))
+        variables = {key: value for key, value in vars(thing).items() if key not in ignore}
+        for key in variables:
+            if isinstance(variables[key], Serializable):
+                variables[key] = variables[key].to_bson()
+            else:
+                variables[key] = to_bson(variables[key])
+        return variables
     else:
         return str(thing)
