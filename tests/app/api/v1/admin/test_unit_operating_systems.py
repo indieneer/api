@@ -21,7 +21,8 @@ class OperatingSystemsTestCase(UnitTest):
                 endpoint,
                 data=json.dumps(body),
                 content_type='application/json',
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])}
+                headers={"Authorization": "Bearer " +
+                         create_test_token("", roles=["admin"])}
             )
 
         def creates_and_returns_an_operating_system():
@@ -52,7 +53,8 @@ class OperatingSystemsTestCase(UnitTest):
                 call_api({"name": "Invalid OS"})
 
             # then
-            self.assertEqual(str(context.exception), str(create_os_mock.side_effect))
+            self.assertEqual(str(context.exception),
+                             str(create_os_mock.side_effect))
             create_os_mock.assert_called_once()
 
         def fails_to_create_an_operating_system_when_body_is_invalid():
@@ -84,8 +86,10 @@ class OperatingSystemsTestCase(UnitTest):
 
         def call_api(os_id):
             return self.test_client.get(
-                endpoint.replace("<string:operating_system_id>", os_id),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                endpoint.replace("<string:operating_system_id>", str(os_id)),
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
@@ -105,7 +109,7 @@ class OperatingSystemsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_os_mock.assert_called_once_with(mock_os._id)
+            get_os_mock.assert_called_once_with(str(mock_os._id))
 
         def does_not_find_an_operating_system_and_returns_an_error():
             # given
@@ -139,9 +143,11 @@ class OperatingSystemsTestCase(UnitTest):
 
         def call_api(os_id, body):
             return self.test_client.patch(
-                endpoint.replace("<string:operating_system_id>", os_id),
+                endpoint.replace("<string:operating_system_id>", str(os_id)),
                 data=json.dumps(body),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
@@ -162,7 +168,10 @@ class OperatingSystemsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            patch_os_mock.assert_called_once_with(mock_os._id, expected_input)
+            patch_os_mock.assert_called_once_with(
+                str(mock_os._id),
+                expected_input
+            )
 
         def fails_to_patch_a_nonexistent_operating_system():
             # given
@@ -180,12 +189,15 @@ class OperatingSystemsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 404)
-            patch_os_mock.assert_called_once_with(mock_id, OperatingSystemPatch(name='Nonexistent OS'))
+            patch_os_mock.assert_called_once_with(
+                str(mock_id),
+                OperatingSystemPatch(name='Nonexistent OS')
+            )
 
         for test in [patches_and_returns_the_operating_system, fails_to_patch_a_nonexistent_operating_system]:
             with self.subTest(test.__name__):
                 test()
-                patch_os_mock.reset_mock()
+            patch_os_mock.reset_mock()
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_delete_operating_system(self, get_models: MagicMock):
@@ -196,8 +208,10 @@ class OperatingSystemsTestCase(UnitTest):
 
         def call_api(os_id):
             return self.test_client.delete(
-                endpoint.replace("<string:operating_system_id>", os_id),
-                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                endpoint.replace("<string:operating_system_id>", str(os_id)),
+                headers={
+                    "Authorization": "Bearer " + create_test_token("", roles=["admin"])
+                },
                 content_type='application/json'
             )
 
@@ -217,7 +231,7 @@ class OperatingSystemsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            delete_os_mock.assert_called_once_with(mock_os._id)
+            delete_os_mock.assert_called_once_with(str(mock_os._id))
 
         def fails_to_delete_a_nonexistent_operating_system():
             # given

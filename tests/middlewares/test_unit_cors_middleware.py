@@ -47,7 +47,6 @@ class CORSMiddlewareTestCase(UnitTest):
 
             # then
             self.assertTrue(callable(handler))
-            print(result.headers)
 
             self.assertEqual(
                 result.headers.get("Access-Control-Allow-Origin"),

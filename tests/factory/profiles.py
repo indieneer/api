@@ -1,8 +1,8 @@
-from app.services import ServicesExtension
+from bson import ObjectId
+
 from app.models import ModelsExtension
 from app.models.profiles import ProfileCreate
-from config.constants import AUTH0_ROLES, Auth0Role
-import time
+from app.services import ServicesExtension
 
 
 class ProfilesFactory:
@@ -14,28 +14,36 @@ class ProfilesFactory:
         self.models = models
 
     def cleanup(self, email: str):
-        users = self.services.auth0.client.users
+        auth = self.services.firebase.auth
 
-        search_result = users.list(q=f"email:{email}")
-        if len(search_result['users']) != 0:
-            user = search_result['users'][0]
-            users.delete(user["user_id"])
+        try:
+            user = auth.get_user_by_email(email)
+
+            auth.delete_user(user.uid)
+        except auth.UserNotFoundError:
+            # Intentionally skip error if a user does not exist
+            pass
+        except Exception as error:
+            raise error
 
         db_profile = self.models.profiles.find_by_email(email)
         if db_profile is not None:
-            self.models.profiles.delete(str(db_profile._id))
+            try:
+                self.delete_db_profile(str(db_profile._id))
+            except BaseException:
+                # Intentionally skip error
+                pass
 
     def create(self, input: ProfileCreate):
         self.cleanup(input.email)
-        time.sleep(2)   # Temporary fix for free plan
+
         profile = self.models.profiles.create(input)
 
         return profile, lambda: self.cleanup(profile.email)
 
-    def create_admin(self, input: ProfileCreate):
-        profile, cleanup = self.create(input)
+    def delete_db_profile(self, profile_id: str):
+        model = self.models.profiles
 
-        users = self.services.auth0.client.users
-        users.add_roles(profile.idp_id, [AUTH0_ROLES[Auth0Role.Admin.value]])
-
-        return profile, cleanup
+        model.db.connection[model.collection].find_one_and_delete(
+            {"_id": ObjectId(profile_id)},
+        )

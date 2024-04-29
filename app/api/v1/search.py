@@ -11,9 +11,17 @@ search_controller = Blueprint('search', __name__, url_prefix='/search')
 @search_controller.route('/', methods=["GET"])
 def search():
     """
-    Executes a search query on the products collection, applying pagination and retrieving additional details.
+    Execute a search query on the products collection with pagination and aggregation.
 
-    :return: A list of matching products along with the pagination metadata.
+    This endpoint performs a search operation on the products collection based on a query parameter.
+    It supports pagination and applies an aggregation pipeline for retrieving product details along with their associated genres.
+    The search is case-insensitive and matches any part of the product name.
+    Pagination details such as page number, limit per page, and total count are included in the response metadata.
+
+    :param int page: The page number for pagination, defaults to 1 if not specified.
+    :param str query: The search query string, defaults to an empty string if not specified.
+    :param int limit: The number of items per page, defaults to 15 if not specified.
+    :return: A dictionary containing the list of matching products and pagination metadata.
     :rtype: dict
     """
 
@@ -38,17 +46,47 @@ def search():
                     {
                         '$lookup': {
                             'from': 'tags',
-                            'localField': 'genres',
-                            'foreignField': '_id',
+                            'let': {'genreIds': '$genres'},
+                            'pipeline': [
+                                {'$match': {'$expr': {'$in': ['$_id', '$$genreIds']}}},
+                                {'$project': {'name': 1, '_id': 0}}
+                            ],
                             'as': 'genres'
                         }
                     },
-                    {'$unset': 'genres._id'}
+                    {
+                        '$lookup': {
+                            'from': 'tags',
+                            'let': {'categoryIds': '$categories'},
+                            'pipeline': [
+                                {'$match': {'$expr': {'$in': ['$_id', '$$categoryIds']}}},
+                                {'$project': {'name': 1, '_id': 0}}
+                            ],
+                            'as': 'categories'
+                        }
+                    },
+                    {
+                        '$addFields': {
+                            'genres': {
+                                '$reduce': {
+                                    'input': '$genres',
+                                    'initialValue': [],
+                                    'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                                }
+                            },
+                            'categories': {
+                                '$reduce': {
+                                    'input': '$categories',
+                                    'initialValue': [],
+                                    'in': {'$concatArrays': ['$$value', ['$$this.name']]}
+                                }
+                            }
+                        }
+                    }
                 ],
-                # Take out of facet when problems start
                 'count': [{'$count': "count"}]
             }
-        },
+        }
     ]
 
     result = (*products.aggregate(aggregation_pipeline),)

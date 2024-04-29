@@ -1,4 +1,4 @@
-from app.models.products import ProductsModel, ProductPatch
+from app.models.products import ProductPatch, ProductsModel
 from tests.integration_test import IntegrationTest
 
 
@@ -22,7 +22,7 @@ class ProductsModelTestCase(IntegrationTest):
         product = self.fixtures.product.clone()
 
         # when
-        created_product = self.models.products.create(product)
+        created_product = self.models.products.put(product)
         self.addCleanup(lambda: self.factory.products.cleanup(product._id))
 
         # then

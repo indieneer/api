@@ -11,7 +11,7 @@ class HealthTestCase(IntegrationTest):
         expected = {
             "status": "ok",
             "data": {
-                "db": {"ok": 1},
+                "db": 1.0,
                 "env": "test",
                 "version": "0.0.1"
             }

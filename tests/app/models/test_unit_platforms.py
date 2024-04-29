@@ -6,6 +6,8 @@ from slugify import slugify
 
 from app.models.exceptions import NotFoundException
 from app.models.platforms import PlatformsModel, PlatformCreate, Platform, PlatformPatch
+
+
 from tests import UnitTest
 
 # TODO: Create a separate fixtures entity for unit tests

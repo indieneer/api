@@ -1,11 +1,11 @@
 import json
+
 from tests import IntegrationTest
 
 
 class LoginsTestCase(IntegrationTest):
 
     def test_logins(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
         # given
         user = self.fixtures.regular_user
 
@@ -20,12 +20,12 @@ class LoginsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
+        # TODO: improve checks in tests
         self.assertEqual(type(response_json["data"]), dict)
         self.assertEqual(
-            len(response_json["data"]["access_token"].split(".")), 3)
+            len(response_json["data"]["id_token"].split(".")), 3)
 
     def test_wrong_password(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
         # given
         user = self.fixtures.regular_user
 
@@ -39,6 +39,5 @@ class LoginsTestCase(IntegrationTest):
         response_json = response.get_json()
 
         # then
-        self.assertEqual(
-            response_json, {'status': 'error', 'error': 'Wrong email or password.'})
+        self.assertEqual(response_json, {'status': 'error', 'error': 'Wrong email or password.'})
         self.assertEqual(response.status_code, 403)

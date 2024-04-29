@@ -163,7 +163,7 @@ class CustomTextTestResult(unittest.runner.TextTestResult):
         subtests_failed_count = 0
         for result in self.results.values():
             total_count += 1
-            if result["status"] != "PASS":
+            if result.get("status") != "PASS":
                 failed_count += 1
             
             for subtest in result.get("subtests", []):

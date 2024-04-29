@@ -1,31 +1,26 @@
 from flask import Blueprint, request, g, current_app
 
 from app.middlewares import requires_auth
+from config import app_config
 from lib.http_utils import respond_error, respond_success
 
 from app.models import get_models, exceptions as models_exceptions
-from app.models.profiles import Profile, ProfileCreate, ProfilePatch
+from app.models.profiles import Profile, ProfileCreate
 
 profiles_controller = Blueprint('profiles', __name__, url_prefix='/profiles')
-
-# Available fields for a profile object
-PROFILE_FIELDS = [
-    "email",
-    "password",
-    "name",
-    "nickname",
-    "date_of_birth"
-]
 
 
 @profiles_controller.route('/<string:profile_id>', methods=["GET"])
 def get_profile(profile_id: str):
     """
-    Retrieve a profile by its ID.
+    Retrieve a user profile by its ID.
 
-    :param str profile_id: The ID of the profile to retrieve.
-    :return: The requested profile in JSON format.
+    This endpoint fetches the details of a user profile from the database, identified by the profile_id.
+    The function raises an exception if the profile is not found.
+
+    :param str profile_id: The unique identifier of the profile to be retrieved.
     :raises NotFoundException: If the profile with the given ID does not exist.
+    :return: The requested profile in JSON format.
     :rtype: dict
     """
 
@@ -41,22 +36,28 @@ def get_profile(profile_id: str):
 @profiles_controller.route('/', methods=["POST"])
 def create_profile():
     """
-    Create a new profile.
+    Create a new user profile.
 
-    :return: The created profile in JSON format.
+    This endpoint is responsible for creating a new user profile.
+    It expects a JSON payload containing the necessary profile information, specifically 'email' and 'password'.
+    The function validates the incoming data and returns an error response if the validation fails.
+
+    :return: The created profile in JSON format along with a status code indicating successful creation.
     :rtype: dict
     :status 201: Profile created successfully.
     """
 
-    profile_model = get_models(current_app).profiles
     data = request.get_json()
+    profile_model = get_models(current_app).profiles
 
-    if data is None or not all(key in data for key in ('email', 'password')):
+    if data is None or not all(key in data and len(data[key]) > 0 for key in ('email', 'password', 'nickname')):
         return respond_error("Bad Request.", 400)
 
     profile_data = ProfileCreate(
         email=data.get("email"),
-        password=data.get("password")
+        password=data.get("password"),
+        nickname=data.get("nickname"),
+        email_verified=False
     )
 
     profile = profile_model.create(profile_data)
@@ -67,64 +68,31 @@ def create_profile():
 @profiles_controller.route('/<string:profile_id>', methods=["PATCH"])
 @requires_auth
 def update_profile(profile_id: str):
-    """
-    Update a user profile.
-
-    This endpoint allows for the partial update of a user profile. Only the owner of the
-    profile is allowed to make updates.
-
-    :param str profile_id: The ID of the profile to be updated.
-    :raises NotFoundException: If the profile was not found.
-    :return: The updated profile or an error message.
-    :rtype: dict
-    """
-
-    invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
-
-    if invoker_id != profile_id:
-        raise models_exceptions.ForbiddenException
-
-    data = request.get_json()
-
-    # Validate the request data
-    if not data:
-        raise
-
-    for key in data:
-        if key not in PROFILE_FIELDS:
-            return respond_error(f'The key "{key}" is not allowed.', 422)
-
-    profiles_model = get_models(current_app).profiles
-    updated = profiles_model.patch(profile_id, ProfilePatch(**data))
-
-    if updated is None:
-        raise models_exceptions.NotFoundException(Profile.__name__)
-
-    return respond_success(updated.to_json())
+    raise Exception("Not implemented")
 
 
-@profiles_controller.route('/<string:user_id>', methods=["DELETE"])
+@profiles_controller.route('/<string:profile_id>', methods=["DELETE"])
 @requires_auth
-def delete_profile(user_id: str):
+def delete_profile(profile_id: str):
     """
     Delete a user's profile.
 
     The user profile is deleted based on the provided user ID.
     The operation is only allowed if the invoker's ID matches the provided user ID.
 
-    :param str user_id: The ID of the user whose profile is to be deleted.
+    :param str profile_id: The ID of the user whose profile is to be deleted.
     :raises ForbiddenException: If the invoker's ID does not match the user ID.
     :raises NotFoundException: If a profile with the provided user ID is not found.
     :return: A success response with acknowledgment if the profile is deleted successfully.
     :rtype: dict
     """
-    invoker_id = g.get("payload").get('https://indieneer.com/profile_id')
+    invoker_id = g.get("payload").get(f'{app_config["FB_NAMESPACE"]}/profile_id')
 
-    if invoker_id != user_id:
+    if invoker_id != profile_id:
         raise models_exceptions.ForbiddenException
 
     profiles = get_models(current_app).profiles
-    profile = profiles.delete(user_id)
+    profile = profiles.delete(profile_id)
 
     if profile is None:
         raise models_exceptions.NotFoundException(Profile.__name__)
@@ -136,11 +104,12 @@ def delete_profile(user_id: str):
 @requires_auth
 def get_authenticated_profile():
     """
-    Retrieve the profile of a user that is currently authenticated.
+    Retrieve the profile of the currently authenticated user.
 
     This endpoint requires authentication and returns the profile of the currently authenticated user.
+    The function raises an exception if the profile is not found or if there is an issue with the authentication payload.
 
-    :raises: NotFoundException if the profile is not found.
+    :raises NotFoundException: If the profile is not found or the authentication payload is invalid.
     :return: A dictionary representing the user's profile.
     :rtype: dict
     """
@@ -153,7 +122,7 @@ def get_authenticated_profile():
         raise
 
     # Extracting the profile ID from the payload
-    profile_id = payload.get('https://indieneer.com/profile_id')
+    profile_id = g.get("payload").get(f'{app_config["FB_NAMESPACE"]}/profile_id')
 
     if profile_id is None:
         raise models_exceptions.NotFoundException(Profile.__name__)

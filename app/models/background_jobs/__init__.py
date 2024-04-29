@@ -1,16 +1,18 @@
 import datetime
-from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from bson import ObjectId
 from pymongo import ReturnDocument
 
 from app.models.base import BaseDocument, Serializable
 from app.services import Database
+
 from .event import Event, EventCreate
 from .metadata import BaseMetadata, JobMetadata
 from .status_type import StatusType
-from .validator import validate_job_type, validate_status, validate_event_type
+from .validator import validate_event_type, validate_job_type, validate_status
 
 
 class BackgroundJob(BaseDocument):
@@ -55,6 +57,11 @@ class BackgroundJobCreate(Serializable):
 class BackgroundJobPatch(Serializable):
     status: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+
+
+class BackgroundJobsPermissions(Enum):
+    Read = "background_jobs:read"
+    Write = "background_jobs:write"
 
 
 class BackgroundJobsModel:
@@ -104,7 +111,8 @@ class BackgroundJobsModel:
 
         background_job = BackgroundJob(**input_data.to_bson())
 
-        self.db.connection[self.collection].insert_one(background_job.to_bson())
+        self.db.connection[self.collection].insert_one(
+            background_job.to_bson())
 
         return background_job
 
@@ -118,17 +126,19 @@ class BackgroundJobsModel:
         :return: The updated background job data.
         :rtype: BackgroundJob
         """
-        background_job = self.db.connection[self.collection].find_one({"_id": ObjectId(background_job_id)})
+        background_job = self.db.connection[self.collection].find_one(
+            {"_id": ObjectId(background_job_id)})
         if background_job is None:
             return None
 
-        payload = {key: value for key, value in input_data.to_json().items() if value is not None}
+        payload = {key: value for key,
+                   value in input_data.to_json().items() if value is not None}
         if payload.get("metadata") is not None:
             for key, value in background_job["metadata"].items():
                 if not input_data.to_json()["metadata"].get(key):
                     payload["metadata"][key] = value
             payload["metadata"] = JobMetadata.create(background_job["type"],
-                                                     **payload["metadata"]).to_json()
+                                                     **payload["metadata"]).to_bson()
 
         if payload.get("status") is not None:
             validate_status(payload["status"])
@@ -147,14 +157,15 @@ class BackgroundJobsModel:
         :return: The created background job data with a new ID.
         :rtype: BackgroundJob
         """
-        background_job_data = input_data.to_json()
+        background_job_data = input_data.to_bson()
         validate_job_type(background_job_data["type"])
         validate_status(background_job_data["status"])
         for event in background_job_data["events"]:
             validate_event_type(event["type"])
         del background_job_data["_id"]
 
-        inserted_id = self.db.connection[self.collection].insert_one(background_job_data).inserted_id
+        inserted_id = self.db.connection[self.collection].insert_one(
+            background_job_data).inserted_id
         background_job_data["_id"] = inserted_id
 
         return BackgroundJob(**background_job_data)
@@ -187,7 +198,7 @@ class BackgroundJobsModel:
 
         updated = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(background_job_id)},
-            {"$push": {"events": Event(**event.to_json()).to_json()}},
+            {"$push": {"events": Event(**event.to_json()).to_bson()}},
             return_document=ReturnDocument.AFTER
         )
 

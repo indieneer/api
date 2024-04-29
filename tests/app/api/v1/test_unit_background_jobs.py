@@ -1,13 +1,16 @@
 import json
 from unittest.mock import MagicMock, patch
 
+from bson import ObjectId
+
 from app.api.exceptions import BadRequestException
 from app.api.v1.background_jobs import get_background_job, get_all_background_jobs, create_background_job, \
     create_background_job_event, update_background_job
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate, Event
 from app.models.exceptions import ForbiddenException, NotFoundException
+from config.constants import FirebaseRole
 from tests import UnitTest
-from tests.utils.jwt import create_test_token
+from tests.utils.jwt import TEST_AUTH_NAMESPACE, create_test_token
 
 
 class BackgroundJobsTestCase(UnitTest):
@@ -18,21 +21,27 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_background_job_mock = get_models.return_value.background_jobs.get
 
+        profile_id = str(ObjectId())
+
         def call_api(background_job_id: str):
-            token = create_test_token(profile_id="1", idp_id="service_test@clients")
+            token = create_test_token(
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.get(
-                endpoint.replace("<string:background_job_id>", str(background_job_id)),
+                endpoint.replace("<string:background_job_id>",
+                                 str(background_job_id)),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
             )
 
-        def finds_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def finds_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_response = {
                 "status": "ok",
@@ -45,7 +54,9 @@ class BackgroundJobsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_background_job_mock.assert_called_once_with(mock_background_job._id)
+            get_background_job_mock.assert_called_once_with(
+                str(mock_background_job._id)
+            )
 
         def does_not_find_a_background_job_and_returns_an_error():
             # given
@@ -85,7 +96,8 @@ class BackgroundJobsTestCase(UnitTest):
                 # then
                 self.assertEqual(response.get_json(), expected_response)
                 self.assertEqual(response.status_code, 403)
-                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                get_background_job_mock.assert_called_once_with(
+                    str(mock_background_job._id))
 
         tests = [
             finds_and_returns_a_background_job,
@@ -105,8 +117,11 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_all_background_jobs_mock = get_models.return_value.background_jobs.get_all
 
+        profile_id = str(ObjectId())
+
         def call_api():
-            token = create_test_token(profile_id="1", idp_id="service_test@clients")
+            token = create_test_token(
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.get(
                 endpoint,
@@ -118,10 +133,10 @@ class BackgroundJobsTestCase(UnitTest):
             # given
             mock_background_jobs = [
                 BackgroundJob(
-                    status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                    status="running", created_by=profile_id, metadata={"match_query": "test"},
                     type="es_seeder"),
                 BackgroundJob(
-                    status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                    status="running", created_by=profile_id, metadata={"match_query": "test"},
                     type="es_seeder")
             ]
             get_all_background_jobs_mock.return_value = mock_background_jobs
@@ -154,10 +169,12 @@ class BackgroundJobsTestCase(UnitTest):
         self.app.route(endpoint, methods=["POST"])(create_background_job)
 
         create_background_job_mock = get_models.return_value.background_jobs.create
-        service_account_id = "service_test@clients"
+
+        profile_id = str(ObjectId())
 
         def call_api(body):
-            token = create_test_token(profile_id="1", idp_id=service_account_id)
+            token = create_test_token(
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.post(
                 endpoint,
@@ -166,10 +183,11 @@ class BackgroundJobsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def creates_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def creates_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             expected_input = BackgroundJobCreate(
-                type="es_seeder", metadata={"match_query": "test"}, created_by=service_account_id
+                type="es_seeder", metadata={"match_query": "test"}, created_by=profile_id
             )
             mock_background_job = BackgroundJob(
                 status="running",
@@ -178,6 +196,7 @@ class BackgroundJobsTestCase(UnitTest):
                 type=expected_input.type
             )
             create_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_response = {
                 "status": "ok",
@@ -219,8 +238,10 @@ class BackgroundJobsTestCase(UnitTest):
                 "error": "Unsupported job type",
                 "status": "error"
             }
-            expected_input = BackgroundJobCreate(type="unsupported_type", metadata={}, created_by=service_account_id)
-            create_background_job_mock.side_effect = BadRequestException(expected_response["error"])
+            expected_input = BackgroundJobCreate(
+                type="unsupported_type", metadata={}, created_by=profile_id)
+            create_background_job_mock.side_effect = BadRequestException(
+                expected_response["error"])
 
             # when
             with self.assertRaises(BadRequestException):
@@ -232,7 +253,8 @@ class BackgroundJobsTestCase(UnitTest):
                 # then
                 self.assertEqual(response.get_json(), expected_response)
                 self.assertEqual(response.status_code, 400)
-                create_background_job_mock.assert_called_once_with(expected_input)
+                create_background_job_mock.assert_called_once_with(
+                    expected_input)
 
         tests = [
             creates_and_returns_a_background_job,
@@ -253,23 +275,29 @@ class BackgroundJobsTestCase(UnitTest):
         get_background_job_mock = get_models.return_value.background_jobs.get
         patch_background_job_mock = get_models.return_value.background_jobs.patch
 
+        profile_id = str(ObjectId())
+
         def call_api(background_job_id: str, body: dict):
-            token = create_test_token(profile_id="1", idp_id="service_test@clients")
+            token = create_test_token(
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.patch(
-                endpoint.replace("<string:background_job_id>", background_job_id),
+                endpoint.replace("<string:background_job_id>",
+                                 background_job_id),
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
             )
 
-        def patches_and_returns_a_background_job():
+        @patch("app.api.v1.background_jobs.app_config")
+        def patches_and_returns_a_background_job(app_config_mock: MagicMock):
             # given
             mock_background_job = BackgroundJob(
-                status="running", created_by="service_test@clients", metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
             get_background_job_mock.return_value = mock_background_job
             patch_background_job_mock.return_value = mock_background_job
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             expected_input = BackgroundJobPatch(
                 status="running"
@@ -287,8 +315,13 @@ class BackgroundJobsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            get_background_job_mock.assert_called_once_with(mock_background_job._id)
-            patch_background_job_mock.assert_called_once_with(mock_background_job._id, expected_input)
+            get_background_job_mock.assert_called_once_with(
+                str(mock_background_job._id)
+            )
+            patch_background_job_mock.assert_called_once_with(
+                str(mock_background_job._id),
+                expected_input
+            )
 
         def fails_to_update_a_background_job_when_no_valid_fields_are_present():
             # given
@@ -339,12 +372,14 @@ class BackgroundJobsTestCase(UnitTest):
 
             # when
             with self.assertRaises(ForbiddenException):
-                response = call_api(str(mock_background_job._id), {"status": "running"})
+                response = call_api(str(mock_background_job._id), {
+                                    "status": "running"})
 
                 # then
                 self.assertEqual(response.get_json(), expected_response)
                 self.assertEqual(response.status_code, 403)
-                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                get_background_job_mock.assert_called_once_with(
+                    str(mock_background_job._id))
                 patch_background_job_mock.assert_not_called()
 
         tests = [
@@ -367,29 +402,35 @@ class BackgroundJobsTestCase(UnitTest):
 
         get_background_job_mock = get_models.return_value.background_jobs.get
         add_background_job_event_mock = get_models.return_value.background_jobs.add_event
-        service_account_id = "service_test@clients"
+
+        profile_id = str(ObjectId())
 
         def call_api(background_job_id: str, body: dict):
-            token = create_test_token(profile_id="1", idp_id=service_account_id)
+            token = create_test_token(
+                profile_id=profile_id, idp_id=f"service|{profile_id}", roles=[FirebaseRole.Service.value])
 
             return self.test_client.post(
-                endpoint.replace("<string:background_job_id>", background_job_id),
+                endpoint.replace("<string:background_job_id>",
+                                 background_job_id),
                 data=json.dumps(body),
                 headers={"Authorization": f"Bearer {token}"},
                 content_type='application/json'
             )
 
-        def creates_and_returns_a_background_job_event():
+        @patch("app.api.v1.background_jobs.app_config")
+        def creates_and_returns_a_background_job_event(app_config_mock: MagicMock):
             # given
             mock_event = Event(message="test", type="info")
             mock_background_job = BackgroundJob(
-                status="running", created_by=service_account_id, metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder", events=[mock_event])
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             get_background_job_mock.return_value = mock_background_job
             add_background_job_event_mock.return_value = mock_background_job
 
-            expected_input = EventCreate(message=mock_event.message, type=mock_event.type)
+            expected_input = EventCreate(
+                message=mock_event.message, type=mock_event.type)
             expected_response = {
                 "status": "ok",
                 "data": mock_background_job.to_json()
@@ -404,7 +445,10 @@ class BackgroundJobsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            add_background_job_event_mock.assert_called_once_with(mock_background_job._id, expected_input)
+            add_background_job_event_mock.assert_called_once_with(
+                str(mock_background_job._id),
+                expected_input
+            )
 
         def fails_to_create_a_background_job_event_when_not_all_required_fields_are_present():
             # given
@@ -449,7 +493,8 @@ class BackgroundJobsTestCase(UnitTest):
                 # then
                 self.assertEqual(response.get_json(), expected_response)
                 self.assertEqual(response.status_code, 403)
-                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
+                get_background_job_mock.assert_called_once_with(
+                    str(mock_background_job._id))
                 add_background_job_event_mock.assert_not_called()
 
         def fails_to_create_a_background_job_event_when_background_job_does_not_exist():
@@ -475,12 +520,15 @@ class BackgroundJobsTestCase(UnitTest):
                 get_background_job_mock.assert_called_once_with(mock_id)
                 add_background_job_event_mock.assert_not_called()
 
-        def fails_to_create_a_background_job_event_when_event_type_is_not_supported():
+        @patch("app.api.v1.background_jobs.app_config")
+        def fails_to_create_a_background_job_event_when_event_type_is_not_supported(app_config_mock: MagicMock):
             # given
-            mock_event_create = EventCreate(type="unsupported_type", message="test")
+            mock_event_create = EventCreate(
+                type="unsupported_type", message="test")
             mock_background_job = BackgroundJob(
-                status="running", created_by=service_account_id, metadata={"match_query": "test"},
+                status="running", created_by=profile_id, metadata={"match_query": "test"},
                 type="es_seeder")
+            app_config_mock.__getitem__.side_effect = lambda key: TEST_AUTH_NAMESPACE if key == 'FB_NAMESPACE' else None
 
             get_background_job_mock.return_value = mock_background_job
 
@@ -488,7 +536,8 @@ class BackgroundJobsTestCase(UnitTest):
                 "error": "Unsupported event type",
                 "status": "error"
             }
-            add_background_job_event_mock.side_effect = BadRequestException(expected_response["error"])
+            add_background_job_event_mock.side_effect = BadRequestException(
+                expected_response["error"])
 
             # when
             with self.assertRaises(BadRequestException):
@@ -499,8 +548,10 @@ class BackgroundJobsTestCase(UnitTest):
                 # then
                 self.assertEqual(response.get_json(), expected_response)
                 self.assertEqual(response.status_code, 400)
-                get_background_job_mock.assert_called_once_with(str(mock_background_job._id))
-                add_background_job_event_mock.assert_called_once_with(str(mock_background_job._id), mock_event_create)
+                get_background_job_mock.assert_called_once_with(
+                    str(mock_background_job._id))
+                add_background_job_event_mock.assert_called_once_with(
+                    str(mock_background_job._id), mock_event_create)
 
         tests = [
             creates_and_returns_a_background_job_event,

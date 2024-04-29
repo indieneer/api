@@ -1,8 +1,9 @@
-from auth0 import Auth0Error
-from flask import Blueprint, request, current_app
 
-from lib.http_utils import respond_success, respond_error
+from flask import Blueprint, current_app, request
+
 from app.models import get_models
+from app.services.firebase.exceptions import InvalidLoginCredentialsException
+from lib.http_utils import respond_error, respond_success
 
 logins_controller = Blueprint('logins', __name__, url_prefix='/logins')
 
@@ -10,7 +11,7 @@ logins_controller = Blueprint('logins', __name__, url_prefix='/logins')
 @logins_controller.route('/', methods=["POST"])
 def logins():
     """
-    Authenticate a user and provide JWT token(s) via Auth0.
+    Authenticate a user and provide JWT token(s) via Firebase.
 
     This endpoint is used to authenticate the user by email and password, and if successful,
     returns the authentication token(s).
@@ -30,24 +31,25 @@ def logins():
         return respond_error("Email and password are required.", 400)
 
     try:
-        tokens = logins_model.login(email, password)
-    except Auth0Error as error:
-        return respond_error(error.message, error.status_code)
+        identity = logins_model.login(email, password)
 
-    return respond_success(tokens)
+        return respond_success(identity.to_json())
+    except InvalidLoginCredentialsException as error:
+        return respond_error('Wrong email or password.', 403)
+    except Exception as error:
+        return respond_error(str(error), 500)
 
 
 @logins_controller.route('/m2m', methods=["POST"])
 def logins_m2m():
     """
-    Perform a machine-to-machine (M2M) login.
+    Authenticate a user and provide JWT token(s) via Firebase.
 
-    This endpoint handles POST requests to facilitate M2M login using client credentials.
-    It requires a client ID and client secret, validates them, and returns appropriate tokens.
+    This endpoint is used to authenticate the user by email and password, and if successful,
+    returns the authentication token(s).
 
-    :raises: Auth0Error if authentication fails.
-    :return: A dictionary containing the authentication tokens.
-    :rtype: dict
+    :return: Authentication token(s) if successful, otherwise an error message and status code.
+    :rtype: dict or tuple
     """
     logins_model = get_models(current_app).logins
 
@@ -56,12 +58,42 @@ def logins_m2m():
     client_id = data.get("client_id")
     client_secret = data.get("client_secret")
 
+    # Input validation
     if not client_id or not client_secret:
-        return respond_error("Client ID and client secret are required.", 400)
+        return respond_error("Client id and client secret are required.", 400)
 
     try:
-        tokens = logins_model.login_m2m(client_id, client_secret)
-    except Auth0Error as error:
-        return respond_error(error.message, error.status_code)
+        token = logins_model.login_m2m(client_id, client_secret)
+        if token is None:
+            return respond_error("Client id or client secret is incorrect", 401)
 
-    return respond_success(tokens)
+        return respond_success(token.to_json())
+    except Exception as error:
+        return respond_error(str(error), 500)
+
+
+@logins_controller.route('/refresh_tokens', methods=["POST"])
+def exchange_refresh_token():
+    """
+    Authenticate a user and provide JWT token(s) via Firebase.
+
+    This endpoint is used to authenticate the user by email and password, and if successful,
+    returns the authentication token(s).
+
+    :return: Authentication token(s) if successful, otherwise an error message and status code.
+    :rtype: dict or tuple
+    """
+    logins_model = get_models(current_app).logins
+
+    data = request.get_json()
+    refresh_token = data.get("refresh_token")
+
+    if not refresh_token:
+        return respond_error("Refresh token is missing.", 400)
+
+    try:
+        identity = logins_model.exchange_refresh_token(refresh_token)
+
+        return respond_success(identity.to_json())
+    except Exception as error:
+        return respond_error(str(error), 500)

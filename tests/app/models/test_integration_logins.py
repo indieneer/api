@@ -1,38 +1,74 @@
-from app.models.logins import LoginsModel
-from tests.integration_test import IntegrationTest
 import jwt
+
+from app.models.logins import LoginsModel
+from app.services.firebase.exceptions import InvalidLoginCredentialsException
+from config import app_config
+from config.constants import FirebaseRole
+from lib import constants
+from tests.integration_test import IntegrationTest
 
 
 class LoginsModelTestCase(IntegrationTest):
 
-    def test_login_user(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
-        logins_model = LoginsModel(auth0=self.services.auth0)
+    def test_login(self):
+        # given
+        logins_model = LoginsModel(
+            firebase=self.services.firebase,
+            profiles=self.models.profiles,
+            service_profiles=self.models.service_profiles
+        )
 
-        email = "pork@gmail.com"
-        password = "126655443"
+        def logins_as_a_regular_user():
+            # when
+            result = logins_model.login(self.fixtures.regular_user.email, constants.strong_password)
 
-        result = logins_model.login(email, password)
+            access_token = result.id_token
+            # TODO: replace with firebase token validator
+            decoded = jwt.decode(access_token, options={"verify_signature": False})
 
-        access_token = result["access_token"]
+            # then
+            self.assertEqual(
+                decoded[f'{app_config["FB_NAMESPACE"]}/profile_id'],
+                str(self.fixtures.regular_user._id)
+            )
+            self.assertIn(
+                FirebaseRole.User.value,
+                decoded[f'{app_config["FB_NAMESPACE"]}/roles']
+            )
 
-        decoded = jwt.decode(access_token, options={"verify_signature": False})
+        def logins_as_an_admin_user():
+            # when
+            result = logins_model.login(self.fixtures.admin_user.email, constants.strong_password)
 
-        self.assertIn('https://indieneer.com/profile_id', decoded.keys())
-        self.assertNotIn("Admin", decoded['https://indieneer.com/roles'])
+            access_token = result.id_token
+            # TODO: replace with firebase token validator
+            decoded = jwt.decode(access_token, options={"verify_signature": False})
 
-    def test_login_admin(self):
-        self.skipTest("Temporary disabled due to Auth0 quota limits")
-        logins_model = LoginsModel(auth0=self.services.auth0)
+            # then
+            self.assertEqual(
+                decoded[f'{app_config["FB_NAMESPACE"]}/profile_id'],
+                str(self.fixtures.admin_user._id)
+            )
+            self.assertIn(
+                FirebaseRole.Admin.value,
+                decoded[f'{app_config["FB_NAMESPACE"]}/roles']
+            )
 
-        email = "john.pork+admin@john.pork"
-        password = "JohnPork@1"
+        def fails_to_login_with_not_existing_email():
+            # when
+            with self.assertRaises(InvalidLoginCredentialsException):
+                logins_model.login("abcdefghi@not.existing", constants.strong_password)
 
-        result = logins_model.login(email, password)
+        def fails_to_login_with_wrong_password():
+            # when
+            with self.assertRaises(InvalidLoginCredentialsException):
+                logins_model.login(self.fixtures.admin_user.email, constants.weak_password)
 
-        access_token = result["access_token"]
+        tests = [
+            logins_as_a_regular_user,
+            logins_as_an_admin_user,
+            fails_to_login_with_not_existing_email,
+            fails_to_login_with_wrong_password,
+        ]
 
-        decoded = jwt.decode(access_token, options={"verify_signature": False})
-
-        self.assertIn('https://indieneer.com/profile_id', decoded.keys())
-        self.assertIn("Admin", decoded['https://indieneer.com/roles'])
+        self.run_subtests(tests)

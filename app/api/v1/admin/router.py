@@ -5,6 +5,11 @@ from .operating_systems import operating_systems_controller
 from .profiles import profiles_controller
 from .products import products_controller
 from .tags import tags_controller
+from .service_profiles import service_profiles_controller
+from .affiliates import affiliates_controller
+from .affiliate_reviews import affiliate_reviews_controller
+from .platform_products import platform_products_controller
+from .affiliate_platform_products import affiliate_platform_products_controller
 
 admin_controller = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -12,4 +17,9 @@ admin_controller.register_blueprint(platforms_controller)
 admin_controller.register_blueprint(operating_systems_controller)
 admin_controller.register_blueprint(profiles_controller)
 admin_controller.register_blueprint(products_controller)
+admin_controller.register_blueprint(platform_products_controller)
+admin_controller.register_blueprint(affiliate_platform_products_controller)
 admin_controller.register_blueprint(tags_controller)
+admin_controller.register_blueprint(service_profiles_controller)
+admin_controller.register_blueprint(affiliates_controller)
+admin_controller.register_blueprint(affiliate_reviews_controller)

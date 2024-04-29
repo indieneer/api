@@ -1,11 +1,12 @@
-from typing import Optional
-from bson import ObjectId
 from dataclasses import dataclass
+from typing import Optional
 
+from bson import ObjectId
 from pymongo import ReturnDocument
 
-from app.services import Database
 from app.models.base import BaseDocument, Serializable
+from app.services import Database
+
 from .exceptions import NotFoundException
 
 
@@ -44,13 +45,13 @@ class TagsModel:
         Retrieve a tag based on its ID.
 
         This method searches for a tag in the database using its unique ID.
-        If found, it returns the Tag object corresponding to the tag ID.
+        If the tag is found, it returns the corresponding Tag object; otherwise, it returns None, indicating the tag does not exist.
 
         :param str tag_id: The unique identifier of the tag.
-        :return: A Tag object if the tag is found.
-        :rtype: Tag
-        :raises: NotFoundException if the tag is not found.
+        :return: A Tag object if the tag is found, otherwise None.
+        :rtype: Tag or None
         """
+
         tag = self.db.connection[self.collection].find_one({"_id": ObjectId(tag_id)})
 
         if tag is not None:
@@ -68,6 +69,7 @@ class TagsModel:
         :return: A list of Tag objects representing all the tags in the database.
         :rtype: list[Tag]
         """
+
         tags = [Tag(**item) for item in self.db.connection[self.collection].find()]
 
         return tags if tags else []
@@ -76,27 +78,29 @@ class TagsModel:
         """
         Create a new tag in the database.
 
-        This method creates a new tag based on the provided input data.
-        It first converts the input data into JSON, then creates a Tag object,
-        which is subsequently inserted into the database.
+        This method adds a new tag to the database based on the provided input data.
+        It converts the input data into a Tag object before inserting it into the database.
+        The created Tag object is then returned.
 
-        :param TagCreate input_data: The data for creating the new tag.
-        :return: The created Tag object.
+        :param TagCreate input_data: The data used for creating the new tag.
+        :return: The newly created Tag object.
         :rtype: Tag
         """
-        tag = Tag(**input_data.to_json())
 
+        tag = Tag(**input_data.to_json())
         self.db.connection[self.collection].insert_one(tag.to_bson())
 
         return tag
 
     def put(self, tag: Tag):
         """
-        Create a new tag in the database with a new ID.
+        Create a new tag in the database.
 
-        :param tag: The tag data to be created.
-        :type tag: Tag
-        :return: The created tag data with a new ID.
+        This method adds a new tag to the database using the provided Tag object.
+        The tag is inserted into the database and returned with its new ID.
+
+        :param Tag tag: The Tag object containing data for the new tag.
+        :return: The newly created Tag object with its assigned ID.
         :rtype: Tag
         """
 
@@ -107,15 +111,17 @@ class TagsModel:
         """
         Update a tag in the database based on its ID.
 
-        This method updates the tag specified by the tag ID using the provided input data.
-        It performs a find and update operation in the database and returns the updated tag.
+        This method updates an existing tag, identified by the tag ID, using the provided input data.
+        The tag is located and updated in the database, and the updated Tag object is returned.
+        If the tag is not found, a NotFoundException is raised.
 
         :param str tag_id: The unique identifier of the tag to be updated.
-        :param TagPatch input_data: The data to update the tag with.
-        :return: The updated Tag object.
+        :param TagPatch input_data: The data used to update the tag.
+        :return: The updated Tag object, if the tag is found.
         :rtype: Tag
-        :raises: NotFoundException if the tag is not found.
+        :raises NotFoundException: If the tag with the specified ID is not found.
         """
+
         updated_tag = self.db.connection[self.collection].find_one_and_update(
             {"_id": ObjectId(tag_id)},
             {"$set": input_data.to_json()},
@@ -131,18 +137,19 @@ class TagsModel:
         """
         Delete a tag from the database based on its ID.
 
-        This method finds and deletes the tag specified by the tag ID from the database.
-        If the tag is found and deleted, it returns the deleted Tag object.
+        This method removes a tag from the database using the provided tag ID.
+        If the tag is found and successfully deleted, the method returns the deleted Tag object.
+        If the tag is not found, a NotFoundException is raised.
 
         :param str tag_id: The unique identifier of the tag to be deleted.
-        :return: The deleted Tag object, if found and deleted successfully.
+        :return: The deleted Tag object, if the tag is found and deleted.
         :rtype: Tag
-        :raises: NotFoundException if the tag is not found.
+        :raises NotFoundException: If the tag with the specified ID is not found.
         """
+
         tag = self.db.connection[self.collection].find_one_and_delete({"_id": ObjectId(tag_id)})
 
         if tag is not None:
             return Tag(**tag)
         else:
             raise NotFoundException(Tag.__name__)
-

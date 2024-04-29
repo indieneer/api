@@ -41,37 +41,19 @@ jobs:
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.10.0
         with:
+          mongodb-replica-set: test-rs
           mongodb-version: 7.0
 
-      - name: Restore cached Auth0 tokens
-        id: restore-auth0-cached-tokens
-        uses: actions/cache@v4
-        with:
-          path: ${{ vars.AUTH0_CACHE_DIR }}
-          key: tokens
-
-      - name: Print tokens
-        env:
-          AUTH0_CACHE_DIR: ${{ vars.AUTH0_CACHE_DIR }}
+      - name: Migrate DB
         run: |
-          if [ -f "$AUTH0_CACHE_DIR/tokens" ]; then cat "$AUTH0_CACHE_DIR/tokens"; fi
+          pymongo-migrate migrate -u "${{ secrets.MONGO_URI }}" -c migrations -m migrations
 
       - name: Run tests
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
-          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
-          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_CLIENT_SECRET }}
-          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
-          AUTH0_AUDIENCE: ${{ secrets.AUTH0_AUDIENCE }}
-          AUTH0_NAMESPACE: ${{ secrets.AUTH0_NAMESPACE }}
-          AUTH0_ROLES: ${{ secrets.AUTH0_ROLES }}
-          AUTH0_CACHE_DIR: ${{ vars.AUTH0_CACHE_DIR }}
+          FB_NAMESPACE: ${{ vars.FB_NAMESPACE }}
+          FB_API_KEY: ${{ secrets.FB_API_KEY }}
+          FB_SERVICE_ACCOUNT: ${{ secrets.FB_SERVICE_ACCOUNT }}
+          FB_M2M_SECRET_KEY: ${{ vars.FB_M2M_SECRET_KEY }}
         run: |
           python -m testicles.cli -t integration
-
-      - name: Cache Auth0 tokens
-        id: cache-auth0-tokens
-        uses: actions/cache@v4
-        with:
-          path: ${{ vars.AUTH0_CACHE_DIR }}
-          key: tokens
