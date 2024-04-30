@@ -5,7 +5,6 @@ import re
 from lib.http_utils import respond_success
 from app.services import get_services
 
-
 search_controller = Blueprint('search', __name__, url_prefix='/search')
 
 
@@ -107,3 +106,5 @@ def search():
     }
 
     return respond_success(data, meta=meta)
+
+

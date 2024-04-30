@@ -10,7 +10,4 @@ __pycache__/
 
 .cache
 
-.credentials
-
-get_codebase.py
-full_codebase.txt
+.credentials/
