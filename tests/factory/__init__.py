@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from .background_jobs import BackgroundJobsFactory
+from .comments import CommentsFactory
 from .profiles import ProfilesFactory
 from .products import ProductsFactory
 from .operating_systems import OperatingSystemsFactory
@@ -20,6 +21,7 @@ class Factory:
     affiliate_reviews: AffiliateReviewsFactory
     profiles: ProfilesFactory
     products: ProductsFactory
+    comments: CommentsFactory
     platforms: PlatformsFactory
     platform_products: PlatformProductsFactory
     affiliate_platform_products: AffiliatePlatformProductsFactory
