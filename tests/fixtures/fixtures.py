@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from app.models.background_jobs import BackgroundJob
 from app.models.profiles import Profile
 from app.models.products import Product
-from app.models.comments import Comment
+from app.models.product_comments import ProductComment
 from app.models.service_profiles import ServiceProfile
 from app.models.tags import Tag
 from app.models.platforms import Platform
@@ -22,7 +22,7 @@ class Fixtures:
     regular_user: Profile
     admin_user: Profile
     product: Product
-    comment: Comment
+    product_comment: ProductComment
     platform: Platform
     platform_product: PlatformProduct
     affiliate_platform_product: AffiliatePlatformProduct

@@ -1,73 +1,75 @@
-from app.models.comments import CommentsModel, CommentPatch, CommentCreate
+from bson import ObjectId
+
+from app.models.product_comments import ProductCommentsModel, ProductCommentPatch, ProductCommentCreate
 from tests.integration_test import IntegrationTest
 
 
-class CommentModelTestCase(IntegrationTest):
+class ProductCommentModelTestCase(IntegrationTest):
 
-    def test_get_comment(self):
-        comment_model = CommentsModel(self.services.db)
+    def test_get_product_comment(self):
+        product_comment_model = ProductCommentsModel(self.services.db)
 
         # given
-        comment = self.fixtures.comment
+        product_comment = self.fixtures.product_comment
 
         # when
-        retrieved_comment = comment_model.get(str(comment.product_id), str(comment._id))
+        retrieved_product_comment = product_comment_model.get(str(product_comment._id))
 
         # then
-        self.assertIsNotNone(retrieved_comment)
-        self.assertEqual(comment.text, retrieved_comment.text)
+        self.assertIsNotNone(retrieved_product_comment)
+        self.assertEqual(product_comment.text, retrieved_product_comment.text)
 
-    def test_create_comment(self):
+    def test_create_product_comment(self):
         # given
-        comment = self.fixtures.comment.clone()
+        product_comment = self.fixtures.product_comment.clone()
 
         # when
-        created_comment = self.models.comments.create(str(comment.product_id), comment)
-        self.addCleanup(lambda: self.factory.comments.cleanup(comment._id))
+        created_product_comment = self.models.product_comments.create(str(product_comment.product_id), product_comment)
+        self.addCleanup(lambda: self.factory.product_comments.cleanup(product_comment._id))
 
         # then
-        self.assertIsNotNone(created_comment)
-        self.assertEqual(created_comment.text, comment.text)
+        self.assertIsNotNone(created_product_comment)
+        self.assertEqual(created_product_comment.text, product_comment.text)
 
-    def test_patch_comment(self):
-        comment_model = CommentsModel(self.services.db)
+    def test_patch_product_comment(self):
+        product_comment_model = ProductCommentsModel(self.services.db)
 
         # given
-        comment = self.fixtures.comment.clone()
-        patch_data = CommentPatch(text="Updated comment text")
+        product_comment = self.fixtures.product_comment.clone()
+        patch_data = ProductCommentPatch(text="Updated product comment text")
 
-        created_comment, cleanup = self.factory.comments.create(comment)
+        created_product_comment, cleanup = self.factory.product_comments.create(product_comment)
         self.addCleanup(cleanup)
 
         # when
-        updated_comment = comment_model.patch(str(comment.product_id), str(created_comment._id), patch_data)
+        updated_product_comment = product_comment_model.patch(str(created_product_comment._id), patch_data)
 
         # then
-        self.assertIsNotNone(updated_comment)
-        self.assertEqual(updated_comment.text, "Updated comment text")
+        self.assertIsNotNone(updated_product_comment)
+        self.assertEqual(updated_product_comment.text, "Updated product comment text")
 
-    def test_delete_comment(self):
-        comment_model = CommentsModel(self.services.db)
+    def test_delete_product_comment(self):
+        product_comment_model = ProductCommentsModel(self.services.db)
 
         # given
-        comment, cleanup = self.factory.comments.create(self.fixtures.comment.clone())
+        product_comment, cleanup = self.factory.product_comments.create(self.fixtures.product_comment.clone())
         self.addCleanup(cleanup)
 
         # when
-        self.models.comments.delete(str(comment.product_id), comment._id)
-        retrieved_comment_after_deletion = comment_model.get(str(comment.product_id), str(comment._id))
+        self.models.product_comments.delete(product_comment._id)
+        retrieved_product_comment_after_deletion = product_comment_model.get(product_comment._id)
 
         # then
-        self.assertIsNone(retrieved_comment_after_deletion)
+        self.assertIsNone(retrieved_product_comment_after_deletion)
 
-    def test_get_all_comments(self):
+    def test_get_all_product_comments(self):
         # given
-        comment_model = CommentsModel(self.services.db)
-        product_id = self.factory.comments.create(self.fixtures.comment.clone())[0].product_id
+        product_comment_model = ProductCommentsModel(self.services.db)
+        product_id = self.factory.product_comments.create(self.fixtures.product_comment.clone())[0].product_id
 
         # when
-        all_comments = comment_model.get_all(product_id)
+        all_product_comments = product_comment_model.get_all(product_id)
 
         # then
-        self.assertIsNotNone(all_comments)
-        self.assertGreater(len(all_comments), 0)
+        self.assertIsNotNone(all_product_comments)
+        self.assertGreater(len(all_product_comments), 0)

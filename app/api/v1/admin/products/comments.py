@@ -3,98 +3,98 @@ from flask import Blueprint, request, current_app
 from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
-from app.models.comments import CommentPatch, CommentCreate
+from app.models.product_comments import ProductCommentPatch, ProductCommentCreate
 from lib.http_utils import respond_success, respond_error
 from .router import products_controller
 
 
-@products_controller.route('/<string:product_id>/comments', methods=["GET"])
+@products_controller.route('/<string:product_id>/product_comments', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_comments(product_id):
+def get_product_comments(product_id):
     """
-    Retrieve all comments.
+    Retrieve all product comments.
 
-    This endpoint returns a list of all comments from the database.
+    This endpoint returns a list of all product comments from the database.
     Requires authentication and admin privileges.
     """
-    comments_model = get_models(current_app).comments
-    comments_list = comments_model.get_all(product_id)
-    return respond_success([comment.to_json() for comment in comments_list])
+    product_comments_model = get_models(current_app).product_comments
+    product_comments_list = product_comments_model.get_all(product_id)
+    return respond_success([product_comment.to_json() for product_comment in product_comments_list])
 
 
-@products_controller.route('/<string:product_id>/comments/<string:comment_id>', methods=["GET"])
+@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_comment_by_id(product_id, comment_id):
+def get_product_comment_by_id(comment_id):
     """
-    Retrieve a single comment by ID.
+    Retrieve a single product comment by ID.
 
-    This endpoint returns the details of a specific comment.
+    This endpoint returns the details of a specific product comment.
     Requires authentication and admin privileges.
     """
-    comments_model = get_models(current_app).comments
-    comment = comments_model.get(product_id, comment_id)
-    if comment:
-        return respond_success(comment.to_json())
+    product_comments_model = get_models(current_app).product_comments
+    product_comment = product_comments_model.get(comment_id)
+    if product_comment:
+        return respond_success(product_comment.to_json())
     else:
-        return respond_error(f'Comment with ID {comment_id} not found', 404)
+        return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/comments', methods=["POST"])
+@products_controller.route('/<string:product_id>/product_comments', methods=["POST"])
 @requires_auth
 @requires_role('admin')
-def create_comment(product_id):
+def create_product_comment(product_id):
     """
-    Create a new comment.
+    Create a new product comment.
 
-    This endpoint creates a new comment with the provided data.
+    This endpoint creates a new product comment with the provided data.
     Requires authentication and admin privileges.
     """
     data = request.get_json()
-    comments_model = get_models(current_app).comments
+    product_comments_model = get_models(current_app).product_comments
     try:
-        comment_data = CommentCreate(**data)
-        new_comment = comments_model.create(product_id, comment_data)
+        product_comment_data = ProductCommentCreate(**data)
+        new_product_comment = product_comments_model.create(product_id, product_comment_data)
     except TypeError:
         raise UnprocessableEntityException("Invalid data provided.")
-    return respond_success(new_comment.to_json(), status_code=201)
+    return respond_success(new_product_comment.to_json(), status_code=201)
 
 
-@products_controller.route('/<string:product_id>/comments/<string:comment_id>', methods=["PATCH"])
+@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["PATCH"])
 @requires_auth
 @requires_role('admin')
-def update_comment(product_id, comment_id):
+def update_product_comment(comment_id):
     """
-    Update an existing comment.
+    Update an existing product comment.
 
-    This endpoint updates a comment's details with the provided data.
+    This endpoint updates a product comment's details with the provided data.
     Requires authentication and admin privileges.
     """
     data = request.get_json()
-    comment_patch_data = CommentPatch(**data)
-    comments_model = get_models(current_app).comments
-    updated_comment = comments_model.patch(product_id, comment_id, comment_patch_data)
+    product_comment_patch_data = ProductCommentPatch(**data)
+    product_comments_model = get_models(current_app).product_comments
+    updated_product_comment = product_comments_model.patch(comment_id, product_comment_patch_data)
 
-    if updated_comment:
-        return respond_success(updated_comment.to_json())
+    if updated_product_comment:
+        return respond_success(updated_product_comment.to_json())
     else:
-        return respond_error(f'Comment with ID {comment_id} not found', 404)
+        return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/comments/<string:comment_id>', methods=["DELETE"])
+@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["DELETE"])
 @requires_auth
 @requires_role('admin')
-def delete_comment(product_id, comment_id):
+def delete_product_comment(comment_id):
     """
-    Delete a comment by ID.
+    Delete a product comment by ID.
 
-    This endpoint removes a comment from the database.
+    This endpoint removes a product comment from the database.
     Requires authentication and admin privileges.
     """
-    comments_model = get_models(current_app).comments
-    deleted_comment = comments_model.delete(product_id, comment_id)
-    if deleted_comment:
-        return respond_success({'message': f'Comment {comment_id} successfully deleted'})
+    product_comments_model = get_models(current_app).product_comments
+    deleted_product_comment = product_comments_model.delete(comment_id)
+    if deleted_product_comment:
+        return respond_success({'message': f'Product comment {comment_id} successfully deleted'})
     else:
-        return respond_error(f'Comment with ID {comment_id} not found', 404)
+        return respond_error(f'Product comment with ID {comment_id} not found', 404)

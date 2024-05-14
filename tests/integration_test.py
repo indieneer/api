@@ -16,7 +16,7 @@ from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
 from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
-from app.models.comments import CommentCreate, CommentsModel
+from app.models.product_comments import ProductCommentCreate, ProductCommentsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platform_products import PlatformProductCreate, PlatformProductsModel
 from app.models.affiliate_platform_products import AffiliatePlatformProductCreate, AffiliatePlatformProductsModel
@@ -33,7 +33,7 @@ from config import app_config
 from config.constants import FirebaseRole
 from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
-                           ProductsFactory, CommentsFactory, ProfilesFactory,
+                           ProductsFactory, ProductCommentsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
                            PlatformProductsFactory, AffiliatePlatformProductsFactory)
 from tests.fixtures import Fixtures
@@ -139,7 +139,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     service_profiles=service_profiles_model
                 ),
                 products=ProductsModel(db=db),
-                comments=CommentsModel(db=db),
+                product_comments=ProductCommentsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
                 tags=TagsModel(db=db),
@@ -161,7 +161,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 products=ProductsFactory(
                     db=db, models=models
                 ),
-                comments=CommentsFactory(
+                product_comments=ProductCommentsFactory(
                     db=db, models=models
                 ),
                 tags=TagsFactory(
@@ -348,20 +348,20 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
-            comment, cleanup = factory.comments.create(
-                CommentCreate(
+            product_comment, cleanup = factory.product_comments.create(
+                ProductCommentCreate(
                     profile_id=ObjectId(regular_user._id),
                     text="Nice Game"
                 )
             )
-            comment.product_id = product._id
+            product_comment.product_id = product._id
             cleanups.append(cleanup)
 
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
-                comment=comment,
+                product_comment=product_comment,
                 platform=platform,
                 platform_product=platform_product,
                 affiliate_platform_product=affiliate_platform_product,
