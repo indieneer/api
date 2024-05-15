@@ -240,6 +240,20 @@ Patch a daily guess game by id
 Get a daily guess game for today. Should be called from NextJS server.
 Returns a daily guess game matched by FLOOR(`display_at`) == TODAY.
 
+**GET /v1/guess_games/today/ladder**
+
+Get today's top 50 guessers ranked by (ASC # of attempts, ASC guessed_at)
+
+Example:
+
+```json
+[
+    { "type": "attributes", "guessers": [{ "avatar_url": "http://...", "nickname": "n1ce", "attempts": 2 }] },
+    { "type": "screenshot", "guessers": [] },
+    { "type": "character", "guessers": [{ "avatar_url": "http://...", "nickname": "n1ce", "attempts": 2 }] }
+]
+```
+
 **POST /v1/guess_games/tomorrow**
 
 Generate a daily guess game for the next day. Will be called from a daily cron job.
