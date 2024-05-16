@@ -42,12 +42,10 @@ class ProductCommentsTestCase(UnitTest):
             mock_product_comment = product_comment_fixture.clone()
             create_product_comment_mock.return_value = mock_product_comment
 
-            expected_input = (
-                    "65f9d1648194a472c9f835cd",
-                    ProductCommentCreate(
-                        profile_id=str(mock_product_comment.profile_id),
-                        text=mock_product_comment.text
-                )
+            expected_input = ProductCommentCreate(
+                product_id="65f9d1648194a472c9f835cd",
+                profile_id=str(mock_product_comment.profile_id),
+                text=mock_product_comment.text
             )
 
             expected_response = {
@@ -57,14 +55,14 @@ class ProductCommentsTestCase(UnitTest):
 
             # when
             response = call_api({
-                "profile_id": str(expected_input[1].profile_id),
-                "text": expected_input[1].text
+                "profile_id": str(expected_input.profile_id),
+                "text": expected_input.text
             })
 
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 201)
-            create_product_comment_mock.assert_called_once_with(*expected_input)
+            create_product_comment_mock.assert_called_once_with(expected_input)
 
         def fails_to_create_a_product_comment_when_body_is_invalid():
             # when

@@ -30,6 +30,7 @@ class ProductComment(BaseDocument):
 @dataclass
 class ProductCommentCreate(Serializable):
     profile_id: Union[ObjectId, str]
+    product_id: Union[ObjectId, str]
     text: str
 
 
@@ -73,19 +74,17 @@ class ProductCommentsModel:
         comments = [ProductComment(**item) for item in self.db.connection[self.collection].find({"product_id": ObjectId(product_id)})]
         return comments if comments else []
 
-    def create(self, product_id: Union[str, None], input_data: ProductCommentCreate) -> ProductComment:
+    def create(self, input_data: ProductCommentCreate) -> ProductComment:
         """
         Create a new product comment associated with a specific product in the database.
 
         This method takes the input data for a new product comment, including the optional product_id, and inserts the new product comment into the database.
         It then returns a ProductComment object initialized with the newly created product comment's details.
 
-        :param Union[str, None] product_id: The unique identifier of the product that the product comment is optionally assigned to.
         :param ProductCommentCreate input_data: An object containing the data for the new product comment, including the profile_id and text.
         :return: An instance of ProductComment initialized with the newly created product comment's details.
         :rtype: ProductComment
         """
-        input_data.product_id = ObjectId(product_id)
         comment_data = ProductComment(**input_data.to_json()).to_bson()
         self.db.connection[self.collection].insert_one(comment_data)
         return ProductComment(**comment_data)

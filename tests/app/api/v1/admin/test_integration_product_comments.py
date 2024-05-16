@@ -42,7 +42,7 @@ class ProductCommentTestCase(IntegrationTest):
     def test_create_product_comment(self):
         # given
         data_fixture = self.fixtures.product_comment.clone()
-        payload = data_fixture.to_dict()
+        payload = data_fixture.to_json()
 
         # TODO: create a `strip_metadata` reverse function, centralize metadata
         del payload["_id"]
@@ -51,7 +51,7 @@ class ProductCommentTestCase(IntegrationTest):
         del payload["product_id"]
 
         # when
-        response = self.app.post(f'/v1/admin/products/{data_fixture.product_id}/product_comments', headers={"Authorization": f'Bearer {self.token}'}, json=ProductCommentCreate(**payload).to_json())
+        response = self.app.post(f'/v1/admin/products/{data_fixture.product_id}/product_comments', headers={"Authorization": f'Bearer {self.token}'}, json=payload)
         response_json = response.get_json()
         self.addCleanup(lambda: self.factory.product_comments.cleanup(ObjectId(response_json["data"]["_id"])))
 

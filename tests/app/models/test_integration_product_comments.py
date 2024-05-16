@@ -21,15 +21,17 @@ class ProductCommentModelTestCase(IntegrationTest):
 
     def test_create_product_comment(self):
         # given
-        product_comment = self.fixtures.product_comment.clone()
+        profile_fixture = self.fixtures.regular_user
+        product_fixture = self.fixtures.product
+        test_text = "Test integration models"
 
         # when
-        created_product_comment = self.models.product_comments.create(str(product_comment.product_id), product_comment)
-        self.addCleanup(lambda: self.factory.product_comments.cleanup(product_comment._id))
+        created_product_comment = self.models.product_comments.create(ProductCommentCreate(product_id=product_fixture._id, profile_id=profile_fixture._id, text=test_text))
+        self.addCleanup(lambda: self.factory.product_comments.cleanup(created_product_comment._id))
 
         # then
         self.assertIsNotNone(created_product_comment)
-        self.assertEqual(created_product_comment.text, product_comment.text)
+        self.assertEqual(created_product_comment.text, test_text)
 
     def test_patch_product_comment(self):
         product_comment_model = ProductCommentsModel(self.services.db)
@@ -65,11 +67,14 @@ class ProductCommentModelTestCase(IntegrationTest):
     def test_get_all_product_comments(self):
         # given
         product_comment_model = ProductCommentsModel(self.services.db)
-        product_id = self.factory.product_comments.create(self.fixtures.product_comment.clone())[0].product_id
+        product_comment, cleanup = self.factory.product_comments.create(self.fixtures.product_comment.clone())
+        self.addCleanup(cleanup)
+        product_id = product_comment.product_id
 
         # when
         all_product_comments = product_comment_model.get_all(product_id)
 
         # then
         self.assertIsNotNone(all_product_comments)
+        self.assertIn(product_comment, all_product_comments)
         self.assertGreater(len(all_product_comments), 0)

@@ -54,8 +54,8 @@ def create_product_comment(product_id: str):
     data = request.get_json()
     product_comments_model = get_models(current_app).product_comments
     try:
-        product_comment_data = ProductCommentCreate(**data)
-        new_product_comment = product_comments_model.create(product_id, product_comment_data)
+        product_comment_data = ProductCommentCreate(product_id=product_id, **data)
+        new_product_comment = product_comments_model.create(product_comment_data)
     except TypeError:
         raise UnprocessableEntityException("Invalid data provided.")
     return respond_success(new_product_comment.to_json(), status_code=201)

@@ -350,11 +350,11 @@ class IntegrationTest(testicles.IntegrationTest):
 
             product_comment, cleanup = factory.product_comments.create(
                 ProductCommentCreate(
+                    product_id=product._id,
                     profile_id=ObjectId(regular_user._id),
                     text="Nice Game"
                 )
             )
-            product_comment.product_id = product._id
             cleanups.append(cleanup)
 
             fixtures = Fixtures(

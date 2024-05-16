@@ -21,6 +21,6 @@ class ProductCommentsFactory:
         if isinstance(input_data, ProductComment):
             product_comment = self.models.product_comments.put(input_data)
         else:
-            product_comment = self.models.product_comments.create(product_id=None, input_data=input_data)
+            product_comment = self.models.product_comments.create(input_data=input_data)
 
         return product_comment, lambda: self.cleanup(product_comment._id)

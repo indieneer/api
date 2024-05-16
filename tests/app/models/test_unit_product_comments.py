@@ -68,6 +68,7 @@ class ProductCommentTestCase(UnitTest):
             db_connection_mock.__getitem__.return_value = collection_mock
 
             expected_input = ProductCommentCreate(
+                product_id=mock_product_comment.product_id,
                 profile_id=mock_product_comment.profile_id,
                 text=mock_product_comment.text
             )
@@ -75,7 +76,7 @@ class ProductCommentTestCase(UnitTest):
             expected_result = mock_product_comment
 
             # when
-            result = model.create(mock_product_comment.product_id, input_data=expected_input)
+            result = model.create(input_data=expected_input)
 
             # then
             self.assertEqual(result.text, expected_result.text)
