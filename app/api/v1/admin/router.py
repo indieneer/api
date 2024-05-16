@@ -3,7 +3,7 @@ from flask import Blueprint
 from .platforms import platforms_controller
 from .operating_systems import operating_systems_controller
 from .profiles import profiles_controller
-from .products import products_controller
+from .products.router import products_controller
 from .tags import tags_controller
 from .service_profiles import service_profiles_controller
 from .affiliates import affiliates_controller
