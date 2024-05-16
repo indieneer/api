@@ -16,8 +16,8 @@ class ProductComment(BaseDocument):
 
     def __init__(
         self,
-        profile_id: ObjectId,
-        product_id: ObjectId,
+        profile_id: Union[ObjectId, str],
+        product_id: Union[ObjectId, str],
         text: str,
         **kwargs
     ) -> None:
@@ -29,7 +29,7 @@ class ProductComment(BaseDocument):
 
 @dataclass
 class ProductCommentCreate(Serializable):
-    profile_id: ObjectId
+    profile_id: Union[ObjectId, str]
     text: str
 
 
@@ -141,4 +141,8 @@ class ProductCommentsModel:
         comment = self.db.connection[self.collection].find_one_and_delete(
             {"_id": ObjectId(comment_id)}
         )
-        return ProductComment(**comment) if comment else None
+
+        if comment is None:
+            raise NotFoundException(model_name=ProductComment.__name__)
+
+        return ProductComment(**comment)

@@ -11,7 +11,7 @@ from .router import products_controller
 @products_controller.route('/<string:product_id>/product_comments', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_product_comments(product_id):
+def get_product_comments(product_id: str):
     """
     Retrieve all product comments.
 
@@ -26,7 +26,7 @@ def get_product_comments(product_id):
 @products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_product_comment_by_id(comment_id):
+def get_product_comment_by_id(product_id: str, comment_id: str):
     """
     Retrieve a single product comment by ID.
 
@@ -44,7 +44,7 @@ def get_product_comment_by_id(comment_id):
 @products_controller.route('/<string:product_id>/product_comments', methods=["POST"])
 @requires_auth
 @requires_role('admin')
-def create_product_comment(product_id):
+def create_product_comment(product_id: str):
     """
     Create a new product comment.
 
@@ -64,7 +64,7 @@ def create_product_comment(product_id):
 @products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["PATCH"])
 @requires_auth
 @requires_role('admin')
-def update_product_comment(comment_id):
+def update_product_comment(product_id: str, comment_id: str):
     """
     Update an existing product comment.
 
@@ -85,7 +85,7 @@ def update_product_comment(comment_id):
 @products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["DELETE"])
 @requires_auth
 @requires_role('admin')
-def delete_product_comment(comment_id):
+def delete_product_comment(product_id: str, comment_id: str):
     """
     Delete a product comment by ID.
 
