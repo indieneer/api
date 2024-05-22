@@ -74,7 +74,7 @@ def search():
 
     response_json = response.json()
 
-    product_ids = [x["_id"] for x in response_json['hits']['hits'] if "_id" in x]
+    product_ids = [hit["_id"] for hit in response_json['hits']['hits']]
     product_object_ids = [ObjectId(id_) for id_ in product_ids]
 
     db = get_services(current_app).db.connection
@@ -82,6 +82,7 @@ def search():
 
     aggregation_pipeline = [
         {'$match': {'_id': {'$in': product_object_ids}}},
+        {'$addFields': {'__order': {'$indexOfArray': [product_object_ids, '$_id']}}},
         {
             '$lookup': {
                 'from': 'tags',
@@ -101,6 +102,7 @@ def search():
                 }
             }
         },
+        {'$sort': {'__order': 1}},
         {
             '$project': {
                 '_id': 1,
