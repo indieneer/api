@@ -4,6 +4,7 @@ from flask import Flask
 
 from .affiliate_reviews import AffiliateReviewsModel
 from .affiliates import AffiliatesModel
+from .product_replies import ProductRepliesModel
 from .product_comments import ProductCommentsModel
 from .platforms import PlatformsModel
 from .platform_products import PlatformProductsModel
@@ -38,10 +39,10 @@ class ModelsExtension:
     affiliates: AffiliatesModel
     affiliate_reviews: AffiliateReviewsModel
 
-
     def __init__(
         self,
         product_comments: ProductCommentsModel,
+        product_replies: ProductRepliesModel,
         affiliates: AffiliatesModel,
         affiliate_reviews: AffiliateReviewsModel,
         products: ProductsModel,
@@ -56,6 +57,7 @@ class ModelsExtension:
         service_profiles: ServiceProfilesModel
     ) -> None:
         self.product_comments = product_comments
+        self.product_replies = product_replies
         self.affiliates = affiliates
         self.affiliate_reviews = affiliate_reviews
         self.products = products
