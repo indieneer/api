@@ -16,6 +16,7 @@ from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
 from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
+from app.models.guess_games import GuessGamesModel, GuessGameCreate
 from app.models.product_comments import ProductCommentCreate, ProductCommentsModel
 from app.models.operating_systems import OperatingSystemCreate
 from app.models.platform_products import PlatformProductCreate, PlatformProductsModel
@@ -35,7 +36,7 @@ from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
                            ProductsFactory, ProductCommentsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
-                           PlatformProductsFactory, AffiliatePlatformProductsFactory)
+                           PlatformProductsFactory, AffiliatePlatformProductsFactory, GuessGamesFactory)
 from tests.fixtures import Fixtures
 
 
@@ -139,6 +140,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     service_profiles=service_profiles_model
                 ),
                 products=ProductsModel(db=db),
+                guess_games=GuessGamesModel(db=db),
                 product_comments=ProductCommentsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
@@ -159,6 +161,9 @@ class IntegrationTest(testicles.IntegrationTest):
                     services=services, models=models
                 ),
                 products=ProductsFactory(
+                    db=db, models=models
+                ),
+                guess_games=GuessGamesFactory(
                     db=db, models=models
                 ),
                 product_comments=ProductCommentsFactory(
@@ -357,10 +362,19 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            guess_game, cleanup = factory.guess_games.create(
+                GuessGameCreate(
+                    data={"Test": "test data"},
+                    product_id=product._id,
+                    type="screenshot"
+                )
+            )
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
+                guess_game=guess_game,
                 product_comment=product_comment,
                 platform=platform,
                 platform_product=platform_product,

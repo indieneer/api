@@ -4,6 +4,7 @@ from .background_jobs import BackgroundJobsFactory
 from .product_comments import ProductCommentsFactory
 from .profiles import ProfilesFactory
 from .products import ProductsFactory
+from .guess_games import GuessGamesFactory
 from .operating_systems import OperatingSystemsFactory
 from .tags import TagsFactory
 from .platforms import PlatformsFactory
@@ -21,6 +22,7 @@ class Factory:
     affiliate_reviews: AffiliateReviewsFactory
     profiles: ProfilesFactory
     products: ProductsFactory
+    guess_games: GuessGamesFactory
     product_comments: ProductCommentsFactory
     platforms: PlatformsFactory
     platform_products: PlatformProductsFactory

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.models.background_jobs import BackgroundJob
+from app.models.guess_games import GuessGame
 from app.models.profiles import Profile
 from app.models.products import Product
 from app.models.product_comments import ProductComment
@@ -22,6 +23,7 @@ class Fixtures:
     regular_user: Profile
     admin_user: Profile
     product: Product
+    guess_game: GuessGame
     product_comment: ProductComment
     platform: Platform
     platform_product: PlatformProduct
