@@ -235,12 +235,12 @@ Patch a daily guess game by id
 
 ### Protected with service account token access
 
-**GET /v1/guess_games/today**
+**GET /v1/daily_guess_games/today**
 
 Get a daily guess game for today. Should be called from NextJS server.
 Returns a daily guess game matched by FLOOR(`display_at`) == TODAY.
 
-**GET /v1/guess_games/today/ladder**
+**GET /v1/daily_guess_games/today/ladder**
 
 Get today's top 50 guessers ranked by (ASC # of attempts, ASC guessed_at)
 
@@ -254,13 +254,13 @@ Example:
 ]
 ```
 
-**POST /v1/guess_games/tomorrow**
+**POST /v1/daily_guess_games/tomorrow**
 
 Generate a daily guess game for the next day. Will be called from a daily cron job.
 
 ### Public
 
-**POST /v1/guess_games/:id/guesses**
+**POST /v1/daily_guess_games/:id/guesses**
 
 Track user guesses.
 
