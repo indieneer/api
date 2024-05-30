@@ -5,6 +5,7 @@ from .product_comments import ProductCommentsFactory
 from .profiles import ProfilesFactory
 from .products import ProductsFactory
 from .guess_games import GuessGamesFactory
+from .daily_guess_games import DailyGuessGamesFactory
 from .operating_systems import OperatingSystemsFactory
 from .tags import TagsFactory
 from .platforms import PlatformsFactory
@@ -23,6 +24,7 @@ class Factory:
     profiles: ProfilesFactory
     products: ProductsFactory
     guess_games: GuessGamesFactory
+    daily_guess_games: DailyGuessGamesFactory
     product_comments: ProductCommentsFactory
     platforms: PlatformsFactory
     platform_products: PlatformProductsFactory

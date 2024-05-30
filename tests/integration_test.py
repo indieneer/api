@@ -16,6 +16,7 @@ from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
 from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
+from app.models.daily_guess_games import DailyGuessGamesModel, DailyGuessGameCreate
 from app.models.guess_games import GuessGamesModel, GuessGameCreate
 from app.models.product_comments import ProductCommentCreate, ProductCommentsModel
 from app.models.operating_systems import OperatingSystemCreate
@@ -36,7 +37,8 @@ from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            OperatingSystemsFactory, PlatformsFactory,
                            ProductsFactory, ProductCommentsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
-                           PlatformProductsFactory, AffiliatePlatformProductsFactory, GuessGamesFactory)
+                           PlatformProductsFactory, AffiliatePlatformProductsFactory, GuessGamesFactory,
+                           DailyGuessGamesFactory)
 from tests.fixtures import Fixtures
 
 
@@ -141,6 +143,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 products=ProductsModel(db=db),
                 guess_games=GuessGamesModel(db=db),
+                daily_guess_games=DailyGuessGamesModel(db=db),
                 product_comments=ProductCommentsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
@@ -165,6 +168,10 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 guess_games=GuessGamesFactory(
                     db=db, models=models
+                ),
+                daily_guess_games=DailyGuessGamesFactory(
+                    db=db,
+                    models=models,
                 ),
                 product_comments=ProductCommentsFactory(
                     db=db, models=models
@@ -369,12 +376,24 @@ class IntegrationTest(testicles.IntegrationTest):
                     type="screenshot"
                 )
             )
+            cleanups.append(cleanup)
+
+            daily_guess_game, cleanup = factory.daily_guess_games.create(
+                DailyGuessGameCreate(
+                    data={"Test": "test data"},
+                    product_id=product._id,
+                    type="screenshot",
+                    display_at="2036-02-03T00:00:00"
+                )
+            )
+            cleanups.append(cleanup)
 
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
                 guess_game=guess_game,
+                daily_guess_game=daily_guess_game,
                 product_comment=product_comment,
                 platform=platform,
                 platform_product=platform_product,
