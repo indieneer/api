@@ -12,6 +12,7 @@ from .operating_systems import OperatingSystemsModel
 from .profiles import ProfilesModel
 from .logins import LoginsModel
 from .products import ProductsModel
+from .searched_product import SearchedProductModel
 from .tags import TagsModel
 from .background_jobs import BackgroundJobsModel
 from .service_profiles import ServiceProfilesModel
@@ -26,6 +27,7 @@ class ModelsExtension:
 
     profiles: ProfilesModel
     products: ProductsModel
+    searched_product: SearchedProductModel
     platforms: PlatformsModel
     platform_products: PlatformProductsModel
     affiliate_platform_products: AffiliatePlatformProductsModel
@@ -38,27 +40,28 @@ class ModelsExtension:
     affiliates: AffiliatesModel
     affiliate_reviews: AffiliateReviewsModel
 
-
     def __init__(
-        self,
-        product_comments: ProductCommentsModel,
-        affiliates: AffiliatesModel,
-        affiliate_reviews: AffiliateReviewsModel,
-        products: ProductsModel,
-        profiles: ProfilesModel,
-        platforms: PlatformsModel,
-        platform_products: PlatformProductsModel,
-        affiliate_platform_products: AffiliatePlatformProductsModel,
-        operating_systems: OperatingSystemsModel,
-        logins: LoginsModel,
-        tags: TagsModel,
-        background_jobs: BackgroundJobsModel,
-        service_profiles: ServiceProfilesModel
+            self,
+            product_comments: ProductCommentsModel,
+            affiliates: AffiliatesModel,
+            affiliate_reviews: AffiliateReviewsModel,
+            products: ProductsModel,
+            searched_product: SearchedProductModel,
+            profiles: ProfilesModel,
+            platforms: PlatformsModel,
+            platform_products: PlatformProductsModel,
+            affiliate_platform_products: AffiliatePlatformProductsModel,
+            operating_systems: OperatingSystemsModel,
+            logins: LoginsModel,
+            tags: TagsModel,
+            background_jobs: BackgroundJobsModel,
+            service_profiles: ServiceProfilesModel
     ) -> None:
         self.product_comments = product_comments
         self.affiliates = affiliates
         self.affiliate_reviews = affiliate_reviews
         self.products = products
+        self.searched_product = searched_product
         self.profiles = profiles
         self.platforms = platforms
         self.platform_products = platform_products

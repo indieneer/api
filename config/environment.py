@@ -4,7 +4,7 @@ from dotenv import find_dotenv, load_dotenv
 
 
 def setup_environment():
-    environment = env.get("PYTHON_ENV", "development")
+    environment = env.get("ENVIRONMENT", "development")
 
     if environment == "test":
         return environment

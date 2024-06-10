@@ -26,6 +26,7 @@ app_config = {
     "ENVIRONMENT": environment,
     "PORT": env.get("PORT", 5001),
     "MONGO_URI": env.get("MONGO_URI"),
+    "ES_HOST": env.get("ES_HOST"),
     "ROOT_USER_EMAIL": env.get("ROOT_USER_EMAIL"),
     "ROOT_USER_PASSWORD": env.get("ROOT_USER_PASSWORD"),
     "FB_NAMESPACE": env.get("FB_NAMESPACE"),

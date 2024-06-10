@@ -1,18 +1,24 @@
+from dataclasses import fields
 import json
+from math import ceil
 
 from bson import ObjectId
 from flask import Blueprint, request, current_app
 import requests
 
-from app.models.products import Product
-from app.services import get_services
+from app.models import get_models
 from lib.http_utils import respond_success, respond_error
 from lib.db_utils import to_json
 
 search_controller = Blueprint('search_v2', __name__, url_prefix='/search')
 
 
-@search_controller.route('/', methods=["POST"])
+def filter_fields(cls, data):
+    field_names = {f.name for f in fields(cls)}
+    return {k: v for k, v in data.items() if k in field_names}
+
+
+@search_controller.route('/', methods=["GET"])
 def search():
     """
     Perform a search query on ElasticSearch and MongoDB with genre substitution.
@@ -24,40 +30,41 @@ def search():
     :return: The search results with genres data if successful, otherwise an error message.
     :rtype: dict
     """
-    data = request.get_json()
+    page = request.args.get("page", 1, type=int)
+    query = request.args.get("query", "")
+    limit = request.args.get("limit", 24, type=int)
 
-    if not data or 'query' not in data:
-        return {"error": "Invalid or missing 'query' in the request body"}, 400
+    payload = {
+        "query": query,
+        "size": limit,
+        "from": limit * (page - 1),
+    }
 
-    # TODO: we should get it from .env
-    url = 'https://your-es-instance-url.com/search'
-    # url = 'http://127.0.0.1:60019/search' # uncomment for localhost
+    if query is None:
+        return {"error": "Invalid or missing 'query' in the query parameters"}, 400
+
+    url = f'{current_app.config["ES_HOST"]}/search'
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
 
     if response.status_code != 200:
         return respond_error("Failed to fetch data from Elasticsearch.", response.status_code)
 
-    product_ids = response.json()
-    product_object_ids = [ObjectId(id_) for id_ in product_ids]
+    response_json = response.json()
 
-    db = get_services(current_app).db.connection
-    products_collection = db["products"]
+    product_ids = [hit["_id"] for hit in response_json['hits']['hits']]
+    product_object_ids = [ObjectId(_id) for _id in product_ids]
+    searched_product_model = get_models(current_app).searched_product
+    searched_products = searched_product_model.search_products(product_object_ids)
 
-    aggregation_pipeline = [
-        {'$match': {'_id': {'$in': product_object_ids}}},
-        {'$lookup': {
-            'from': 'tags',
-            'localField': 'genres',
-            'foreignField': '_id',
-            'as': 'genres'
-        }},
-        {'$unset': 'genres._id'}
-    ]
+    count = response_json["hits"]["total"]["value"]
 
-    products_cursor = products_collection.aggregate(aggregation_pipeline)
+    meta = {
+        "total_count": count,
+        "items_per_page": limit,
+        "items_on_page": len(searched_products),
+        "page_count": ceil(count / limit),
+        "page": page
+    }
 
-    # Create Product instances from the documents and convert to JSON
-    products = to_json(products_cursor)
-
-    return respond_success(products)
+    return respond_success(to_json(searched_products), meta=meta)

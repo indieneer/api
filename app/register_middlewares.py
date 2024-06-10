@@ -19,7 +19,7 @@ def register_middlewares(app: Flask):
     # CORS
     ##
     origins = []
-    match app.config.get("PYTHON_ENV"):
+    match app.config.get("ENVIRONMENT"):
         case "development":
             origins = [
                 "http://localhost:3000",

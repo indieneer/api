@@ -12,7 +12,7 @@ from app.middlewares.requires_auth import RequiresAuthExtension
 from app.middlewares.requires_role import RequiresRoleExtension
 from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
                         PlatformsModel, ProductsModel, ProfilesModel,
-                        ServiceProfilesModel, TagsModel, AffiliatesModel, AffiliateReviewsModel)
+                        ServiceProfilesModel, TagsModel, AffiliatesModel, AffiliateReviewsModel, SearchedProductModel)
 from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
@@ -139,6 +139,7 @@ class IntegrationTest(testicles.IntegrationTest):
                     service_profiles=service_profiles_model
                 ),
                 products=ProductsModel(db=db),
+                searched_product=SearchedProductModel(db=db),
                 product_comments=ProductCommentsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
