@@ -1,14 +1,12 @@
-from dataclasses import dataclass, fields
+from dataclasses import fields
 import json
 from math import ceil
-from typing import List
 
 from bson import ObjectId
 from flask import Blueprint, request, current_app
 import requests
 
-from app.models import ProductsModel, get_models
-from app.services import get_services
+from app.models import get_models
 from lib.http_utils import respond_success, respond_error
 from lib.db_utils import to_json
 
