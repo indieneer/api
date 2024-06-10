@@ -7,32 +7,12 @@ from bson import ObjectId
 from flask import Blueprint, request, current_app
 import requests
 
-from app.models import ProductsModel
+from app.models import ProductsModel, get_models
 from app.services import get_services
 from lib.http_utils import respond_success, respond_error
 from lib.db_utils import to_json
 
 search_controller = Blueprint('search_v2', __name__, url_prefix='/search')
-
-
-@dataclass
-class Media:
-    header_url: str
-
-
-@dataclass
-class SearchedProduct:
-    _id: str
-    name: str
-    slug: str
-    short_description: str
-    genres: List[str]
-    publishers: List[str]
-    price: dict
-    is_free: bool
-    developers: List[str]
-    media: Media
-    platforms_os: List[str]
 
 
 def filter_fields(cls, data):
@@ -75,65 +55,18 @@ def search():
     response_json = response.json()
 
     product_ids = [hit["_id"] for hit in response_json['hits']['hits']]
-    product_object_ids = [ObjectId(id_) for id_ in product_ids]
-
-    db = get_services(current_app).db.connection
-    products_collection = db[ProductsModel.collection]
-
-    aggregation_pipeline = [
-        {'$match': {'_id': {'$in': product_object_ids}}},
-        {'$addFields': {'__order': {'$indexOfArray': [product_object_ids, '$_id']}}},
-        {
-            '$lookup': {
-                'from': 'tags',
-                'localField': 'genres',
-                'foreignField': '_id',
-                'as': 'genres'
-            }
-        },
-        {
-            '$addFields': {
-                'genres': {
-                    '$reduce': {
-                        'input': '$genres',
-                        'initialValue': [],
-                        'in': {'$concatArrays': ['$$value', ['$$this.name']]}
-                    }
-                }
-            }
-        },
-        {'$sort': {'__order': 1}},
-        {
-            '$project': {
-                '_id': 1,
-                'name': 1,
-                'slug': 1,
-                'short_description': 1,
-                'publishers': 1,
-                'genres': 1,
-                'price': 1,
-                'is_free': 1,
-                'developers': 1,
-                'media': {
-                    'header_url': '$media.header_url'
-                },
-                'platforms_os': 1,
-            }
-        }
-    ]
+    product_object_ids = [ObjectId(_id) for _id in product_ids]
+    searched_product_model = get_models(current_app).searched_product
+    searched_products = searched_product_model.search_products(product_object_ids)
 
     count = response_json["hits"]["total"]["value"]
-    result = list(products_collection.aggregate(aggregation_pipeline))
-
-    for item in result:
-        item["_id"] = str(item["_id"])
 
     meta = {
         "total_count": count,
         "items_per_page": limit,
-        "items_on_page": len(result),
+        "items_on_page": len(searched_products),
         "page_count": ceil(count / limit),
         "page": page
     }
 
-    return respond_success(to_json(result), meta=meta)
+    return respond_success(to_json(searched_products), meta=meta)
