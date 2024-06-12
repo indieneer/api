@@ -12,11 +12,12 @@ from app.middlewares.requires_auth import RequiresAuthExtension
 from app.middlewares.requires_role import RequiresRoleExtension
 from app.models import (LoginsModel, ModelsExtension, OperatingSystemsModel,
                         PlatformsModel, ProductsModel, ProfilesModel,
-                        ServiceProfilesModel, TagsModel, AffiliatesModel, AffiliateReviewsModel)
+                        ServiceProfilesModel, TagsModel, AffiliatesModel, AffiliateReviewsModel, GameGuessesModel)
 from app.models.affiliate_reviews import AffiliateReviewCreate
 from app.models.affiliates import AffiliateCreate
 from app.models.background_jobs import BackgroundJobCreate, BackgroundJobsModel
 from app.models.daily_guess_games import DailyGuessGamesModel, DailyGuessGameCreate
+from app.models.game_guesses import GameGuessCreate
 from app.models.guess_games import GuessGamesModel, GuessGameCreate
 from app.models.product_comments import ProductCommentCreate, ProductCommentsModel
 from app.models.operating_systems import OperatingSystemCreate
@@ -38,7 +39,7 @@ from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            ProductsFactory, ProductCommentsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
                            PlatformProductsFactory, AffiliatePlatformProductsFactory, GuessGamesFactory,
-                           DailyGuessGamesFactory)
+                           DailyGuessGamesFactory, GameGuessesFactory)
 from tests.fixtures import Fixtures
 
 
@@ -144,6 +145,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 products=ProductsModel(db=db),
                 guess_games=GuessGamesModel(db=db),
                 daily_guess_games=DailyGuessGamesModel(db=db),
+                game_guesses=GameGuessesModel(db=db),
                 product_comments=ProductCommentsModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
@@ -170,6 +172,10 @@ class IntegrationTest(testicles.IntegrationTest):
                     db=db, models=models
                 ),
                 daily_guess_games=DailyGuessGamesFactory(
+                    db=db,
+                    models=models,
+                ),
+                game_guesses=GameGuessesFactory(
                     db=db,
                     models=models,
                 ),
@@ -388,12 +394,24 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            game_guess, cleanup = factory.game_guesses.create(
+                GameGuessCreate(
+                    attempts=[{"product_id": product._id, "data": {}}],
+                    ip="127.0.0.1",
+                    daily_guess_game_id=daily_guess_game._id,
+                    profile_id=regular_user._id,
+                    guessed_at="2024-02-03T00:00:00",
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
                 guess_game=guess_game,
                 daily_guess_game=daily_guess_game,
+                game_guess=game_guess,
                 product_comment=product_comment,
                 platform=platform,
                 platform_product=platform_product,
