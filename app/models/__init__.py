@@ -4,6 +4,9 @@ from flask import Flask
 
 from .affiliate_reviews import AffiliateReviewsModel
 from .affiliates import AffiliatesModel
+from .daily_guess_games import DailyGuessGamesModel
+from .game_guesses import GameGuessesModel
+from .guess_games import GuessGamesModel
 from .product_comments import ProductCommentsModel
 from .platforms import PlatformsModel
 from .platform_products import PlatformProductsModel
@@ -26,6 +29,9 @@ class ModelsExtension:
 
     profiles: ProfilesModel
     products: ProductsModel
+    guess_games: GuessGamesModel
+    daily_guess_games: DailyGuessGamesModel
+    game_guesses: GameGuessesModel
     platforms: PlatformsModel
     platform_products: PlatformProductsModel
     affiliate_platform_products: AffiliatePlatformProductsModel
@@ -38,13 +44,15 @@ class ModelsExtension:
     affiliates: AffiliatesModel
     affiliate_reviews: AffiliateReviewsModel
 
-
     def __init__(
         self,
         product_comments: ProductCommentsModel,
         affiliates: AffiliatesModel,
         affiliate_reviews: AffiliateReviewsModel,
         products: ProductsModel,
+        guess_games: GuessGamesModel,
+        daily_guess_games: DailyGuessGamesModel,
+        game_guesses: GameGuessesModel,
         profiles: ProfilesModel,
         platforms: PlatformsModel,
         platform_products: PlatformProductsModel,
@@ -59,6 +67,9 @@ class ModelsExtension:
         self.affiliates = affiliates
         self.affiliate_reviews = affiliate_reviews
         self.products = products
+        self.guess_games = guess_games
+        self.daily_guess_games = daily_guess_games
+        self.game_guesses = game_guesses
         self.profiles = profiles
         self.platforms = platforms
         self.platform_products = platform_products

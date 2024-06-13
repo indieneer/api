@@ -1,5 +1,8 @@
 from flask import Blueprint
 
+from .guess_games import guess_games_controller
+from .daily_guess_games import daily_guess_games_controller
+from .game_guesses import game_guesses_controller
 from .platforms import platforms_controller
 from .operating_systems import operating_systems_controller
 from .profiles import profiles_controller
@@ -17,6 +20,9 @@ admin_controller.register_blueprint(platforms_controller)
 admin_controller.register_blueprint(operating_systems_controller)
 admin_controller.register_blueprint(profiles_controller)
 admin_controller.register_blueprint(products_controller)
+admin_controller.register_blueprint(guess_games_controller)
+admin_controller.register_blueprint(daily_guess_games_controller)
+admin_controller.register_blueprint(game_guesses_controller)
 admin_controller.register_blueprint(platform_products_controller)
 admin_controller.register_blueprint(affiliate_platform_products_controller)
 admin_controller.register_blueprint(tags_controller)
