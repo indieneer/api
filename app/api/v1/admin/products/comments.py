@@ -8,25 +8,10 @@ from lib.http_utils import respond_success, respond_error
 from .router import products_controller
 
 
-@products_controller.route('/<string:product_id>/product_comments', methods=["GET"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_product_comments(product_id: str):
-    """
-    Retrieve all product comments.
-
-    This endpoint returns a list of all product comments from the database.
-    Requires authentication and admin privileges.
-    """
-    product_comments_model = get_models(current_app).product_comments
-    product_comments_list = product_comments_model.get_all(product_id)
-    return respond_success([product_comment.to_json() for product_comment in product_comments_list])
-
-
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
-@requires_auth
-@requires_role('admin')
-def get_product_comment_by_id(product_id: str, comment_id: str):
+def get_product_comment_by_id(comment_id: str):
     """
     Retrieve a single product comment by ID.
 
@@ -41,10 +26,10 @@ def get_product_comment_by_id(product_id: str, comment_id: str):
         return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/product_comments', methods=["POST"])
+@products_controller.route('/product_comments', methods=["POST"])
 @requires_auth
 @requires_role('admin')
-def create_product_comment(product_id: str):
+def create_product_comment():
     """
     Create a new product comment.
 
@@ -54,17 +39,17 @@ def create_product_comment(product_id: str):
     data = request.get_json()
     product_comments_model = get_models(current_app).product_comments
     try:
-        product_comment_data = ProductCommentCreate(product_id=product_id, **data)
+        product_comment_data = ProductCommentCreate(**data)
         new_product_comment = product_comments_model.create(product_comment_data)
     except TypeError:
         raise UnprocessableEntityException("Invalid data provided.")
     return respond_success(new_product_comment.to_json(), status_code=201)
 
 
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["PATCH"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["PATCH"])
 @requires_auth
 @requires_role('admin')
-def update_product_comment(product_id: str, comment_id: str):
+def update_product_comment(comment_id: str):
     """
     Update an existing product comment.
 
@@ -82,10 +67,10 @@ def update_product_comment(product_id: str, comment_id: str):
         return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["DELETE"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["DELETE"])
 @requires_auth
 @requires_role('admin')
-def delete_product_comment(product_id: str, comment_id: str):
+def delete_product_comment(comment_id: str):
     """
     Delete a product comment by ID.
 
