@@ -2,6 +2,7 @@ from flask import Flask
 
 from app.models import AffiliatesModel, AffiliateReviewsModel, PlatformProductsModel, AffiliatePlatformProductsModel, \
     ProductCommentsModel
+from app.models.cms.popular_on_steam import PopularOnSteamModel
 from config import app_config
 
 app = Flask(__name__)
@@ -68,7 +69,8 @@ def main(app: Flask):
         ),
         tags=TagsModel(db=db),
         background_jobs=BackgroundJobsModel(db=db),
-        service_profiles=service_profiles_model
+        service_profiles=service_profiles_model,
+        popular_on_steam=PopularOnSteamModel(db=db)
     )
     models.init_app(app)
 

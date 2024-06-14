@@ -4,6 +4,7 @@ from flask import Flask
 
 from .affiliate_reviews import AffiliateReviewsModel
 from .affiliates import AffiliatesModel
+from .cms.popular_on_steam import PopularOnSteamModel
 from .product_comments import ProductCommentsModel
 from .platforms import PlatformsModel
 from .platform_products import PlatformProductsModel
@@ -37,23 +38,24 @@ class ModelsExtension:
     product_comments: ProductCommentsModel
     affiliates: AffiliatesModel
     affiliate_reviews: AffiliateReviewsModel
-
+    popular_on_steam: PopularOnSteamModel
 
     def __init__(
-        self,
-        product_comments: ProductCommentsModel,
-        affiliates: AffiliatesModel,
-        affiliate_reviews: AffiliateReviewsModel,
-        products: ProductsModel,
-        profiles: ProfilesModel,
-        platforms: PlatformsModel,
-        platform_products: PlatformProductsModel,
-        affiliate_platform_products: AffiliatePlatformProductsModel,
-        operating_systems: OperatingSystemsModel,
-        logins: LoginsModel,
-        tags: TagsModel,
-        background_jobs: BackgroundJobsModel,
-        service_profiles: ServiceProfilesModel
+            self,
+            product_comments: ProductCommentsModel,
+            affiliates: AffiliatesModel,
+            affiliate_reviews: AffiliateReviewsModel,
+            products: ProductsModel,
+            profiles: ProfilesModel,
+            platforms: PlatformsModel,
+            platform_products: PlatformProductsModel,
+            affiliate_platform_products: AffiliatePlatformProductsModel,
+            operating_systems: OperatingSystemsModel,
+            logins: LoginsModel,
+            tags: TagsModel,
+            background_jobs: BackgroundJobsModel,
+            service_profiles: ServiceProfilesModel,
+            popular_on_steam: PopularOnSteamModel
     ) -> None:
         self.product_comments = product_comments
         self.affiliates = affiliates
@@ -68,6 +70,7 @@ class ModelsExtension:
         self.tags = tags
         self.background_jobs = background_jobs
         self.service_profiles = service_profiles
+        self.popular_on_steam = popular_on_steam
 
     def init_app(self, app: Flask):
         app.extensions[self.KEY] = self
