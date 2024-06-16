@@ -4,6 +4,7 @@ from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.platform_products import PlatformProductPatch, PlatformProductCreate
+from lib.db_utils import to_json
 from lib.http_utils import respond_success, respond_error
 
 platform_products_controller = Blueprint('platform_products', __name__, url_prefix='/platform_products')
@@ -21,7 +22,7 @@ def get_platform_products():
     """
     platform_products_model = get_models(current_app).platform_products
     platform_products_list = platform_products_model.get_all()
-    return respond_success([platform_product.to_json() for platform_product in platform_products_list])
+    return respond_success(to_json(platform_products_list))
 
 
 @platform_products_controller.route('/<string:platform_product_id>', methods=["GET"])

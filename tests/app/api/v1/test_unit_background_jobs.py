@@ -9,6 +9,7 @@ from app.api.v1.background_jobs import get_background_job, get_all_background_jo
 from app.models.background_jobs import BackgroundJob, BackgroundJobCreate, BackgroundJobPatch, EventCreate, Event
 from app.models.exceptions import ForbiddenException, NotFoundException
 from config.constants import FirebaseRole
+from lib.db_utils import to_json
 from tests import UnitTest
 from tests.utils.jwt import TEST_AUTH_NAMESPACE, create_test_token
 
@@ -143,7 +144,7 @@ class BackgroundJobsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": [background_job.to_json() for background_job in mock_background_jobs]
+                "data": to_json(mock_background_jobs)
             }
 
             # when

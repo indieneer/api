@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from app.api.v1.tags import get_tags
 from app.models.tags import Tag
+from lib.db_utils import to_json
 from tests import UnitTest
 
 
@@ -27,7 +28,7 @@ class TagsTestCase(UnitTest):
 
             expected_response = {
                 "status": "ok",
-                "data": [tag.to_json() for tag in mock_tags]
+                "data": to_json(mock_tags)
             }
 
             # when

@@ -2,6 +2,7 @@ from flask import Blueprint, request, current_app
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.affiliate_reviews import AffiliateReviewPatch, AffiliateReviewCreate
+from lib.db_utils import to_json
 from lib.http_utils import respond_success, respond_error
 from app.api.exceptions import UnprocessableEntityException
 
@@ -28,7 +29,7 @@ def get_affiliate_reviews():
     """
     affiliate_reviews_model = get_models(current_app).affiliate_reviews
     affiliate_reviews_list = affiliate_reviews_model.get_all()
-    return respond_success([review.to_json() for review in affiliate_reviews_list])
+    return respond_success(to_json(affiliate_reviews_list))
 
 
 @affiliate_reviews_controller.route('/<string:review_id>', methods=["GET"])

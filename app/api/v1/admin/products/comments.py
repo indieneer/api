@@ -4,6 +4,7 @@ from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.product_comments import ProductCommentPatch, ProductCommentCreate
+from lib.db_utils import to_json
 from lib.http_utils import respond_success, respond_error
 from .router import products_controller
 
@@ -20,7 +21,7 @@ def get_product_comments(product_id: str):
     """
     product_comments_model = get_models(current_app).product_comments
     product_comments_list = product_comments_model.get_all(product_id)
-    return respond_success([product_comment.to_json() for product_comment in product_comments_list])
+    return respond_success(to_json(product_comments_list))
 
 
 @products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
