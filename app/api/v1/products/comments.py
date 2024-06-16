@@ -3,10 +3,23 @@ from flask import Blueprint, request, g, current_app
 from app.middlewares import requires_auth
 from config import app_config
 from lib.http_utils import respond_error, respond_success
+from lib.db_utils import to_json
 
 from app.models import get_models, exceptions as models_exceptions
 from app.models.product_comments import ProductComment, ProductCommentCreate, ProductCommentPatch
 from .router import products_controller
+
+
+@products_controller.route('/product_comments/product/<string:product_id>', methods=["GET"])
+def get_all_product_comments(product_id: str):
+    """
+    Retrieve all product comments for a specific product.
+
+    This endpoint returns all product comments associated with a specific product ID.
+    """
+    product_comments_model = get_models(current_app).product_comments
+    all_product_comments = product_comments_model.get_all(product_id)
+    return respond_success(to_json(all_product_comments))
 
 
 @products_controller.route('/<string:product_id>/comments', methods=["POST"])
