@@ -1,5 +1,6 @@
 from flask import Blueprint
 
+from .cms import cms_controller
 from .platforms import platforms_controller
 from .operating_systems import operating_systems_controller
 from .profiles import profiles_controller
@@ -23,3 +24,4 @@ admin_controller.register_blueprint(tags_controller)
 admin_controller.register_blueprint(service_profiles_controller)
 admin_controller.register_blueprint(affiliates_controller)
 admin_controller.register_blueprint(affiliate_reviews_controller)
+admin_controller.register_blueprint(cms_controller)
