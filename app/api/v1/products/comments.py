@@ -10,15 +10,26 @@ from app.models.product_comments import ProductComment, ProductCommentCreate, Pr
 from .router import products_controller
 
 
-@products_controller.route('/product_comments/product/<string:product_id>', methods=["GET"])
+from flask import request
+
+
+@products_controller.route('/<string:product_id>/comments', methods=["GET"])
 def get_all_product_comments(product_id: str):
     """
     Retrieve all product comments for a specific product.
 
     This endpoint returns all product comments associated with a specific product ID.
+    Requires authentication and admin privileges.
+
+    Query Parameters:
+    - limit: int (optional, default=15) - The maximum number of comments to return.
+    - newest_first: bool (optional, default=True) - Determines the order of the comments.
     """
+    limit = request.args.get('limit', 15, type=int)
+    newest_first = request.args.get('newest_first', True, type=bool)
+
     product_comments_model = get_models(current_app).product_comments
-    all_product_comments = product_comments_model.get_all(product_id)
+    all_product_comments = product_comments_model.get_all(product_id, limit=limit, newest_first=newest_first)
     return respond_success(to_json(all_product_comments))
 
 

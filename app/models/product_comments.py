@@ -60,7 +60,7 @@ class ProductCommentsModel:
         comment = self.db.connection[self.collection].find_one({"_id": ObjectId(comment_id)})
         return ProductComment(**comment) if comment else None
 
-    def get_all(self, product_id: str) -> List[ProductComment]:
+    def get_all(self, product_id: str, limit: int = 15, newest_first: bool = True) -> List['ProductComment']:
         """
         Retrieve all product comments for a specific product from the database.
 
@@ -68,11 +68,15 @@ class ProductCommentsModel:
         If there are no product comments found, it returns an empty list.
 
         :param str product_id: The unique identifier of the product whose product comments are to be retrieved.
+        :param int limit: The maximum number of comments to return.
+        :param bool newest_first: Determines the order of the comments. If True, the comments will be ordered from newest to oldest. If False, the comments will be ordered from oldest to newest.
         :return: A list of ProductComment objects representing all the product comments associated with the specified product.
         :rtype: list[ProductComment]
         """
-        comments = [ProductComment(**item) for item in self.db.connection[self.collection].find({"product_id": ObjectId(product_id)})]
-        return comments if comments else []
+        query = {"product_id": ObjectId(product_id)}
+        sort_order = [("created_at", -1)] if newest_first else [("created_at", 1)]
+        comments = [ProductComment(**item) for item in self.db.connection[self.collection].find(query).sort(sort_order).limit(limit)]
+        return comments
 
     def create(self, input_data: ProductCommentCreate) -> ProductComment:
         """
