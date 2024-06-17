@@ -12,8 +12,10 @@ from app.models.product_replies import ProductRepliesModel, ProductReplyCreate, 
 from app.models.products import Product, Price, Media, Movie, Resolution, Screenshot, Requirements, \
     PlatformOsRequirements, ReleaseDate
 from tests import UnitTest
+from tests.mocks.database import mock_collection
 
 # TODO: Create a separate fixtures entity for unit tests
+
 profile_fixture = Profile(
     display_name="Pork",
     email="john_pork@gmail.com",
@@ -40,14 +42,14 @@ class ProductReplyTestCase(UnitTest):
 
     @patch("app.models.product_replies.Database")
     def test_create_product_reply(self, db: MagicMock):
-        db_connection_mock = db.connection
 
         def creates_and_returns_a_product_reply():
             # given
             model = ProductRepliesModel(db)
             mock_product_reply = product_reply_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+
+            collection_mock = mock_collection(db, 'product_replies')
+            collection_mock.insert_one.return_value = mock_product_reply.to_json()
 
             expected_input = ProductReplyCreate(
                 comment_id=mock_product_reply.comment_id,
@@ -71,19 +73,17 @@ class ProductReplyTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_connection_mock.reset_mock()
 
     @patch("app.models.product_replies.Database")
     def test_get_product_reply(self, db: MagicMock):
-        db_connection_mock = db.connection
 
         def gets_and_returns_product_reply():
             # given
             model = ProductRepliesModel(db)
             product_reply_id = ObjectId()
             mock_product_reply = product_reply_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+
+            collection_mock = mock_collection(db, 'product_replies')
             collection_mock.find_one.return_value = mock_product_reply.to_json()
 
             # when
@@ -100,11 +100,9 @@ class ProductReplyTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_connection_mock.reset_mock()
 
     @patch("app.models.product_replies.Database")
     def test_patch_product_reply(self, db: MagicMock):
-        db_connection_mock = db.connection
 
         def patches_and_returns_updated_product_reply():
             # given
@@ -112,9 +110,8 @@ class ProductReplyTestCase(UnitTest):
             product_reply_id = ObjectId()
             updated_product_reply = product_reply_fixture.clone()
             updated_product_reply.text = "Updated text"
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
 
+            collection_mock = mock_collection(db, 'product_replies')
             collection_mock.find_one_and_update.return_value = updated_product_reply.to_json()
 
             update_data = ProductReplyPatch(
@@ -134,19 +131,17 @@ class ProductReplyTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_connection_mock.reset_mock()
 
     @patch("app.models.product_replies.Database")
     def test_delete_product_reply(self, db: MagicMock):
-        db_connection_mock = db.connection
 
         def deletes_and_confirms_deletion():
             # given
             model = ProductRepliesModel(db)
             product_reply_id = ObjectId()
             mock_product_reply = product_reply_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+
+            collection_mock = mock_collection(db, 'product_replies')
             collection_mock.find_one_and_delete.return_value = mock_product_reply.to_json()
 
             # when
@@ -169,8 +164,8 @@ class ProductReplyTestCase(UnitTest):
             # given
             model = ProductRepliesModel(db)
             nonexistent_product_reply_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+
+            collection_mock = mock_collection(db, 'product_replies')
             collection_mock.find_one_and_delete.return_value = None
 
             # when & then
@@ -186,4 +181,3 @@ class ProductReplyTestCase(UnitTest):
         for test in tests:
             with self.subTest(test.__name__):
                 test()
-            db_connection_mock.reset_mock()

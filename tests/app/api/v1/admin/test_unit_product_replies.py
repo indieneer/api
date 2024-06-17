@@ -13,8 +13,8 @@ from app.api.exceptions import UnprocessableEntityException
 
 # Using the attached fixture for product replies
 product_reply_fixture = ProductReply(
-    comment_id="65f9d1648194a472c9f835cd",
-    profile_id="65f9d1648194a472c9f835ce",
+    comment_id=str(ObjectId()),
+    profile_id=str(ObjectId()),
     text="Nice Game"
 )
 
@@ -30,7 +30,7 @@ class ProductRepliesTestCase(UnitTest):
 
         def call_api(body):
             return self.test_client.post(
-                endpoint.replace("<string:comment_id>", "65f9d1648194a472c9f835cd"),
+                endpoint.replace("<string:comment_id>", str(product_reply_fixture.comment_id)),
                 data=json.dumps(body),
                 content_type='application/json',
                 headers={"Authorization": "Bearer " +
@@ -43,7 +43,7 @@ class ProductRepliesTestCase(UnitTest):
             create_product_reply_mock.return_value = mock_product_reply
 
             expected_input = ProductReplyCreate(
-                comment_id="65f9d1648194a472c9f835cd",
+                comment_id=str(mock_product_reply.comment_id),
                 profile_id=str(mock_product_reply.profile_id),
                 text=mock_product_reply.text
             )
@@ -77,10 +77,7 @@ class ProductRepliesTestCase(UnitTest):
             fails_to_create_a_product_reply_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_product_reply_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_product_reply_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.replies.get_models")
     def test_get_product_reply_by_id(self, get_models: MagicMock):
@@ -99,8 +96,8 @@ class ProductRepliesTestCase(UnitTest):
 
         def finds_and_returns_a_product_reply():
             # given
-            mock_comment_id = "65f9d1648194a472c9f835cd"
-            mock_product_reply_id = "507f1f77bcf86cd799439011"  # Example ObjectId
+            mock_comment_id = str(ObjectId())
+            mock_product_reply_id = str(ObjectId())
             mock_product_reply = product_reply_fixture.clone()
             get_product_reply_mock.return_value = mock_product_reply
 
@@ -119,8 +116,8 @@ class ProductRepliesTestCase(UnitTest):
 
         def does_not_find_a_product_reply_and_returns_an_error():
             # given
-            mock_comment_id = "65f9d1648194a472c9f835cd"
-            mock_product_reply_id = "1"
+            mock_comment_id = str(ObjectId())
+            mock_product_reply_id = str(ObjectId())
             get_product_reply_mock.return_value = None
 
             expected_response = {
@@ -141,10 +138,7 @@ class ProductRepliesTestCase(UnitTest):
             does_not_find_a_product_reply_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_product_reply_mock.reset_mock()
+        self.run_subtests(tests, after_each=get_product_reply_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.replies.get_models")
     def test_update_product_reply(self, get_models: MagicMock):
@@ -164,8 +158,8 @@ class ProductRepliesTestCase(UnitTest):
 
         def updates_and_returns_the_product_reply():
             # given
-            mock_comment_id = "65f9d1648194a472c9f835cd"
-            mock_product_reply_id = "507f1f77bcf86cd799439011"
+            mock_comment_id = str(product_reply_fixture.comment_id)
+            mock_product_reply_id = str(ObjectId())
             updated_fields = {"text": "Awesome Game"}
             mock_product_reply = product_reply_fixture.clone()
             update_product_reply_mock.return_value = mock_product_reply
@@ -187,10 +181,7 @@ class ProductRepliesTestCase(UnitTest):
             updates_and_returns_the_product_reply,
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            update_product_reply_mock.reset_mock()
+        self.run_subtests(tests, after_each=update_product_reply_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.replies.get_models")
     def test_delete_product_reply(self, get_models: MagicMock):
@@ -209,8 +200,8 @@ class ProductRepliesTestCase(UnitTest):
 
         def deletes_the_product_reply():
             # given
-            mock_comment_id = "65f9d1648194a472c9f835cd"
-            mock_product_reply_id = "507f1f77bcf86cd799439011"
+            mock_comment_id = str(product_reply_fixture.comment_id)
+            mock_product_reply_id = str(ObjectId())
 
             expected_response = {
                 "message": f"Product reply {mock_product_reply_id} successfully deleted"
@@ -226,8 +217,8 @@ class ProductRepliesTestCase(UnitTest):
 
         def fails_to_delete_a_nonexistent_product_reply():
             # given
-            mock_comment_id = "65f9d1648194a472c9f835cd"
-            mock_product_reply_id = "2"
+            mock_comment_id = str(product_reply_fixture.comment_id)
+            mock_product_reply_id = str(ObjectId())
             delete_product_reply_mock.return_value = None
 
             expected_response = {
@@ -248,8 +239,5 @@ class ProductRepliesTestCase(UnitTest):
             fails_to_delete_a_nonexistent_product_reply
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_product_reply_mock.reset_mock()
+        self.run_subtests(tests, after_each=delete_product_reply_mock.reset_mock)
 

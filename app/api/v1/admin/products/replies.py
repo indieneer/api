@@ -1,6 +1,6 @@
 from flask import Blueprint, request, current_app
 
-from app.api.exceptions import UnprocessableEntityException
+from app.api.exceptions import UnprocessableEntityException, BadRequestException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.product_replies import ProductReplyPatch, ProductReplyCreate
@@ -34,6 +34,12 @@ def get_product_reply_by_id(comment_id: str, reply_id: str):
     This endpoint returns the details of a specific product reply.
     Requires authentication and admin privileges.
     """
+    product_comments_model = get_models(current_app).product_comments
+    product_comment = product_comments_model.get(comment_id)
+
+    if not product_comment:
+        return respond_error(f'The reply is attached to a nonexistent comment with ID {comment_id}', 404)
+
     product_replies_model = get_models(current_app).product_replies
     product_reply = product_replies_model.get(reply_id)
     if product_reply:
@@ -53,6 +59,10 @@ def create_product_reply(comment_id: str):
     Requires authentication and admin privileges.
     """
     data = request.get_json()
+
+    if len(data["text"]) <= 0:
+        return respond_error("`text` can't be empty", 400)
+
     product_replies_model = get_models(current_app).product_replies
     try:
         product_reply_data = ProductReplyCreate(comment_id=comment_id, **data)
@@ -73,6 +83,10 @@ def update_product_reply(comment_id: str, reply_id: str):
     Requires authentication and admin privileges.
     """
     data = request.get_json()
+
+    if len(data["text"]) <= 0:
+        return respond_error("`text` can't be empty", 400)
+
     product_reply_patch_data = ProductReplyPatch(**data)
     product_replies_model = get_models(current_app).product_replies
     updated_product_reply = product_replies_model.patch(reply_id, product_reply_patch_data)

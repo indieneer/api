@@ -7,7 +7,7 @@ from tests.integration_test import IntegrationTest
 class ProductReplyModelTestCase(IntegrationTest):
 
     def test_get_product_reply(self):
-        product_reply_model = ProductRepliesModel(self.services.db)
+        product_reply_model = self.models.product_replies
 
         # given
         product_reply = self.fixtures.product_reply
@@ -34,7 +34,7 @@ class ProductReplyModelTestCase(IntegrationTest):
         self.assertEqual(created_product_reply.text, test_text)
 
     def test_patch_product_reply(self):
-        product_reply_model = ProductRepliesModel(self.services.db)
+        product_reply_model = self.models.product_replies
 
         # given
         product_reply = self.fixtures.product_reply.clone()
@@ -51,7 +51,7 @@ class ProductReplyModelTestCase(IntegrationTest):
         self.assertEqual(updated_product_reply.text, "Updated product reply text")
 
     def test_delete_product_reply(self):
-        product_reply_model = ProductRepliesModel(self.services.db)
+        product_reply_model = self.models.product_replies
 
         # given
         product_reply, cleanup = self.factory.product_replies.create(self.fixtures.product_reply.clone())
@@ -65,8 +65,9 @@ class ProductReplyModelTestCase(IntegrationTest):
         self.assertIsNone(retrieved_product_reply_after_deletion)
 
     def test_get_all_product_replies(self):
+        product_reply_model = self.models.product_replies
+
         # given
-        product_reply_model = ProductRepliesModel(self.services.db)
         product_reply, cleanup = self.factory.product_replies.create(self.fixtures.product_reply.clone())
         self.addCleanup(cleanup)
         comment_id = product_reply.comment_id

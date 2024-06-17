@@ -39,25 +39,86 @@ class ProductReplyTestCase(IntegrationTest):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_json["data"]["text"], "I agree with you")
 
-    def test_create_product_reply(self):
+    def test_does_not_find_a_reply_with_nonexistent_id(self):
         # given
-        data_fixture = self.fixtures.product_reply.clone()
-        payload = data_fixture.to_json()
-
-        # TODO: create a `strip_metadata` reverse function, centralize metadata
-        del payload["_id"]
-        del payload["created_at"]
-        del payload["updated_at"]
-        del payload["comment_id"]
+        nonexistent_reply_id = ObjectId()
+        existing_comment_id = self.fixtures.product_comment._id
 
         # when
-        response = self.app.post(f'/v1/admin/comments/{data_fixture.comment_id}/product_replies', headers={"Authorization": f'Bearer {self.token}'}, json=payload)
+        response = self.app.get(f"/v1/admin/comments/{existing_comment_id}/product_replies/{nonexistent_reply_id}",
+                                headers={"Authorization": f'Bearer {self.token}'})
         response_json = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_json["error"], f'Product reply with ID {nonexistent_reply_id} not found')
+
+    def test_comment_for_reply_not_found(self):
+        # given
+        nonexistent_comment_id = ObjectId()
+        product_reply_id = ObjectId()  # Simulate any ObjectId for the product reply
+
+        # when
+        response = self.app.get(f"/v1/admin/comments/{nonexistent_comment_id}/product_replies/{product_reply_id}",
+                                headers={"Authorization": f'Bearer {self.token}'})
+        response_json = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_json["error"], f'The reply is attached to a nonexistent comment with ID {nonexistent_comment_id}')
+
+    def test_create_product_reply(self):
+        # given
+        some_comment_id = str(ObjectId())
+        payload = {
+            "profile_id": str(ObjectId()),
+            "text": "I agree with you"
+        }
+
+        # when
+        response = self.app.post(f'/v1/admin/comments/{some_comment_id}/product_replies', headers={"Authorization": f'Bearer {self.token}'}, json=payload)
+        response_json = response.get_json()
+
         self.addCleanup(lambda: self.factory.product_replies.cleanup(ObjectId(response_json["data"]["_id"])))
 
         # then
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response_json["data"]["text"], payload["text"])
+
+    def test_does_not_allow_to_create_a_reply_with_zero_length(self):
+        # given
+        some_comment_id = str(ObjectId())
+        payload = {
+            "profile_id": str(ObjectId()),
+            "text": ""
+        }
+
+        # when
+        response = self.app.post(f'/v1/admin/comments/{some_comment_id}/product_replies',
+                                 headers={"Authorization": f'Bearer {self.token}'}, json=payload)
+        response_json = response.get_json()
+
+        print(response_json)
+
+        # then
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("text", response_json["error"])
+
+    def test_does_not_allow_to_edit_a_reply_to_be_zero_length(self):
+        # given
+        data_fixture = self.fixtures.product_reply.clone()
+        product_reply, cleanup = self.factory.product_replies.create(data_fixture)
+        self.addCleanup(cleanup)
+        update_payload = {"text": ""}
+
+        # when
+        response = self.app.patch(f"/v1/admin/comments/{product_reply.comment_id}/product_replies/{product_reply._id}",
+                                  headers={"Authorization": f'Bearer {self.token}'}, json=update_payload)
+        response_json = response.get_json()
+
+        # then
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("text", response_json["error"])
 
     def test_update_product_reply(self):
         # given
