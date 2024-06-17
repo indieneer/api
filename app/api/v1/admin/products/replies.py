@@ -60,7 +60,7 @@ def create_product_reply(comment_id: str):
     """
     data = request.get_json()
 
-    if len(data["text"]) <= 0:
+    if (text := data.get("text")) is not None and len(text) <= 0:
         return respond_error("`text` can't be empty", 400)
 
     product_replies_model = get_models(current_app).product_replies
