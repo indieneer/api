@@ -58,11 +58,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             does_not_find_background_job_and_returns_none
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_get_all_background_jobs(self):
         def finds_and_returns_all_background_jobs():
@@ -94,11 +94,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             does_not_find_background_jobs_and_returns_empty_list
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_create_background_job(self):
         def creates_and_returns_background_job():
@@ -142,11 +142,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             fails_to_create_background_job_with_invalid_type_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_patch_background_job(self):
         def finds_then_patches_and_returns_background_job():
@@ -219,11 +219,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             fails_to_patch_background_job_with_invalid_status_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_put_background_job(self):
         def inserts_and_returns_background_job():
@@ -284,11 +284,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             fails_to_insert_background_job_with_invalid_event_type_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_delete_background_job(self):
         def deletes_and_returns_deleted_count():
@@ -325,11 +325,11 @@ class BackgroundJobsModelTestCase(UnitTest):
             does_not_delete_and_returns_zero
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)
 
     def test_add_event(self):
         def adds_event_and_returns_updated_background_job():
@@ -377,8 +377,8 @@ class BackgroundJobsModelTestCase(UnitTest):
             fails_to_add_event_with_invalid_event_type_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
+        def reset_mocks():
             self.mock_db.reset_mock()
             self.mock_collection.reset_mock()
+
+        self.run_subtests(tests, after_each=reset_mocks)

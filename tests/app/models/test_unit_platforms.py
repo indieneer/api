@@ -6,9 +6,8 @@ from slugify import slugify
 
 from app.models.exceptions import NotFoundException
 from app.models.platforms import PlatformsModel, PlatformCreate, Platform, PlatformPatch
-
-
 from tests import UnitTest
+from tests.mocks.database import mock_collection
 
 # TODO: Create a separate fixtures entity for unit tests
 platform_fixture = Platform(
@@ -23,14 +22,13 @@ class PlatformTestCase(UnitTest):
 
     @patch("app.models.platforms.Database")
     def test_create_platform(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platforms')
 
         def creates_and_returns_a_platform():
             # given
             model = PlatformsModel(db)
             mock_platform = platform_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+            collection_mock.insert_one.return_value = mock_platform.to_json()
 
             expected_input = PlatformCreate(
                 name=mock_platform.name,
@@ -53,22 +51,17 @@ class PlatformTestCase(UnitTest):
             creates_and_returns_a_platform
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platforms.Database")
     def test_get_platform(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platforms')
 
         def gets_and_returns_platform():
             # given
             model = PlatformsModel(db)
             platform_id = ObjectId()
             mock_platform = platform_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = mock_platform.to_json()
 
             # when
@@ -91,8 +84,6 @@ class PlatformTestCase(UnitTest):
             # given
             model = PlatformsModel(db)
             nonexistent_platform_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = None
 
             # when
@@ -108,23 +99,17 @@ class PlatformTestCase(UnitTest):
             fails_to_get_a_nonexistent_platform
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platforms.Database")
     def test_patch_platform(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platforms')
 
         def patches_and_returns_updated_platform():
             # given
             model = PlatformsModel(db)
             platform_id = ObjectId()
             updated_platform = platform_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
-
             collection_mock.find_one_and_update.return_value = updated_platform.to_json()
 
             update_data = PlatformPatch(
@@ -161,8 +146,6 @@ class PlatformTestCase(UnitTest):
             model = PlatformsModel(db)
             nonexistent_platform_id = ObjectId()
             update_data = platform_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_update.return_value = None
 
             # when & then
@@ -175,22 +158,17 @@ class PlatformTestCase(UnitTest):
             fails_to_patch_a_nonexistent_platform
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platforms.Database")
     def test_delete_platform(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platforms')
 
         def deletes_and_confirms_deletion():
             # given
             model = PlatformsModel(db)
             platform_id = ObjectId()
             mock_platform = platform_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = mock_platform.to_json()
 
             # when
@@ -213,8 +191,6 @@ class PlatformTestCase(UnitTest):
             # given
             model = PlatformsModel(db)
             nonexistent_platform_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = None
 
             # when & then
@@ -227,7 +203,4 @@ class PlatformTestCase(UnitTest):
             fails_to_delete_a_nonexistent_platform
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
