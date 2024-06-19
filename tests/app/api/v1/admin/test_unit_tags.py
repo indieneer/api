@@ -82,10 +82,7 @@ class TagsTestCase(UnitTest):
             fails_to_create_a_tag_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_tag_mock.reset_mock()
+        self.run_subtests(tests, create_tag_mock.reset_mock)
 
     @patch("app.api.v1.admin.tags.get_models")
     def test_get_tag(self, get_models: MagicMock):
@@ -144,17 +141,14 @@ class TagsTestCase(UnitTest):
             does_not_find_a_tag_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_tag_mock.reset_mock()
+        self.run_subtests(tests, get_tag_mock.reset_mock)
 
     @patch("app.api.v1.admin.tags.get_models")
-    def test_patch_tag(self, get_models: MagicMock):
+    def test_update_tag(self, get_models: MagicMock):
         endpoint = "/tags/<string:tag_id>"
         self.app.route(endpoint, methods=["PATCH"])(update_tag)
 
-        patch_tag_mock = get_models.return_value.tags.patch
+        update_tag_mock = get_models.return_value.tags.patch
 
         def call_api(tag_id, body):
             return self.test_client.patch(
@@ -166,10 +160,10 @@ class TagsTestCase(UnitTest):
                 content_type='application/json'
             )
 
-        def patches_and_returns_the_tag():
+        def updates_and_returns_the_tag():
             # given
             mock_tag = Tag(name="Test tag")
-            patch_tag_mock.return_value = mock_tag
+            update_tag_mock.return_value = mock_tag
 
             expected_input = TagPatch(
                 name=mock_tag.name,
@@ -187,17 +181,14 @@ class TagsTestCase(UnitTest):
             # then
             self.assertEqual(response.get_json(), expected_response)
             self.assertEqual(response.status_code, 200)
-            patch_tag_mock.assert_called_once_with(
+            update_tag_mock.assert_called_once_with(
                 str(mock_tag._id), expected_input)
 
         tests = [
-            patches_and_returns_the_tag
+            updates_and_returns_the_tag
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            patch_tag_mock.reset_mock()
+        self.run_subtests(tests, update_tag_mock.reset_mock)
 
     @patch("app.api.v1.admin.tags.get_models")
     def test_delete_tag(self, get_models: MagicMock):
@@ -255,7 +246,4 @@ class TagsTestCase(UnitTest):
             fails_to_find_a_tag_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_tag_mock.reset_mock()
+        self.run_subtests(tests, delete_tag_mock.reset_mock)

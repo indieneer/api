@@ -6,6 +6,7 @@ from pymongo import ReturnDocument
 from app.models.exceptions import NotFoundException
 from app.models.platform_products import PlatformProductsModel, PlatformProductCreate, PlatformProduct, PlatformProductPatch
 from tests import UnitTest
+from tests.mocks.database import mock_collection
 from app.models.price import Price
 
 # Fixture with the Price import
@@ -20,14 +21,13 @@ class PlatformProductTestCase(UnitTest):
 
     @patch("app.models.platform_products.Database")
     def test_create_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platform_products')
 
         def creates_and_returns_a_platform_product():
             # given
             model = PlatformProductsModel(db)
             mock_platform_product = platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+            collection_mock.insert_one.return_value = mock_platform_product.to_json()
 
             expected_input = PlatformProductCreate(
                 platform_id=mock_platform_product.platform_id,
@@ -49,22 +49,17 @@ class PlatformProductTestCase(UnitTest):
             creates_and_returns_a_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platform_products.Database")
     def test_get_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platform_products')
 
         def gets_and_returns_platform_product():
             # given
             model = PlatformProductsModel(db)
             platform_product_id = ObjectId()
             mock_platform_product = platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = mock_platform_product.to_json()
 
             # when
@@ -87,8 +82,6 @@ class PlatformProductTestCase(UnitTest):
             # given
             model = PlatformProductsModel(db)
             nonexistent_platform_product_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = None
 
             # when
@@ -104,14 +97,11 @@ class PlatformProductTestCase(UnitTest):
             fails_to_get_a_nonexistent_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platform_products.Database")
     def test_patch_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platform_products')
 
         def patches_and_returns_updated_platform_product():
             # given
@@ -120,9 +110,6 @@ class PlatformProductTestCase(UnitTest):
             updated_platform_product = platform_product_fixture.clone()
             updated_platform_product.prices = [Price(currency="EUR", value=10.0)]
             updated_platform_product.product_page_url = "https://www.updated-example.com"
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
-
             collection_mock.find_one_and_update.return_value = updated_platform_product.to_json()
 
             update_data = PlatformProductPatch(
@@ -157,8 +144,6 @@ class PlatformProductTestCase(UnitTest):
             model = PlatformProductsModel(db)
             nonexistent_platform_product_id = ObjectId()
             update_data = platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_update.return_value = None
 
             # when & then
@@ -171,22 +156,17 @@ class PlatformProductTestCase(UnitTest):
             fails_to_patch_a_nonexistent_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.platform_products.Database")
     def test_delete_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'platform_products')
 
         def deletes_and_confirms_deletion():
             # given
             model = PlatformProductsModel(db)
             platform_product_id = ObjectId()
             mock_platform_product = platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = mock_platform_product.to_json()
 
             # when
@@ -209,8 +189,6 @@ class PlatformProductTestCase(UnitTest):
             # given
             model = PlatformProductsModel(db)
             nonexistent_platform_product_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = None
 
             # when & then
@@ -223,7 +201,4 @@ class PlatformProductTestCase(UnitTest):
             fails_to_delete_a_nonexistent_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)

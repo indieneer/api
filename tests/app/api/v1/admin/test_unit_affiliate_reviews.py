@@ -10,6 +10,7 @@ from app.api.exceptions import UnprocessableEntityException
 from bson import ObjectId
 
 
+# TODO: Update model dataclass type checking to avoid warnings
 class AffiliateReviewsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.affiliate_reviews.get_models")
@@ -30,9 +31,9 @@ class AffiliateReviewsTestCase(UnitTest):
 
         def creates_and_returns_an_affiliate_review():
             # given
-            mock_affiliate_review = AffiliateReview(profile_id="507f1f77bcf86cd799439011",
-                                       affiliate_id="507f1f77bcf86cd799439012",
-                                       affiliate_platform_product_id="507f1f77bcf86cd799439013",
+            mock_affiliate_review = AffiliateReview(profile_id=str(ObjectId()),
+                                       affiliate_id=str(ObjectId()),
+                                       affiliate_platform_product_id=str(ObjectId()),
                                        text="Great product",
                                        rating=5
                                        )
@@ -78,10 +79,7 @@ class AffiliateReviewsTestCase(UnitTest):
             fails_to_create_an_affiliate_review_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_affiliate_review_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_affiliate_review_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_reviews.get_models")
     def test_get_affiliate_review_by_id(self, get_models: MagicMock):
@@ -99,10 +97,10 @@ class AffiliateReviewsTestCase(UnitTest):
 
         def finds_and_returns_an_affiliate_review():
             # given
-            mock_affiliate_review_id = "507f1f77bcf86cd799439011"  # Example ObjectId
-            mock_affiliate_review = AffiliateReview(profile_id=ObjectId("507f1f77bcf86cd799439011"),
-                                                    affiliate_id=ObjectId("507f1f77bcf86cd799439012"),
-                                                    affiliate_platform_product_id=ObjectId("507f1f77bcf86cd799439013"),
+            mock_affiliate_review_id = str(ObjectId())
+            mock_affiliate_review = AffiliateReview(profile_id=str(ObjectId()),
+                                                    affiliate_id=str(ObjectId()),
+                                                    affiliate_platform_product_id=str(ObjectId()),
                                                     text="Very satisfied",
                                                     rating=4,
                                                     _id=mock_affiliate_review_id)
@@ -144,10 +142,7 @@ class AffiliateReviewsTestCase(UnitTest):
             does_not_find_an_affiliate_review_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_affiliate_review_mock.reset_mock()
+        self.run_subtests(tests, after_each=get_affiliate_review_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_reviews.get_models")
     def test_update_affiliate_review(self, get_models: MagicMock):
@@ -166,11 +161,11 @@ class AffiliateReviewsTestCase(UnitTest):
 
         def updates_and_returns_the_affiliate_review():
             # given
-            mock_affiliate_review_id = "507f1f77bcf86cd799439011"
+            mock_affiliate_review_id = str(ObjectId())
             updated_fields = {"text": "Updated review text.", "rating": 3}
-            mock_affiliate_review = AffiliateReview(profile_id=ObjectId("507f1f77bcf86cd799439011"),
-                                                    affiliate_id=ObjectId("507f1f77bcf86cd799439012"),
-                                                    affiliate_platform_product_id=ObjectId("507f1f77bcf86cd799439013"),
+            mock_affiliate_review = AffiliateReview(profile_id=str(ObjectId()),
+                                                    affiliate_id=str(ObjectId()),
+                                                    affiliate_platform_product_id=str(ObjectId()),
                                                     text="Updated review text.",
                                                     rating=3,
                                                     _id=mock_affiliate_review_id
@@ -195,10 +190,7 @@ class AffiliateReviewsTestCase(UnitTest):
             updates_and_returns_the_affiliate_review,
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            update_affiliate_review_mock.reset_mock()
+        self.run_subtests(tests, after_each=update_affiliate_review_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_reviews.get_models")
     def test_delete_affiliate_review(self, get_models: MagicMock):
@@ -216,7 +208,7 @@ class AffiliateReviewsTestCase(UnitTest):
 
         def deletes_the_affiliate_review():
             # given
-            mock_affiliate_review_id = "507f1f77bcf86cd799439011"
+            mock_affiliate_review_id = str(ObjectId())
 
             expected_response = {
                 "message": f"Affiliate review {mock_affiliate_review_id} successfully deleted"
@@ -253,7 +245,4 @@ class AffiliateReviewsTestCase(UnitTest):
             fails_to_delete_a_nonexistent_affiliate_review
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_affiliate_review_mock.reset_mock()
+        self.run_subtests(tests, after_each=delete_affiliate_review_mock.reset_mock)
