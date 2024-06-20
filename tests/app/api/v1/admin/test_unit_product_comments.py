@@ -13,8 +13,8 @@ from app.api.exceptions import UnprocessableEntityException
 
 # Using the attached fixture for product comments
 product_comment_fixture = ProductComment(
-    product_id="65f9d1648194a472c9f835cd",
-    profile_id="65f9d1648194a472c9f835ce",
+    product_id=str(ObjectId()),
+    profile_id=str(ObjectId()),
     text="Nice Game"
 )
 
@@ -30,7 +30,7 @@ class ProductCommentsTestCase(UnitTest):
 
         def call_api(body):
             return self.test_client.post(
-                endpoint.replace("<string:product_id>", "65f9d1648194a472c9f835cd"),
+                endpoint.replace("<string:product_id>", str(product_comment_fixture.product_id)),
                 data=json.dumps(body),
                 content_type='application/json',
                 headers={"Authorization": "Bearer " +
@@ -78,10 +78,7 @@ class ProductCommentsTestCase(UnitTest):
             fails_to_create_a_product_comment_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_product_comment_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_product_comment_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_get_product_comment_by_id(self, get_models: MagicMock):
@@ -100,8 +97,8 @@ class ProductCommentsTestCase(UnitTest):
 
         def finds_and_returns_a_product_comment():
             # given
-            mock_product_id = "65f9d1648194a472c9f835cd"
-            mock_product_comment_id = "507f1f77bcf86cd799439011"  # Example ObjectId
+            mock_product_id = str(ObjectId())
+            mock_product_comment_id = str(ObjectId())
             mock_product_comment = product_comment_fixture.clone()
             get_product_comment_mock.return_value = mock_product_comment
 
@@ -120,8 +117,8 @@ class ProductCommentsTestCase(UnitTest):
 
         def does_not_find_a_product_comment_and_returns_an_error():
             # given
-            mock_product_id = "65f9d1648194a472c9f835cd"
-            mock_product_comment_id = "1"
+            mock_product_id = str(ObjectId())
+            mock_product_comment_id = str(ObjectId())
             get_product_comment_mock.return_value = None
 
             expected_response = {
@@ -142,10 +139,7 @@ class ProductCommentsTestCase(UnitTest):
             does_not_find_a_product_comment_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_product_comment_mock.reset_mock()
+        self.run_subtests(tests, after_each=get_product_comment_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_update_product_comment(self, get_models: MagicMock):
@@ -165,8 +159,8 @@ class ProductCommentsTestCase(UnitTest):
 
         def updates_and_returns_the_product_comment():
             # given
-            mock_product_id = "65f9d1648194a472c9f835cd"
-            mock_product_comment_id = "507f1f77bcf86cd799439011"
+            mock_product_id = str(ObjectId())
+            mock_product_comment_id = str(ObjectId())
             updated_fields = {"text": "Awesome Game"}
             mock_product_comment = product_comment_fixture.clone()
             update_product_comment_mock.return_value = mock_product_comment
@@ -188,10 +182,7 @@ class ProductCommentsTestCase(UnitTest):
             updates_and_returns_the_product_comment,
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            update_product_comment_mock.reset_mock()
+        self.run_subtests(tests, after_each=update_product_comment_mock.reset_mock)
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_delete_product_comment(self, get_models: MagicMock):
@@ -210,8 +201,8 @@ class ProductCommentsTestCase(UnitTest):
 
         def deletes_the_product_comment():
             # given
-            mock_product_id = "65f9d1648194a472c9f835cd"
-            mock_product_comment_id = "507f1f77bcf86cd799439011"
+            mock_product_id = str(ObjectId())
+            mock_product_comment_id = str(ObjectId())
 
             expected_response = {
                 "message": f"Product comment {mock_product_comment_id} successfully deleted"
@@ -227,8 +218,8 @@ class ProductCommentsTestCase(UnitTest):
 
         def fails_to_delete_a_nonexistent_product_comment():
             # given
-            mock_product_id = "65f9d1648194a472c9f835cd"
-            mock_product_comment_id = "2"
+            mock_product_id = str(ObjectId())
+            mock_product_comment_id = str(ObjectId())
             delete_product_comment_mock.return_value = None
 
             expected_response = {
@@ -249,7 +240,4 @@ class ProductCommentsTestCase(UnitTest):
             fails_to_delete_a_nonexistent_product_comment
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_product_comment_mock.reset_mock()
+        self.run_subtests(tests, after_each=delete_product_comment_mock.reset_mock)
