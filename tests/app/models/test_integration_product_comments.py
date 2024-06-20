@@ -7,7 +7,7 @@ from tests.integration_test import IntegrationTest
 class ProductCommentModelTestCase(IntegrationTest):
 
     def test_get_product_comment(self):
-        product_comment_model = ProductCommentsModel(self.services.db)
+        product_comment_model = self.models.product_comments
 
         # given
         product_comment = self.fixtures.product_comment
@@ -34,7 +34,7 @@ class ProductCommentModelTestCase(IntegrationTest):
         self.assertEqual(created_product_comment.text, test_text)
 
     def test_patch_product_comment(self):
-        product_comment_model = ProductCommentsModel(self.services.db)
+        product_comment_model = self.models.product_comments
 
         # given
         product_comment = self.fixtures.product_comment.clone()
@@ -51,7 +51,7 @@ class ProductCommentModelTestCase(IntegrationTest):
         self.assertEqual(updated_product_comment.text, "Updated product comment text")
 
     def test_delete_product_comment(self):
-        product_comment_model = ProductCommentsModel(self.services.db)
+        product_comment_model = self.models.product_comments
 
         # given
         product_comment, cleanup = self.factory.product_comments.create(self.fixtures.product_comment.clone())
@@ -66,7 +66,7 @@ class ProductCommentModelTestCase(IntegrationTest):
 
     def test_get_all_product_comments(self):
         # given
-        product_comment_model = ProductCommentsModel(self.services.db)
+        product_comment_model = self.models.product_comments
         product_comment, cleanup = self.factory.product_comments.create(self.fixtures.product_comment.clone())
         self.addCleanup(cleanup)
         product_id = product_comment.product_id

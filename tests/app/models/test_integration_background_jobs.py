@@ -9,7 +9,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
     def test_get_all_background_jobs(self):
         self.skipTest("Fix hardcoded")
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job
 
         # when
@@ -22,7 +22,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_get_background_job(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job
 
         # when
@@ -37,7 +37,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_get_background_job_not_found(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job_id = ObjectId()
 
         # when
@@ -48,7 +48,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
         self.assertIsNone(retrieved_background_job)
 
     def test_patch_background_job(self):
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
 
         # given
         background_job = self.fixtures.background_job
@@ -66,7 +66,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_patch_background_job_with_invalid_status(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job
         patch_data = BackgroundJobPatch(status="invalid")
 
@@ -81,7 +81,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_put_background_job(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job.clone()
         background_job.status = "pending"
 
@@ -96,7 +96,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_create_background_job(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job
 
         # when
@@ -118,7 +118,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
     def test_delete_background_job(self):
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job, cleanup = self.factory.background_jobs.create(
             self.fixtures.background_job.clone())
 
@@ -134,7 +134,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
     def test_add_event_to_background_job(self):
         self.skipTest("unexpectedly None")
         # given
-        background_jobs_model = BackgroundJobsModel(self.services.db)
+        background_jobs_model = self.models.background_jobs
         background_job = self.fixtures.background_job.clone()
         _, cleanup = self.factory.background_jobs.create(background_job)
         background_job.events = [Event(type="info", message="Test event")]
@@ -148,7 +148,7 @@ class BackgroundJobsModelTestCase(IntegrationTest):
 
         # then
         self.assertIsNotNone(updated_background_job)
-        self.assertEqual(updated_background_job.events[0]['type'], background_job.to_dict()[
+        self.assertEqual(updated_background_job.events[0]['type'], background_job.to_dict()[  # TODO: Investigate __getitem__ warning
                          "events"][0]["type"])
         self.assertEqual(updated_background_job.events[0]['message'], background_job.to_dict()[
                          "events"][0]["message"])
