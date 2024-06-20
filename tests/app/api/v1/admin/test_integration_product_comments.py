@@ -18,7 +18,7 @@ class ProductCommentTestCase(IntegrationTest):
         self.addCleanup(cleanup)
 
         # when
-        response = self.app.get(f"/v1/admin/products/{product_comment.product_id}/product_comments", headers={"Authorization": f'Bearer {self.token}'})
+        response = self.app.get(f"/v1/admin/products/{product_comment.product_id}/comments", headers={"Authorization": f'Bearer {self.token}'})
         response_json = response.get_json()
 
         # then
@@ -32,7 +32,7 @@ class ProductCommentTestCase(IntegrationTest):
         self.addCleanup(cleanup)
 
         # when
-        response = self.app.get(f"/v1/admin/products/{product_comment.product_id}/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'})
+        response = self.app.get(f"/v1/admin/products/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'})
         response_json = response.get_json()
 
         # then
@@ -48,11 +48,11 @@ class ProductCommentTestCase(IntegrationTest):
         del payload["_id"]
         del payload["created_at"]
         del payload["updated_at"]
-        del payload["product_id"]
 
         # when
-        response = self.app.post(f'/v1/admin/products/{data_fixture.product_id}/product_comments', headers={"Authorization": f'Bearer {self.token}'}, json=payload)
+        response = self.app.post(f'/v1/admin/products/product_comments', headers={"Authorization": f'Bearer {self.token}'}, json=payload)
         response_json = response.get_json()
+
         self.addCleanup(lambda: self.factory.product_comments.cleanup(ObjectId(response_json["data"]["_id"])))
 
         # then
@@ -67,7 +67,7 @@ class ProductCommentTestCase(IntegrationTest):
         update_payload = {"text": "new"}
 
         # when
-        response = self.app.patch(f"/v1/admin/products/{product_comment.product_id}/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'}, json=update_payload)
+        response = self.app.patch(f"/v1/admin/products/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'}, json=update_payload)
         response_json = response.get_json()
 
         # then
@@ -80,8 +80,9 @@ class ProductCommentTestCase(IntegrationTest):
         product_comment, cleanup = self.factory.product_comments.create(data_fixture)
         self.addCleanup(cleanup)
         # when
-        response = self.app.delete(f"/v1/admin/products/{product_comment.product_id}/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'})
+        response = self.app.delete(f"/v1/admin/products/product_comments/{product_comment._id}", headers={"Authorization": f'Bearer {self.token}'})
         response_json = response.get_json()
+
         # then
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_json["data"]["message"], f'Product comment {product_comment._id} successfully deleted')

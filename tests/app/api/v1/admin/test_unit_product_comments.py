@@ -23,7 +23,7 @@ class ProductCommentsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_create_product_comment(self, get_models: MagicMock):
-        endpoint = "/admin/products/<string:product_id>/product_comments"
+        endpoint = "/admin/products/product_comments"
         self.app.route(endpoint, methods=["POST"])(create_product_comment)
 
         create_product_comment_mock = get_models.return_value.product_comments.create
@@ -43,7 +43,7 @@ class ProductCommentsTestCase(UnitTest):
             create_product_comment_mock.return_value = mock_product_comment
 
             expected_input = ProductCommentCreate(
-                product_id="65f9d1648194a472c9f835cd",
+                product_id=str(ObjectId),
                 profile_id=str(mock_product_comment.profile_id),
                 text=mock_product_comment.text
             )
@@ -55,6 +55,7 @@ class ProductCommentsTestCase(UnitTest):
 
             # when
             response = call_api({
+                "product_id": str(ObjectId),
                 "profile_id": str(expected_input.profile_id),
                 "text": expected_input.text
             })
@@ -84,7 +85,7 @@ class ProductCommentsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_get_product_comment_by_id(self, get_models: MagicMock):
-        endpoint = "/admin/products/<string:product_id>/product_comments/<string:comment_id>"
+        endpoint = "/admin/products/product_comments/<string:comment_id>"
         self.app.route(endpoint, methods=["GET"])(get_product_comment_by_id)
 
         get_product_comment_mock = get_models.return_value.product_comments.get
@@ -148,7 +149,7 @@ class ProductCommentsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_update_product_comment(self, get_models: MagicMock):
-        endpoint = "/admin/products/<string:product_id>/product_comments/<string:comment_id>"
+        endpoint = "/admin/products/product_comments/<string:comment_id>"
         self.app.route(endpoint, methods=["PATCH"])(update_product_comment)
 
         update_product_comment_mock = get_models.return_value.product_comments.patch
@@ -194,7 +195,7 @@ class ProductCommentsTestCase(UnitTest):
 
     @patch("app.api.v1.admin.products.comments.get_models")
     def test_delete_product_comment(self, get_models: MagicMock):
-        endpoint = "/admin/products/<string:product_id>/product_comments/<string:comment_id>"
+        endpoint = "/admin/products/product_comments/<string:comment_id>"
         self.app.route(endpoint, methods=["DELETE"])(delete_product_comment)
 
         delete_product_comment_mock = get_models.return_value.product_comments.delete
