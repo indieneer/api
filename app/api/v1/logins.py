@@ -1,5 +1,5 @@
-
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, request, make_response
+from werkzeug.exceptions import UnsupportedMediaType
 
 from app.models import get_models
 from app.services.firebase.exceptions import InvalidLoginCredentialsException
@@ -85,15 +85,20 @@ def exchange_refresh_token():
     """
     logins_model = get_models(current_app).logins
 
-    data = request.get_json()
-    refresh_token = data.get("refresh_token")
+    try:
+        data = request.get_json()
+        refresh_token = data.get("refresh_token")
+    except UnsupportedMediaType:
+        refresh_token = request.cookies.get("RefreshToken")
 
     if not refresh_token:
         return respond_error("Refresh token is missing.", 400)
 
     try:
         identity = logins_model.exchange_refresh_token(refresh_token)
-
-        return respond_success(identity.to_json())
+        response = make_response(respond_success(identity.to_json()))
+        response.set_cookie("Authorization", identity.id_token, httponly=True, secure=True)
+        response.set_cookie("RefreshToken", identity.refresh_token, httponly=True, secure=True)
+        return response
     except Exception as error:
         return respond_error(str(error), 500)

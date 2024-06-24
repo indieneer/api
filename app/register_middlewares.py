@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from flask import Flask
 from flask_cors import CORS
+
 from app.middlewares.cors_middleware import CORSMiddleware
 
 from lib.logger.middleware import LoggerMiddleware, LoggerOptions
@@ -19,7 +20,7 @@ def register_middlewares(app: Flask):
     # CORS
     ##
     origins = []
-    match app.config.get("PYTHON_ENV"):
+    match app.config.get("ENVIRONMENT"):
         case "development":
             origins = [
                 "http://localhost:3000",
