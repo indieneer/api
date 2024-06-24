@@ -86,11 +86,12 @@ def exchange_refresh_token():
     logins_model = get_models(current_app).logins
 
     try:
-        data = request.get_json()
-        refresh_token = data.get("refresh_token")
+        refresh_token = request.get_json().get('refresh_token', None)
     except UnsupportedMediaType:
-        refresh_token = request.cookies.get("RefreshToken")
+        refresh_token = None
 
+    if not refresh_token:
+        refresh_token = request.cookies.get('RefreshToken')
     if not refresh_token:
         return respond_error("Refresh token is missing.", 400)
 
