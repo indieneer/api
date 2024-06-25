@@ -14,7 +14,7 @@ def logins():
     Authenticate a user and provide JWT token(s) via Firebase.
 
     This endpoint is used to authenticate the user by email and password, and if successful,
-    returns the authentication token(s).
+    returns the authentication token(s) and equally sets the cookies.
 
     :return: Authentication token(s) if successful, otherwise an error message and status code.
     :rtype: dict or tuple
@@ -32,8 +32,10 @@ def logins():
 
     try:
         identity = logins_model.login(email, password)
-
-        return respond_success(identity.to_json())
+        response = make_response(respond_success(identity.to_json()))
+        response.set_cookie("Authorization", identity.id_token, httponly=True, secure=True)
+        response.set_cookie("RefreshToken", identity.refresh_token, httponly=True, secure=True)
+        return response
     except InvalidLoginCredentialsException as error:
         return respond_error('Wrong email or password.', 403)
     except Exception as error:
@@ -78,7 +80,7 @@ def exchange_refresh_token():
     Authenticate a user and provide JWT token(s) via Firebase.
 
     This endpoint is used to authenticate the user by email and password, and if successful,
-    returns the authentication token(s).
+    returns the authentication token(s) and equally sets the cookies.
 
     :return: Authentication token(s) if successful, otherwise an error message and status code.
     :rtype: dict or tuple
