@@ -4,7 +4,7 @@ import json
 
 from bson import ObjectId
 
-from app.api.v1.admin.products.comments import get_product_comment_by_id, create_product_comment, delete_product_comment, update_product_comment
+from app.api.v1.admin.products.comments import get_product_comment_by_id, get_all_product_comments, create_product_comment, delete_product_comment, update_product_comment
 
 from tests import UnitTest
 from app.models.product_comments import ProductCommentCreate, ProductComment, ProductCommentPatch
@@ -241,3 +241,115 @@ class ProductCommentsTestCase(UnitTest):
         ]
 
         self.run_subtests(tests, after_each=delete_product_comment_mock.reset_mock)
+
+    @patch("app.api.v1.admin.products.comments.get_models")
+    def test_get_all_product_comments(self, get_models: MagicMock):
+        endpoint = "/admin/products/<string:product_id>/comments"
+        self.app.route(endpoint, methods=["GET"])(get_all_product_comments)
+
+        get_all_product_comments_mock = get_models.return_value.product_comments.get_all
+
+        def call_api(product_id, limit=None, newest_first=None):
+            params = []
+            if limit is not None:
+                params.append(f"limit={limit}")
+            if newest_first is not None:
+                params.append(f"newest_first={str(newest_first).lower()}")  # Convert boolean to string
+            query_string = "&".join(params)
+            full_url = f"{endpoint.replace('<string:product_id>', product_id)}?{query_string}"
+            return self.test_client.get(
+                full_url,
+                headers={"Authorization": "Bearer " + create_test_token("", roles=["admin"])},
+                content_type='application/json'
+            )
+
+        def returns_comments_with_limit():
+            # given
+            mock_product_id = str(ObjectId())
+            mock_product_comments = [product_comment_fixture.clone() for _ in range(2)]
+            get_all_product_comments_mock.return_value = mock_product_comments[:1]
+
+            expected_response = {
+                "status": "ok",
+                "data": [comment.to_json() for comment in mock_product_comments[:1]]
+            }
+
+            # when
+            response = call_api(mock_product_id, limit=1)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_all_product_comments_mock.assert_called_once_with(mock_product_id, limit=1, newest_first=True)
+
+        def returns_comments_with_newest_first_true():
+            # given
+            mock_product_id = str(ObjectId())
+            mock_product_comments = [product_comment_fixture.clone() for _ in range(2)]
+            mock_product_comments[0].created_at = datetime.datetime.utcnow()
+            mock_product_comments[1].created_at = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+            get_all_product_comments_mock.return_value = mock_product_comments
+
+            expected_response = {
+                "status": "ok",
+                "data": [comment.to_json() for comment in mock_product_comments]
+            }
+
+            # when
+            response = call_api(mock_product_id, newest_first=True)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_all_product_comments_mock.assert_called_once_with(mock_product_id, limit=15, newest_first=True)
+
+        def returns_comments_with_newest_first_false():
+            # given
+            mock_product_id = str(ObjectId())
+            mock_product_comments = [product_comment_fixture.clone() for _ in range(2)]
+            mock_product_comments[0].created_at = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+            mock_product_comments[1].created_at = datetime.datetime.utcnow()
+            get_all_product_comments_mock.return_value = mock_product_comments
+
+            expected_response = {
+                "status": "ok",
+                "data": [comment.to_json() for comment in mock_product_comments]
+            }
+
+            # when
+            response = call_api(mock_product_id, newest_first=False)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_all_product_comments_mock.assert_called_once_with(mock_product_id, limit=15, newest_first=False)
+
+        def returns_comments_with_limit_and_newest_first():
+            # given
+            mock_product_id = str(ObjectId())
+            mock_product_comments = [product_comment_fixture.clone() for _ in range(2)]
+            mock_product_comments[0].created_at = datetime.datetime.utcnow()
+            mock_product_comments[1].created_at = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+            get_all_product_comments_mock.return_value = mock_product_comments[:1]
+
+            expected_response = {
+                "status": "ok",
+                "data": [comment.to_json() for comment in mock_product_comments[:1]]
+            }
+
+            # when
+            response = call_api(mock_product_id, limit=1, newest_first=True)
+
+            # then
+            self.assertEqual(response.get_json(), expected_response)
+            self.assertEqual(response.status_code, 200)
+            get_all_product_comments_mock.assert_called_once_with(mock_product_id, limit=1, newest_first=True)
+
+        tests = [
+            returns_comments_with_limit,
+            returns_comments_with_newest_first_true,
+            returns_comments_with_newest_first_false,
+            returns_comments_with_limit_and_newest_first
+        ]
+
+        self.run_subtests(tests, after_each=get_all_product_comments_mock.reset_mock)

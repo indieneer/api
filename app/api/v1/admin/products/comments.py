@@ -27,7 +27,7 @@ def get_all_product_comments(product_id: str):
     - newest_first: bool (optional, default=True) - Determines the order of the comments.
     """
     limit = request.args.get('limit', 15, type=int)
-    newest_first = request.args.get('newest_first', True, type=bool)
+    newest_first = request.args.get('newest_first', 'true').lower() == 'true'
 
     product_comments_model = get_models(current_app).product_comments
     all_product_comments = product_comments_model.get_all(product_id, limit=limit, newest_first=newest_first)
