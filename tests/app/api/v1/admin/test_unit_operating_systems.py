@@ -72,10 +72,7 @@ class OperatingSystemsTestCase(UnitTest):
             fails_to_create_an_operating_system_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_os_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_os_mock.reset_mock)
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_get_operating_system(self, get_models: MagicMock):
@@ -129,10 +126,12 @@ class OperatingSystemsTestCase(UnitTest):
             self.assertEqual(response.status_code, 404)
             get_os_mock.assert_called_once_with(mock_id)
 
-        for test in [finds_and_returns_an_operating_system, does_not_find_an_operating_system_and_returns_an_error]:
-            with self.subTest(test.__name__):
-                test()
-            get_os_mock.reset_mock()
+        tests = [
+            finds_and_returns_an_operating_system,
+            does_not_find_an_operating_system_and_returns_an_error
+        ]
+
+        self.run_subtests(tests, after_each=get_os_mock.reset_mock)
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_patch_operating_system(self, get_models: MagicMock):
@@ -194,10 +193,12 @@ class OperatingSystemsTestCase(UnitTest):
                 OperatingSystemPatch(name='Nonexistent OS')
             )
 
-        for test in [patches_and_returns_the_operating_system, fails_to_patch_a_nonexistent_operating_system]:
-            with self.subTest(test.__name__):
-                test()
-            patch_os_mock.reset_mock()
+        tests = [
+            patches_and_returns_the_operating_system,
+            fails_to_patch_a_nonexistent_operating_system
+        ]
+
+        self.run_subtests(tests, after_each=patch_os_mock.reset_mock)
 
     @patch("app.api.v1.admin.operating_systems.get_models")
     def test_delete_operating_system(self, get_models: MagicMock):
@@ -251,7 +252,10 @@ class OperatingSystemsTestCase(UnitTest):
             self.assertEqual(response.status_code, 404)
             delete_os_mock.assert_called_once_with(mock_id)
 
-        for test in [deletes_the_operating_system, fails_to_delete_a_nonexistent_operating_system]:
-            with self.subTest(test.__name__):
-                test()
-            delete_os_mock.reset_mock()
+        tests = [
+            deletes_the_operating_system,
+            fails_to_delete_a_nonexistent_operating_system
+        ]
+
+        self.run_subtests(tests, after_each=delete_os_mock.reset_mock)
+
