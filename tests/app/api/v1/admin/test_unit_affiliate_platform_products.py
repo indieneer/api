@@ -1,14 +1,9 @@
-import datetime
 from unittest.mock import patch, MagicMock
 import json
 
 from bson import ObjectId
 
 from app.api.v1.admin.affiliate_platform_products import get_affiliate_platform_product_by_id, create_affiliate_platform_product, delete_affiliate_platform_product, update_affiliate_platform_product
-from app.models.affiliates import Affiliate
-
-from app.models.products import Product, Price, Media, Movie, Resolution, Screenshot, Requirements, \
-    PlatformOsRequirements, ReleaseDate
 
 from tests import UnitTest
 from app.models.affiliate_platform_products import AffiliatePlatformProductCreate, AffiliatePlatformProduct, AffiliatePlatformProductPatch
@@ -17,12 +12,12 @@ from app.api.exceptions import UnprocessableEntityException
 
 # TODO: Create a separate fixtures entity for unit tests
 affiliate_platform_product_fixture = AffiliatePlatformProduct(
-    affiliate_id="65f9d1648194a472c9f835cd",
+    affiliate_id=str(ObjectId()),
     buy_page_url="https://www.example.com",
     prices=[],
     promotions=[],
-    platform_product_id="65f9d1648194a472c9f835ce",
-    product_id="65f9d1648194a472c9f835cd"
+    platform_product_id=str(ObjectId()),
+    product_id=str(ObjectId())
 )
 
 
@@ -91,10 +86,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
             fails_to_create_an_affiliate_platform_product_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_affiliate_platform_product_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_affiliate_platform_product_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_platform_products.get_models")
     def test_get_affiliate_platform_product_by_id(self, get_models: MagicMock):
@@ -112,7 +104,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
 
         def finds_and_returns_an_affiliate_platform_product():
             # given
-            mock_affiliate_platform_product_id = "507f1f77bcf86cd799439011"  # Example ObjectId
+            mock_affiliate_platform_product_id = str(ObjectId())
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
             get_affiliate_platform_product_mock.return_value = mock_affiliate_platform_product
 
@@ -131,7 +123,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
 
         def does_not_find_an_affiliate_platform_product_and_returns_an_error():
             # given
-            mock_id = "1"
+            mock_id = str(ObjectId())
             get_affiliate_platform_product_mock.return_value = None
 
             expected_response = {
@@ -152,10 +144,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
             does_not_find_an_affiliate_platform_product_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_affiliate_platform_product_mock.reset_mock()
+        self.run_subtests(tests, after_each=get_affiliate_platform_product_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_platform_products.get_models")
     def test_update_affiliate_platform_product(self, get_models: MagicMock):
@@ -174,7 +163,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
 
         def updates_and_returns_the_affiliate_platform_product():
             # given
-            mock_affiliate_platform_product_id = "507f1f77bcf86cd799439011"
+            mock_affiliate_platform_product_id = str(ObjectId())
             updated_fields = {"buy_page_url": "https://www.example.com/new"}
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
             update_affiliate_platform_product_mock.return_value = mock_affiliate_platform_product
@@ -196,10 +185,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
             updates_and_returns_the_affiliate_platform_product,
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            update_affiliate_platform_product_mock.reset_mock()
+        self.run_subtests(tests, after_each=update_affiliate_platform_product_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliate_platform_products.get_models")
     def test_delete_affiliate_platform_product(self, get_models: MagicMock):
@@ -217,7 +203,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
 
         def deletes_the_affiliate_platform_product():
             # given
-            mock_affiliate_platform_product_id = "507f1f77bcf86cd799439011"
+            mock_affiliate_platform_product_id = str(ObjectId())
 
             expected_response = {
                 "message": f"Affiliate platform product {mock_affiliate_platform_product_id} successfully deleted"
@@ -233,7 +219,7 @@ class AffiliatePlatformProductsTestCase(UnitTest):
 
         def fails_to_delete_a_nonexistent_affiliate_platform_product():
             # given
-            mock_id = "2"
+            mock_id = str(ObjectId())
             delete_affiliate_platform_product_mock.return_value = None
 
             expected_response = {
@@ -254,8 +240,4 @@ class AffiliatePlatformProductsTestCase(UnitTest):
             fails_to_delete_a_nonexistent_affiliate_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_affiliate_platform_product_mock.reset_mock()
-
+        self.run_subtests(tests, after_each=delete_affiliate_platform_product_mock.reset_mock)

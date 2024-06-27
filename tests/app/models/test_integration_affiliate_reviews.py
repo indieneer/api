@@ -1,6 +1,7 @@
 from app.models.affiliate_reviews import AffiliateReviewsModel, AffiliateReviewPatch
 from tests.integration_test import IntegrationTest
 
+
 class AffiliateReviewsModelTestCase(IntegrationTest):
     def test_create_affiliate_review(self):
         # given

@@ -5,7 +5,7 @@ from tests.integration_test import IntegrationTest
 class ProductsModelTestCase(IntegrationTest):
 
     def test_get_product(self):
-        products_model = ProductsModel(self.services.db)
+        products_model = self.models.products
 
         # given
         product = self.fixtures.product
@@ -31,7 +31,7 @@ class ProductsModelTestCase(IntegrationTest):
         self.assertEqual(created_product.detailed_description, product.detailed_description)
 
     def test_patch_product(self):
-        products_model = ProductsModel(self.services.db)
+        products_model = self.models.products
 
         # given
         product = self.fixtures.product.clone()
@@ -48,7 +48,7 @@ class ProductsModelTestCase(IntegrationTest):
         self.assertEqual(updated_product.name, "Updated Name")
 
     def test_delete_product(self):
-        products_model = ProductsModel(self.services.db)
+        products_model = self.models.products
         # given
         product, cleanup = self.factory.products.create(
             self.fixtures.product.clone())

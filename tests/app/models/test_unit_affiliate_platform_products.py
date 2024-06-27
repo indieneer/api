@@ -11,6 +11,7 @@ from app.models.affiliate_platform_products import AffiliatePlatformProductsMode
 from app.models.products import Product, Price, Media, Movie, Resolution, Screenshot, Requirements, \
     PlatformOsRequirements, ReleaseDate
 from tests import UnitTest
+from tests.mocks.database import mock_collection
 
 
 # TODO: Create a separate fixtures entity for unit tests
@@ -63,18 +64,18 @@ affiliate_platform_product_fixture = AffiliatePlatformProduct(
 affiliate_platform_product_fixture.affiliate = affiliate_fixture
 affiliate_platform_product_fixture.product = product_fixture
 
+
 class AffiliatePlatformProductTestCase(UnitTest):
 
     @patch("app.models.affiliate_platform_products.Database")
     def test_create_affiliate_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'affiliate_platform_products')
 
         def creates_and_returns_an_affiliate_platform_product():
             # given
             model = AffiliatePlatformProductsModel(db)
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+            collection_mock.insert_one.return_value = mock_affiliate_platform_product.to_json()
 
             expected_input = AffiliatePlatformProductCreate(
                 affiliate_id=mock_affiliate_platform_product.affiliate_id,
@@ -98,22 +99,17 @@ class AffiliatePlatformProductTestCase(UnitTest):
             creates_and_returns_an_affiliate_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.affiliate_platform_products.Database")
     def test_get_affiliate_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'affiliate_platform_products')
 
         def gets_and_returns_affiliate_platform_product():
             # given
             model = AffiliatePlatformProductsModel(db)
             affiliate_platform_product_id = ObjectId()
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.aggregate.return_value = [mock_affiliate_platform_product.to_json()]
 
             # when
@@ -136,8 +132,6 @@ class AffiliatePlatformProductTestCase(UnitTest):
             # given
             model = AffiliatePlatformProductsModel(db)
             nonexistent_affiliate_platform_product_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.aggregate.return_value = None
 
             # when
@@ -153,14 +147,11 @@ class AffiliatePlatformProductTestCase(UnitTest):
             fails_to_get_a_nonexistent_affiliate_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.affiliate_platform_products.Database")
     def test_patch_affiliate_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'affiliate_platform_products')
 
         def patches_and_returns_updated_affiliate_platform_product():
             # given
@@ -168,9 +159,6 @@ class AffiliatePlatformProductTestCase(UnitTest):
             affiliate_platform_product_id = ObjectId()
             updated_affiliate_platform_product = affiliate_platform_product_fixture.clone()
             updated_affiliate_platform_product.buy_page_url = "https://www.example.com/new"
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
-
             collection_mock.find_one_and_update.return_value = updated_affiliate_platform_product.to_json()
 
             update_data = AffiliatePlatformProductPatch(
@@ -198,8 +186,6 @@ class AffiliatePlatformProductTestCase(UnitTest):
             model = AffiliatePlatformProductsModel(db)
             nonexistent_affiliate_platform_product_id = ObjectId()
             update_data = affiliate_platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_update.return_value = None
 
             # when & then
@@ -212,22 +198,17 @@ class AffiliatePlatformProductTestCase(UnitTest):
             fails_to_patch_a_nonexistent_affiliate_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.affiliate_platform_products.Database")
     def test_delete_affiliate_platform_product(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'affiliate_platform_products')
 
         def deletes_and_confirms_deletion():
             # given
             model = AffiliatePlatformProductsModel(db)
             affiliate_platform_product_id = ObjectId()
             mock_affiliate_platform_product = affiliate_platform_product_fixture.clone()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = mock_affiliate_platform_product.to_json()
 
             # when
@@ -250,8 +231,6 @@ class AffiliatePlatformProductTestCase(UnitTest):
             # given
             model = AffiliatePlatformProductsModel(db)
             nonexistent_affiliate_platform_product_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = None
 
             # when & then
@@ -264,7 +243,4 @@ class AffiliatePlatformProductTestCase(UnitTest):
             fails_to_delete_a_nonexistent_affiliate_platform_product
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)

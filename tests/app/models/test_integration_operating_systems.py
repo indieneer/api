@@ -6,7 +6,7 @@ from dataclasses import fields
 class OperatingSystemsModelTestCase(IntegrationTest):
 
     def test_get_operating_system(self):
-        os_model = OperatingSystemsModel(self.services.db)
+        os_model = self.models.operating_systems
 
         # given
         os_fixture = self.fixtures.operating_system
@@ -34,7 +34,7 @@ class OperatingSystemsModelTestCase(IntegrationTest):
         self.assertEqual(created_os.name, os_fixture.name)
 
     def test_patch_operating_system(self):
-        os_model = OperatingSystemsModel(self.services.db)
+        os_model = self.models.operating_systems
 
         # given
         os_fixture = self.fixtures.operating_system.clone()
@@ -51,7 +51,7 @@ class OperatingSystemsModelTestCase(IntegrationTest):
         self.assertEqual(updated_os.name, "Updated OS Name")
 
     def test_delete_operating_system(self):
-        os_model = OperatingSystemsModel(self.services.db)
+        os_model = self.models.operating_systems
 
         # given
         os_fixture, cleanup = self.factory.operating_systems.create(

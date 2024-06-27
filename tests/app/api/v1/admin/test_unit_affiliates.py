@@ -86,10 +86,7 @@ class AffiliatesTestCase(UnitTest):
             fails_to_create_an_affiliate_when_body_is_invalid
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            create_affiliate_mock.reset_mock()
+        self.run_subtests(tests, after_each=create_affiliate_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliates.get_models")
     def test_get_affiliate_by_id(self, get_models: MagicMock):
@@ -155,10 +152,7 @@ class AffiliatesTestCase(UnitTest):
             does_not_find_an_affiliate_and_returns_an_error
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            get_affiliate_mock.reset_mock()
+        self.run_subtests(tests, after_each=get_affiliate_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliates.get_models")
     def test_update_affiliate(self, get_models: MagicMock):
@@ -208,10 +202,7 @@ class AffiliatesTestCase(UnitTest):
             updates_and_returns_the_affiliate,
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            update_affiliate_mock.reset_mock()
+        self.run_subtests(tests, after_each=update_affiliate_mock.reset_mock)
 
     @patch("app.api.v1.admin.affiliates.get_models")
     def test_delete_affiliate(self, get_models: MagicMock):
@@ -266,7 +257,4 @@ class AffiliatesTestCase(UnitTest):
             fails_to_delete_a_nonexistent_affiliate
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            delete_affiliate_mock.reset_mock()
+        self.run_subtests(tests, after_each=delete_affiliate_mock.reset_mock)

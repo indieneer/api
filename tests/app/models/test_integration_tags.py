@@ -5,7 +5,7 @@ from tests.integration_test import IntegrationTest
 class TagsModelTestCase(IntegrationTest):
 
     def test_get_tag(self):
-        tags_model = TagsModel(self.services.db)
+        tags_model = self.models.tags
 
         # given
         tag_fixture = self.fixtures.tag
@@ -30,7 +30,7 @@ class TagsModelTestCase(IntegrationTest):
         self.assertEqual(created_tag.name, tag_fixture.name)
 
     def test_patch_tag(self):
-        tags_model = TagsModel(self.services.db)
+        tags_model = self.models.tags
 
         # given
         tag_fixture = self.fixtures.tag.clone()
@@ -47,7 +47,7 @@ class TagsModelTestCase(IntegrationTest):
         self.assertEqual(updated_tag.name, "Updated Name")
 
     def test_delete_tag(self):
-        tags_model = TagsModel(self.services.db)
+        tags_model = self.models.tags
 
         # given
         tag_fixture, cleanup = self.factory.tags.create(

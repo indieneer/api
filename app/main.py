@@ -1,7 +1,7 @@
 from flask import Flask
 
 from app.models import AffiliatesModel, AffiliateReviewsModel, PlatformProductsModel, AffiliatePlatformProductsModel, \
-    ProductCommentsModel
+    ProductCommentsModel, ProductRepliesModel
 from config import app_config
 
 app = Flask(__name__)
@@ -57,6 +57,7 @@ def main(app: Flask):
         profiles=profiles_model,
         products=ProductsModel(db=db),
         product_comments=ProductCommentsModel(db=db),
+        product_replies=ProductRepliesModel(db=db),
         platforms=PlatformsModel(db=db),
         platform_products=PlatformProductsModel(db=db),
         affiliate_platform_products=AffiliatePlatformProductsModel(db=db),

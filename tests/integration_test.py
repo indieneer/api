@@ -21,6 +21,7 @@ from app.models.operating_systems import OperatingSystemCreate
 from app.models.platform_products import PlatformProductCreate, PlatformProductsModel
 from app.models.affiliate_platform_products import AffiliatePlatformProductCreate, AffiliatePlatformProductsModel
 from app.models.platforms import PlatformCreate
+from app.models.product_replies import ProductReplyCreate, ProductRepliesModel
 from app.models.products import Media, ProductCreate, Requirements, Price, Movie, Resolution, Screenshot, \
     PlatformOsRequirements, ReleaseDate
 from app.models.profiles import ProfileCreate
@@ -36,6 +37,7 @@ from tests.factory import (BackgroundJobsFactory, Factory, LoginsFactory,
                            ProductsFactory, ProductCommentsFactory, ProfilesFactory,
                            ServiceProfilesFactory, TagsFactory, AffiliatesFactory, AffiliateReviewsFactory,
                            PlatformProductsFactory, AffiliatePlatformProductsFactory)
+from tests.factory.product_replies import ProductRepliesFactory
 from tests.fixtures import Fixtures
 
 
@@ -140,6 +142,7 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 products=ProductsModel(db=db),
                 product_comments=ProductCommentsModel(db=db),
+                product_replies=ProductRepliesModel(db=db),
                 platform_products=PlatformProductsModel(db=db),
                 affiliate_platform_products=AffiliatePlatformProductsModel(db=db),
                 tags=TagsModel(db=db),
@@ -163,6 +166,9 @@ class IntegrationTest(testicles.IntegrationTest):
                 ),
                 product_comments=ProductCommentsFactory(
                     db=db, models=models
+                ),
+                product_replies=ProductRepliesFactory(
+                  db=db, models=models
                 ),
                 tags=TagsFactory(
                     db=db, models=models
@@ -357,11 +363,21 @@ class IntegrationTest(testicles.IntegrationTest):
             )
             cleanups.append(cleanup)
 
+            product_reply, cleanup = factory.product_replies.create(
+                ProductReplyCreate(
+                    comment_id=product_comment._id,
+                    profile_id=ObjectId(regular_user._id),
+                    text="I agree with you"
+                )
+            )
+            cleanups.append(cleanup)
+
             fixtures = Fixtures(
                 regular_user=regular_user,
                 admin_user=admin_user,
                 product=product,
                 product_comment=product_comment,
+                product_reply=product_reply,
                 platform=platform,
                 platform_product=platform_product,
                 affiliate_platform_product=affiliate_platform_product,
