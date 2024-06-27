@@ -4,6 +4,7 @@ from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.affiliates import AffiliatePatch, AffiliateCreate
+from lib.db_utils import to_json
 from lib.http_utils import respond_success, respond_error
 
 affiliates_controller = Blueprint('affiliates', __name__, url_prefix='/affiliates')
@@ -21,7 +22,7 @@ def get_affiliates():
     """
     affiliates_model = get_models(current_app).affiliates
     affiliates_list = affiliates_model.get_all()
-    return respond_success([affiliate.to_json() for affiliate in affiliates_list])
+    return respond_success(to_json(affiliates_list))
 
 
 @affiliates_controller.route('/<string:affiliate_id>', methods=["GET"])

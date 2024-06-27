@@ -7,6 +7,7 @@ from app.middlewares import requires_auth, requires_role
 from app.models import exceptions as models_exceptions
 from app.models import get_models
 from app.models.products import Product, ProductCreate, ProductPatch
+from lib.db_utils import to_json
 from lib.http_utils import respond_error, respond_success
 from .router import products_controller
 
@@ -21,7 +22,7 @@ def get_products():
     if products is None:
         raise models_exceptions.NotFoundException(Product.__name__)
 
-    return respond_success([product.to_json() for product in products])
+    return respond_success(to_json(products))
 
 
 @products_controller.route('/<string:product_id>', methods=["GET"])

@@ -4,6 +4,7 @@ from app.api.exceptions import UnprocessableEntityException
 from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.affiliate_platform_products import AffiliatePlatformProductPatch, AffiliatePlatformProductCreate
+from lib.db_utils import to_json
 from lib.http_utils import respond_success, respond_error
 
 affiliate_platform_products_controller = Blueprint('affiliate_platform_products', __name__, url_prefix='/affiliate_platform_products')
@@ -21,7 +22,7 @@ def get_affiliate_platform_products():
     """
     affiliate_platform_products_model = get_models(current_app).affiliate_platform_products
     affiliate_platform_products_list = affiliate_platform_products_model.get_all()
-    return respond_success([affiliate_platform_product.to_json() for affiliate_platform_product in affiliate_platform_products_list])
+    return respond_success(to_json(affiliate_platform_products_list))
 
 
 @affiliate_platform_products_controller.route('/<string:affiliate_platform_product_id>', methods=["GET"])
