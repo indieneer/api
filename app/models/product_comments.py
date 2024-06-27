@@ -60,7 +60,7 @@ class ProductCommentsModel:
         comment = self.db.connection[self.collection].find_one({"_id": ObjectId(comment_id)})
         return ProductComment(**comment) if comment else None
 
-    def get_all(self, product_id: str, limit: int = 15, newest_first: bool = True) -> List['ProductComment']:
+    def get_all(self, product_id: str, limit: int = 15, newest_first: bool = True) -> List[ProductComment]:
         """
         Retrieve all product comments for a specific product from the database.
 
