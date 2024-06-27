@@ -5,28 +5,39 @@ from app.middlewares import requires_auth, requires_role
 from app.models import get_models
 from app.models.product_comments import ProductCommentPatch, ProductCommentCreate
 from lib.http_utils import respond_success, respond_error
+from lib.db_utils import to_json
 from .router import products_controller
 
 
-@products_controller.route('/<string:product_id>/product_comments', methods=["GET"])
+from flask import request
+
+
+@products_controller.route('/<string:product_id>/comments', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_product_comments(product_id: str):
+def get_all_product_comments(product_id: str):
     """
-    Retrieve all product comments.
+    Retrieve all product comments for a specific product.
 
-    This endpoint returns a list of all product comments from the database.
+    This endpoint returns all product comments associated with a specific product ID.
     Requires authentication and admin privileges.
+
+    Query Parameters:
+    - limit: int (optional, default=15) - The maximum number of comments to return.
+    - newest_first: bool (optional, default=True) - Determines the order of the comments.
     """
+    limit = request.args.get('limit', 15, type=int)
+    newest_first = request.args.get('newest_first', 'true').lower() == 'true'
+
     product_comments_model = get_models(current_app).product_comments
-    product_comments_list = product_comments_model.get_all(product_id)
-    return respond_success([product_comment.to_json() for product_comment in product_comments_list])
+    all_product_comments = product_comments_model.get_all(product_id, limit=limit, newest_first=newest_first)
+    return respond_success(to_json(all_product_comments))
 
 
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')
-def get_product_comment_by_id(product_id: str, comment_id: str):
+def get_product_comment_by_id(comment_id: str):
     """
     Retrieve a single product comment by ID.
 
@@ -41,10 +52,10 @@ def get_product_comment_by_id(product_id: str, comment_id: str):
         return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/product_comments', methods=["POST"])
+@products_controller.route('/product_comments', methods=["POST"])
 @requires_auth
 @requires_role('admin')
-def create_product_comment(product_id: str):
+def create_product_comment():
     """
     Create a new product comment.
 
@@ -54,17 +65,17 @@ def create_product_comment(product_id: str):
     data = request.get_json()
     product_comments_model = get_models(current_app).product_comments
     try:
-        product_comment_data = ProductCommentCreate(product_id=product_id, **data)
+        product_comment_data = ProductCommentCreate(**data)
         new_product_comment = product_comments_model.create(product_comment_data)
     except TypeError:
         raise UnprocessableEntityException("Invalid data provided.")
     return respond_success(new_product_comment.to_json(), status_code=201)
 
 
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["PATCH"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["PATCH"])
 @requires_auth
 @requires_role('admin')
-def update_product_comment(product_id: str, comment_id: str):
+def update_product_comment(comment_id: str):
     """
     Update an existing product comment.
 
@@ -82,10 +93,10 @@ def update_product_comment(product_id: str, comment_id: str):
         return respond_error(f'Product comment with ID {comment_id} not found', 404)
 
 
-@products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["DELETE"])
+@products_controller.route('/product_comments/<string:comment_id>', methods=["DELETE"])
 @requires_auth
 @requires_role('admin')
-def delete_product_comment(product_id: str, comment_id: str):
+def delete_product_comment(comment_id: str):
     """
     Delete a product comment by ID.
 

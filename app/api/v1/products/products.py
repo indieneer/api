@@ -4,8 +4,7 @@ from app.models.products import Product
 from lib.http_utils import respond_success
 
 from app.models import get_models, exceptions as models_exceptions
-
-products_controller = Blueprint('products', __name__, url_prefix='/products')
+from .router import products_controller
 
 
 @products_controller.route('/<string:product_slug>', methods=["GET"])
