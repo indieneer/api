@@ -143,11 +143,6 @@ class AffiliatePlatformProductsModel:
         except IndexError:
             return None
 
-        print("HITLEEEEEEEEEEER", affiliate_platform_product)
-
-        # Assuming result returns at least one document after the aggregation
-        print("MOTHERFUCKERRRRRRRRR", affiliate_platform_product)
-
         try:
             # Construct the full affiliate platform product object including the nested affiliate and product
             affiliate_platform_product_object = AffiliatePlatformProduct(

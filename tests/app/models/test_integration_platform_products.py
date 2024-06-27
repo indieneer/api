@@ -6,7 +6,7 @@ from dataclasses import fields
 class PlatformProductsModelTestCase(IntegrationTest):
 
     def test_get_platform_product(self):
-        platform_products_model = PlatformProductsModel(self.services.db)
+        platform_products_model = self.models.platform_products
 
         # given
         platform_product_fixture = self.fixtures.platform_product
@@ -33,7 +33,7 @@ class PlatformProductsModelTestCase(IntegrationTest):
         self.assertEqual(created_platform_product.platform_id, platform_product_fixture.platform_id)
 
     def test_patch_platform_product(self):
-        platform_products_model = PlatformProductsModel(self.services.db)
+        platform_products_model = self.models.platform_products
 
         # given
         patch_data = PlatformProductPatch(platform_id=12345)
@@ -49,7 +49,7 @@ class PlatformProductsModelTestCase(IntegrationTest):
         self.assertEqual(updated_platform_product.platform_id, 12345)
 
     def test_delete_platform_product(self):
-        platform_products_model = PlatformProductsModel(self.services.db)
+        platform_products_model = self.models.platform_products
 
         # given
         platform_product_fixture, cleanup = self.factory.platform_products.create(

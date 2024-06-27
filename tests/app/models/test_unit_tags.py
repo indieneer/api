@@ -7,6 +7,7 @@ from app.models.exceptions import NotFoundException
 from app.models.tags import TagsModel
 
 from tests import UnitTest
+from tests.mocks.database import mock_collection
 from app.models.tags import TagCreate, Tag, TagPatch
 
 
@@ -14,14 +15,14 @@ class TagsTestCase(UnitTest):
 
     @patch("app.models.tags.Database")
     def test_create_tag(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'tags')
 
         def creates_and_returns_a_tag():
             # given
             model = TagsModel(db)
             mock_tag = Tag(name="Test tag")
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+
+            collection_mock.insert_one.return_value = mock_tag.to_json()
 
             expected_input = TagCreate(
                 name=mock_tag.name
@@ -40,22 +41,17 @@ class TagsTestCase(UnitTest):
             creates_and_returns_a_tag
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.tags.Database")
     def test_get_tag(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'tags')
 
         def gets_and_returns_tag():
             # given
             model = TagsModel(db)
             tag_id = ObjectId()
             mock_tag = Tag(name="Test tag")
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = mock_tag.to_json()
 
             # when
@@ -78,8 +74,6 @@ class TagsTestCase(UnitTest):
             # given
             model = TagsModel(db)
             nonexistent_tag_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one.return_value = None
 
             # when
@@ -95,23 +89,17 @@ class TagsTestCase(UnitTest):
             fails_to_get_a_nonexistent_tag
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.tags.Database")
     def test_patch_tag(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'tags')
 
         def patches_and_returns_updated_tag():
             # given
             model = TagsModel(db)
             tag_id = ObjectId()
             updated_tag = Tag(name="Updated tag")
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
-
             collection_mock.find_one_and_update.return_value = updated_tag.to_json()
 
             update_data = TagPatch(
@@ -144,8 +132,6 @@ class TagsTestCase(UnitTest):
             model = TagsModel(db)
             nonexistent_tag_id = ObjectId()
             update_data = TagPatch(name="Updated tag")
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_update.return_value = None
 
             # when & then
@@ -158,22 +144,17 @@ class TagsTestCase(UnitTest):
             fails_to_patch_a_nonexistent_tag
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)
 
     @patch("app.models.tags.Database")
     def test_delete_tag(self, db: MagicMock):
-        db_connection_mock = db.connection
+        collection_mock = mock_collection(db, 'tags')
 
         def deletes_and_confirms_deletion():
             # given
             model = TagsModel(db)
             tag_id = ObjectId()
-            mock_tag = Tag("Test tag")
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
+            mock_tag = Tag(name="Test tag")
             collection_mock.find_one_and_delete.return_value = mock_tag.to_json()
 
             # when
@@ -196,8 +177,6 @@ class TagsTestCase(UnitTest):
             # given
             model = TagsModel(db)
             nonexistent_tag_id = ObjectId()
-            collection_mock = MagicMock()
-            db_connection_mock.__getitem__.return_value = collection_mock
             collection_mock.find_one_and_delete.return_value = None
 
             # when & then
@@ -210,7 +189,4 @@ class TagsTestCase(UnitTest):
             fails_to_delete_a_nonexistent_tag
         ]
 
-        for test in tests:
-            with self.subTest(test.__name__):
-                test()
-            db_connection_mock.reset_mock()
+        self.run_subtests(tests, after_each=collection_mock.reset_mock)

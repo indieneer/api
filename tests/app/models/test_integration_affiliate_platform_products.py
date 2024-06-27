@@ -4,7 +4,7 @@ from tests.integration_test import IntegrationTest
 
 class AffiliatePlatformProductsModelTestCase(IntegrationTest):
     def test_get_affiliate_platform_product(self):
-        affiliate_platform_products_model = AffiliatePlatformProductsModel(self.services.db)
+        affiliate_platform_products_model = self.models.affiliate_platform_products
 
         # given
         affiliate_platform_product = self.fixtures.affiliate_platform_product
@@ -29,7 +29,7 @@ class AffiliatePlatformProductsModelTestCase(IntegrationTest):
         self.assertEqual(created_affiliate_platform_product.buy_page_url, affiliate_platform_product.buy_page_url)
 
     def test_patch_affiliate_platform_product(self):
-        affiliate_platform_products_model = AffiliatePlatformProductsModel(self.services.db)
+        affiliate_platform_products_model = self.models.affiliate_platform_products
 
         # given
         affiliate_platform_product = self.fixtures.affiliate_platform_product.clone()
@@ -46,7 +46,7 @@ class AffiliatePlatformProductsModelTestCase(IntegrationTest):
         self.assertEqual(updated_affiliate_platform_product.buy_page_url, "https://www.example.com/new")
 
     def test_delete_affiliate_platform_product(self):
-        affiliate_platform_products_model = AffiliatePlatformProductsModel(self.services.db)
+        affiliate_platform_products_model = self.models.affiliate_platform_products
 
         # given
         affiliate_platform_product, cleanup = self.factory.affiliate_platform_products.create(
@@ -62,7 +62,7 @@ class AffiliatePlatformProductsModelTestCase(IntegrationTest):
 
     def test_get_all_affiliate_platform_products(self):
         # given
-        affiliate_platform_products_model = AffiliatePlatformProductsModel(self.services.db)
+        affiliate_platform_products_model = self.models.affiliate_platform_products
 
         # when
         all_affiliate_platform_products = affiliate_platform_products_model.get_all()

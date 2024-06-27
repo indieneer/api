@@ -4,7 +4,7 @@ from tests.integration_test import IntegrationTest
 
 class AffiliatesModelTestCase(IntegrationTest):
     def test_get_affiliate(self):
-        affiliates_model = AffiliatesModel(self.services.db)
+        affiliates_model = self.models.affiliates
 
         # given
         affiliate = self.fixtures.affiliate
@@ -30,7 +30,7 @@ class AffiliatesModelTestCase(IntegrationTest):
         self.assertEqual(created_affiliate.bio, affiliate.bio)
 
     def test_patch_affiliate(self):
-        affiliates_model = AffiliatesModel(self.services.db)
+        affiliates_model = self.models.affiliates
 
         # given
         affiliate = self.fixtures.affiliate.clone()
@@ -47,7 +47,7 @@ class AffiliatesModelTestCase(IntegrationTest):
         self.assertEqual(updated_affiliate.name, "Updated Name")
 
     def test_delete_affiliate(self):
-        affiliates_model = AffiliatesModel(self.services.db)
+        affiliates_model = self.models.affiliates
 
         # given
         affiliate, cleanup = self.factory.affiliates.create(
@@ -63,7 +63,7 @@ class AffiliatesModelTestCase(IntegrationTest):
 
     def test_get_all_affiliates(self):
         # given
-        affiliates_model = AffiliatesModel(self.services.db)
+        affiliates_model = self.models.affiliates
 
         # when
         all_affiliates = affiliates_model.get_all()
