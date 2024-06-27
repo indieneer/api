@@ -23,6 +23,7 @@ def get_product_comments(product_id: str):
     return respond_success([product_comment.to_json() for product_comment in product_comments_list])
 
 
+# TODO: discuss removing product_id from the URL
 @products_controller.route('/<string:product_id>/product_comments/<string:comment_id>', methods=["GET"])
 @requires_auth
 @requires_role('admin')

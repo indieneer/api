@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.models.background_jobs import BackgroundJob
+from app.models.product_replies import ProductReply
 from app.models.profiles import Profile
 from app.models.products import Product
 from app.models.product_comments import ProductComment
@@ -23,6 +24,7 @@ class Fixtures:
     admin_user: Profile
     product: Product
     product_comment: ProductComment
+    product_reply: ProductReply
     platform: Platform
     platform_product: PlatformProduct
     affiliate_platform_product: AffiliatePlatformProduct
