@@ -13,7 +13,7 @@ class AuthError(Exception):
 def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
-    auth = request.headers.get("Authorization", "")
+    auth = request.headers.get("Authorization", f'Bearer {request.cookies.get("Authorization")}')
     parts = auth.split()
 
     if len(parts) == 0:
