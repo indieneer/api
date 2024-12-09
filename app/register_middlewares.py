@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from flask import Flask
 from flask_cors import CORS
 from app.middlewares.cors_middleware import CORSMiddleware
+from app.middlewares.rate_limiter import RateLimiterMiddleware
 
 from lib.logger.middleware import LoggerMiddleware, LoggerOptions
 from lib.logger.logger import Logger
@@ -71,3 +72,8 @@ def register_middlewares(app: Flask):
     # Error
     ##
     app.wsgi_app.add_middleware(ErrorMiddleware)
+
+    ##
+    # Rate limiter
+    ##
+    app.wsgi_app.add_middleware(RateLimiterMiddleware)
